@@ -7,19 +7,20 @@ from PySide6.QtWidgets import QMainWindow, QToolBar, QSpinBox, QLabel, QCheckBox
 from CommonTools.components import ColorButton, GuidePanel
 from ServerTools.core.server_socket import WebSocketServer
 from CommonTools.messages import *
-from CommonTools.core import Image
+from CommonTools.core import Image, ClientData
 from ServerTools.components import TokensPanel, DialogCreateMap
 
 from .masterController import MasterController
 
 
 class MasterGameTable(QMainWindow):
-    def __init__(self):
+    def __init__(self, login):
         super().__init__()
         self.setMinimumSize(1000, 700)
         self.setWindowTitle("Виртуальный стол: Мастер")
         
         self.images: dict[str, Any] = {}
+        self.players: dict[str, ClientData] = {}
         self.server = WebSocketServer()
         self.server.client_connected.connect(self._handle_connect)
         self.server.client_disconnected.connect(self._handle_disconnect)
@@ -37,7 +38,7 @@ class MasterGameTable(QMainWindow):
         self.token_panel = TokensPanel()
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.token_panel)
         
-        self.guide_panel = GuidePanel("https://5e14.ttg.club/", "Справочник")
+        self.guide_panel = GuidePanel("https://5e14.ttg.club/", "Справочник", f"Master{login}")
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.guide_panel)
         self.guide_panel.hide()
         
@@ -52,12 +53,15 @@ class MasterGameTable(QMainWindow):
         self.delete_map_action.triggered.connect(self._on_action_delete_map)
         self.save_map_action = self.topToolBar.addAction("Сохранить карту")
         self.active_map_action = self.topToolBar.addAction("Активировать карту")
+        self.active_map_action.triggered.connect(self._on_action_active_map)
         
         self.bottomToolBar = QToolBar()
         self.addToolBar(Qt.ToolBarArea.BottomToolBarArea, self.bottomToolBar)
         
         self.offset_grid_x = QSpinBox(value=0)
+        self.offset_grid_x.valueChanged.connect(self._handle_offset_size_change)
         self.offset_grid_y = QSpinBox(value=0)
+        self.offset_grid_y.valueChanged.connect(self._handle_offset_size_change)
         
         self.bottomToolBar.addWidget(QLabel("Отступ"))
         self.bottomToolBar.addWidget(self.offset_grid_x)
@@ -65,6 +69,7 @@ class MasterGameTable(QMainWindow):
         self.bottomToolBar.addWidget(QLabel("\t"))
         
         self.size_grid = QSpinBox(value=50)
+        self.size_grid.valueChanged.connect(self._handle_offset_size_change)
         
         self.bottomToolBar.addWidget(QLabel("Размер сетки"))
         self.bottomToolBar.addWidget(self.size_grid)
@@ -105,12 +110,24 @@ class MasterGameTable(QMainWindow):
                 self.images[name] = path
                 self.controller.tabMaps.load_map(name, path)
                 self.server.broadcast(MapLoadBackground(name=name))
+                
+    def _on_action_active_map(self):
+        if name := self.controller.tabMaps.getActiveNameMap():
+            self.controller.activeMap(name)
+            
+    def _handle_offset_size_change(self, *_):
+        offset = QPoint(self.offset_grid_x.value(), self.offset_grid_y.value())
+        size = self.size_grid.value()
+        self.controller.tabMaps.call_all_method("setOffsetSize", offset, size)
+        self.server.broadcast(MapGridData(offset=offset.toTuple(), size=size))
     
     def _handle_connect(self, uid):
         print("Connect", uid)
     
     def _handle_disconnect(self, uid):
         print("Disconnect", uid)
+        self.players.pop(uid)
+        self.controller.update_player_list(self.players)
         self.server.broadcast(ClientRemovePlayer(uid=uid), uid)
     
     def _handle_message_raw(self, uid, msg_raw: str):
@@ -118,9 +135,13 @@ class MasterGameTable(QMainWindow):
         self._handle_message(uid, msg)
     
     def _handle_message(self, uid, msg: BaseMessage):
+        if self.controller.handle_message(msg):
+            return
         match msg.type:
             case ClientActionType.START_PLAYER:
                 self._action_add_player(uid, msg)
+                self.players[uid] = self.server.clients[uid]
+                self.controller.update_player_list(self.players)
             case MapActionType.MAPS_ALL_DATA:
                 self._handle_all_data_maps(uid, msg)
             case ImageActionType.NAME_REQUEST:

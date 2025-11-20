@@ -16,6 +16,7 @@ class MapActionType(BaseActionType):
     
     MAP_CREATE = "map", "create", "map"
     MAP_DELETE = "map", "delete", "map"
+    MAP_ACTIVE = "map", "active", "map"
     MAP_GRID_DATA = "map", "grid", "data"
     MAP_MOVE_MAP = "map", "move", "map"
     
@@ -65,6 +66,10 @@ class MapCreateMap(BaseMessage, type=MapActionType.MAP_CREATE):
     
 class MapDeleteMap(BaseMessage, type=MapActionType.MAP_DELETE):
     name: str
+    
+    
+class MapActiveMap(BaseMessage, type=MapActionType.MAP_ACTIVE):
+    name: str
 
 
 class MapMessageToken(BaseMessage):
@@ -112,7 +117,7 @@ class MapMovedMap(BaseMessage, type=MapActionType.MAP_MOVE_MAP):
 __all__ = ["MapActionType", "MapAddToken2", "MapFreezePlayer", "MapGridData",
            "MapLoadBackground", "MapGetCurrentLoad", "MapGetBeginLoad",
            
-           "MapCreateMap", "MapChangeGridOffset", "MapMovedMap", "MapDeleteMap",
+           "MapCreateMap", "MapChangeGridOffset", "MapMovedMap", "MapDeleteMap", "MapActiveMap",
            
            "MapAddToken", "MapRemoveToken", "MapMoveToken", "MapGetAllTokens",
            "MapData", "GetAllMaps", "MapPlayerMoved"]

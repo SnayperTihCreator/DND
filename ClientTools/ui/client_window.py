@@ -16,7 +16,7 @@ from CommonTools.map_widget.tokens_dnd import MovedEvent
 
 
 class PlayerGameTable(QMainWindow):
-    def __init__(self):
+    def __init__(self, login):
         super().__init__()
         self.setMinimumSize(1000, 700)
         self.setWindowTitle("Виртуальный стол: Игрок")
@@ -50,7 +50,7 @@ class PlayerGameTable(QMainWindow):
         
         self.stacker.setCurrentWidget(self.connector)
         
-        self.player_panel = GuidePanel("https://longstoryshort.app/characters/list/", "Лист персонажа")
+        self.player_panel = GuidePanel("https://longstoryshort.app/characters/list/", "Лист персонажа", login)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.player_panel)
         self.player_panel.hide()
         
@@ -124,6 +124,9 @@ class PlayerGameTable(QMainWindow):
         if self.callback_manager.handle(msg):
             return
         
+        if self.controller.handle_message(msg):
+            return
+        
         match msg.type:
             case ClientActionType.START_PLAYER:
                 self.client_data.is_playing = True
@@ -131,14 +134,14 @@ class PlayerGameTable(QMainWindow):
                 self.activate_controller()
                 self.stacker.setCurrentWidget(self.controller)
                 self.socket.send_msg(GetAllMaps())
-            case MapActionType.LOAD_BACKGROUND:
+            case MapActionType.LOAD_BACKGROUND if self.controller.active:
                 self._handle_load_bg(msg)
             case _:
                 print(f"unhandled <{msg.type}>{msg}")
     
     def _handle_load_bg(self, msg: MapLoadBackground):
         self.image_manager.register(msg.name, self._callback_load_bg)
-        uid = self.callback_manager.register(ignore=partial(self.image_manager.unregister, msg.name))
+        uid = self.callback_manager.register(True, ignore=partial(self.image_manager.unregister, msg.name))
         self.socket.send_msg(ImageNameRequest(name=msg.name, uid=uid))
     
     def _callback_load_bg(self, name, file_path):

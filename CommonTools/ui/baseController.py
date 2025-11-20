@@ -18,7 +18,6 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
     def __init__(self, socket: Socket, client: ClientData):
         super().__init__()
         self.socket = socket
-        self.socket.message_received.connect(self._handle_message_raw)
         self.active = True
         
         self.players_map: dict[str, BaseToken] = {}
@@ -91,32 +90,31 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
                 cd = self.players[player_id]
                 self.players_map[player_id] = map_main.create_player(cd.name, cd.cls, player_id)
     
-    def _handle_message_raw(self, msg_raw: str):
+    # noinspection PyTypeChecker
+    def handle_message(self, msg: BaseMessage):
         if not self.active:
             return
-        msg = BaseMessage.from_str(msg_raw)
-        self._handle_message(msg)
-    
-    # noinspection PyTypeChecker
-    def _handle_message(self, msg: BaseMessage):
         match msg.type:
             case MapActionType.ADD_TOKEN:
-                self._handle_add_token(msg)
+                return self._handle_add_token(msg)
             case MapActionType.REMOVE_TOKEN:
-                self._handle_remove_token(msg)
+                return self._handle_remove_token(msg)
             case MapActionType.MOVE_TOKEN:
-                self._handle_move_token(msg)
+                return self._handle_move_token(msg)
             case _:
-                self._handle_custom_message(msg)
+                return self._handle_custom_message(msg)
     
     def _handle_add_token(self, msg: MapAddToken):
         self.add_token(msg.name, msg.mime, msg.pos)
+        return True
     
     def _handle_remove_token(self, msg: MapRemoveToken):
         self.remove_token(msg.name, msg.mime)
+        return True
     
     def _handle_move_token(self, msg: MapMoveToken):
         self.move_token(msg.name, msg.mime, msg.pos)
+        return True
     
     @abstractmethod
     def _handle_custom_message(self, msg: BaseMessage):
@@ -138,7 +136,7 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
         if self.bufferActive and name not in self.activeMaps:
             self.buffer_tokens[f"{name}|{mime}"] = pos
         else:
-            self.move_token(name, mime, pos)
+            self.move_token_nw(name, mime, pos)
     
     def add_token_nw(self, name, mime, pos):
         token = self.tabMaps.create_token(name, mime, pos)

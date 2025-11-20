@@ -19,12 +19,23 @@ class PlayerController(BaseController):
     def _handle_custom_message(self, msg: BaseMessage):
         match msg.type:
             case MapActionType.MAP_CREATE:
-                self._handle_create_map(msg)
+                return self._handle_create_map(msg)
             case MapActionType.MAP_DELETE:
-                self._handle_delete_map(msg)
+                return self._handle_delete_map(msg)
+            case MapActionType.MAP_ACTIVE:
+                return self._handle_active_map(msg)
+            case MapActionType.MAP_GRID_DATA:
+                return self._handle_grid_data(msg)
     
     def _handle_create_map(self, msg: MapCreateMap):
-        self.tabMaps.addMap(msg.name, msg.visible)
+        return self.tabMaps.addMap(msg.name, msg.visible)
     
     def _handle_delete_map(self, msg: MapDeleteMap):
-        self.tabMaps.removeMap(msg.name)
+        return self.tabMaps.removeMap(msg.name)
+        
+    def _handle_active_map(self, msg: MapActiveMap):
+        return self.tabMaps.activeMap(msg.name)
+    
+    def _handle_grid_data(self, msg: MapGridData):
+        offset = QPoint(*msg.offset)
+        self.tabMaps.call_all_method("setOffsetSize", offset, msg.size)

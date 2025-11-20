@@ -51,11 +51,19 @@ class TabMapsWidget(QTabWidget):
             idx = self.addTab(mWidget, name)
             self.setTabVisible(idx, visible or self.visible_always)
             self.maps[name] = MapData(name, visible, mWidget)
+            return True
     
     def removeMap(self, name):
         if mWidget := self.getMap(name):
             self.removeTab(self.indexOf(mWidget))
             del self.maps[name]
+            return True
+            
+    def activeMap(self, name):
+        if mWidget := self.getMap(name):
+            self.maps[name].visible = True
+            self.setTabVisible(self.indexOf(mWidget), self.maps[name].visible)
+            return True
     
     def getMapData(self, name) -> tuple[MapData, list[BaseToken]]:
         mdata = self.maps[name]

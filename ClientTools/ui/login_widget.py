@@ -43,4 +43,5 @@ class Loging(QMainWindow):
         self.client_data.name = lineData
         self.client_data.cls = self.lineInputClass.text()
         print(f"start {lineData}")
-        self.socket.send_msg(ClientStartPlayer(name=lineData, cls=self.client_data.cls))
+        self.socket.send_msg(ClientStartPlayer(
+            name=self.client_data.name, cls=self.client_data.cls))

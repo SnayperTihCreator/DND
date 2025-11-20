@@ -31,19 +31,22 @@ class CallbackManager:
         if impl := self._callback_done.pop(msg.uid_callback, None):
             self._callback_ignore.pop(msg.uid_callback, None)
             self._callback_error.pop(msg.uid_callback, None)
-            impl()
+            if callable(impl):
+                impl()
             return True
     
     def _handle_error_call(self, msg: ErrorCallback):
         if impl := self._callback_error.pop(msg.uid_callback, None):
             self._callback_done.pop(msg.uid_callback, None)
             self._callback_ignore.pop(msg.uid_callback, None)
-            impl()
+            if callable(impl):
+                impl()
             return True
     
     def _handle_ignore_call(self, msg: IgnoreCallback):
         if impl := self._callback_ignore.pop(msg.uid_callback, None):
             self._callback_done.pop(msg.uid_callback, None)
             self._callback_error.pop(msg.uid_callback, None)
-            impl()
+            if callable(impl):
+                impl()
             return True

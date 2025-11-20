@@ -1,5 +1,4 @@
 import os
-import uuid
 
 from PySide6.QtWebEngineCore import QWebEngineProfile, QWebEnginePage
 from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit, QWidget, QDockWidget
@@ -10,7 +9,7 @@ os.environ['QTWEBENGINE_CHROMIUM_FLAGS'] = '--disable-web-security --ignore-cert
 
 
 class GuidePanel(QDockWidget):
-    def __init__(self, url, title):
+    def __init__(self, url, title, login):
         super().__init__(title)
         
         self.cw = QWidget()
@@ -27,7 +26,7 @@ class GuidePanel(QDockWidget):
         
         self.box.addLayout(navigation_panel)
         
-        self.profile = QWebEngineProfile(uuid.uuid4().hex, self)
+        self.profile = QWebEngineProfile(login, self)
         self.profile.setPersistentCookiesPolicy(QWebEngineProfile.ForcePersistentCookies)
         self.profile.setHttpCacheType(QWebEngineProfile.DiskHttpCache)
         self.profile.setHttpUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
