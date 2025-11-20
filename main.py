@@ -1,10 +1,13 @@
 import sys
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module='pkg_resources')
 
 from PySide6.QtWidgets import QApplication
 
 from CommonTools.dialogRun import RunDialog
 from ServerTools.ui.master_window import MasterGameTable
 from ClientTools.ui.client_window import PlayerGameTable
+
 
 # noinspection PyUnresolvedReferences
 import assets_rc
