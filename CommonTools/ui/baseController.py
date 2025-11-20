@@ -44,8 +44,9 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
     def clear_buffer(self, name_active):
         self.activeMaps.append(name_active)
         removed = []
-        for uid, pos in self.buffer_tokens.copy().items():
+        for uid, pos in self.buffer_tokens.items():
             name, mime = uid.split("|")
+            print(name_active, name, mime, pos)
             if name_active == name:
                 self.add_token_nw(name, mime, pos)
                 removed.append(uid)
@@ -121,19 +122,19 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
         pass
     
     def add_token(self, name, mime, pos):
-        if self.bufferActive and name not in self.activeMaps:
+        if self.bufferActive and (name not in self.activeMaps):
             self.buffer_tokens[f"{name}|{mime}"] = pos
         else:
             self.add_token_nw(name, mime, pos)
     
     def remove_token(self, name, mime):
-        if self.bufferActive and name not in self.activeMaps:
+        if self.bufferActive and (name not in self.activeMaps):
             del self.buffer_tokens[f"{name}|{mime}"]
         else:
             self.remove_token_nw(name, mime)
     
     def move_token(self, name, mime, pos):
-        if self.bufferActive and name not in self.activeMaps:
+        if self.bufferActive and (name not in self.activeMaps):
             self.buffer_tokens[f"{name}|{mime}"] = pos
         else:
             self.move_token_nw(name, mime, pos)
@@ -143,6 +144,7 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
         if token is not None:
             self._apply_visible_token(token)
         self.update_players()
+        return token
     
     def remove_token_nw(self, name, mime):
         self.tabMaps.removeTokenByMime(name, mime)

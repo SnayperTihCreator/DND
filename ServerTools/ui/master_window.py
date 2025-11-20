@@ -9,6 +9,7 @@ from ServerTools.core.server_socket import WebSocketServer
 from CommonTools.messages import *
 from CommonTools.core import Image, ClientData
 from ServerTools.components import TokensPanel, DialogCreateMap
+from CommonTools.map_widget.tokens_dnd import BaseToken
 
 from .masterController import MasterController
 
@@ -177,6 +178,10 @@ class MasterGameTable(QMainWindow):
             self.server.answer(uid, MapCreateMap(name=mdata.name, visible=mdata.visible))
             if mdata.mWidget.file_map:
                 self.server.answer(uid, MapLoadBackground(name=map_name))
+            for item in mdata.mWidget.items():
+                QApplication.processEvents()
+                if isinstance(item, BaseToken):
+                    self.server.answer(uid, MapAddToken(name=map_name, mime=item.mime(), pos=item.pos().toTuple()))
     
     def _handle_name_map(self, uid, msg: ImageNameRequest):
         if file_path := self.images.get(msg.name, None):

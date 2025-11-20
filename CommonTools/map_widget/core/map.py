@@ -171,6 +171,7 @@ class MapWidget(QGraphicsView):
     def create_token(self, mime_data: str, position: QPointF):
         token = self.token_manager.create_token(mime_data, position)
         if token is not None:
+            token.show()
             self.scene().addItem(token)
             self._apply_movement_setting_to_token(token)
         return token

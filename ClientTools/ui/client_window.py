@@ -145,8 +145,8 @@ class PlayerGameTable(QMainWindow):
         self.socket.send_msg(ImageNameRequest(name=msg.name, uid=uid))
     
     def _callback_load_bg(self, name, file_path):
-        self.controller.clear_buffer(name)
         self.controller.tabMaps.load_map(name, file_path)
+        self.controller.clear_buffer(name)
         
     def _handle_change_color(self, color):
         self.controller.tabMaps.call_all_method("setColorGrid", color)

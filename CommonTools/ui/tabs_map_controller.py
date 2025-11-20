@@ -94,8 +94,7 @@ class TabMapsWidget(QTabWidget):
         mWidget = self.getMap(name)
         if mWidget is None:
             return
-        token = mWidget.create_token(mime, point)
-        return token
+        return mWidget.create_token(mime, point)
     
     def removeTokenByMime(self, name: str, mime: str):
         mWidget = self.getMap(name)

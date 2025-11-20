@@ -70,6 +70,7 @@ class WebSocketServer(Socket):
     
     def broadcast(self, msg: BaseMessage, uid_answer=None):
         for uid, client in self.clients.items():
+            QApplication.processEvents()
             if uid_answer and (uid == uid_answer):
                 continue
             client.send_msg(msg)
