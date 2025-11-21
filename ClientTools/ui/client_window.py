@@ -109,6 +109,7 @@ class PlayerGameTable(QMainWindow):
         self.showErrorMessage("Сервер сдох")
         self.deactivate_controller()
         self.stacker.setCurrentWidget(self.connector)
+        self.controller.tabMaps.clearMaps()
     
     def _handle_message_raw(self, msg_raw: str):
         msg = BaseMessage.from_str(msg_raw)

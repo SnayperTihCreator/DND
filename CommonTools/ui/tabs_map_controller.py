@@ -32,6 +32,10 @@ class TabMapsWidget(QTabWidget):
         
         self.calls_saved: dict[str, tuple[Any, ...]] = {}
         self.visible_always = False
+        
+    def clearMaps(self):
+        for name, mData in self.maps.items():
+            mData.mWidget.clear()
     
     def addMap(self, name, visible=True):
         if self.maps.get(name, None) is None:

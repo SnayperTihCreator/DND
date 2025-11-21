@@ -17,6 +17,7 @@ class MasterController(BaseController):
         self.tabMaps.token_added.connect(self._ohandle_add_token)
         self.tabMaps.token_removed.connect(self._ohandle_remove_token)
         self.tabMaps.token_moved.connect(self._ohandle_move_token)
+        self.tabMaps.token_moved_map.connect(self._ohandle_move_map)
     
     def _handle_custom_message(self, msg: BaseMessage):
         return
@@ -37,6 +38,9 @@ class MasterController(BaseController):
         if self.tabMaps.isEmpty():
             return
         self.socket.send_msg(MapMoveToken(name=name, mime=token.mime(), pos=pos))
+        
+    def _ohandle_move_map(self, a, b, c):
+        print(a, b, c)
     
     def addMap(self, name, visible):
         self.tabMaps.addMap(name, visible)

@@ -106,7 +106,7 @@ class MasterGameTable(QMainWindow):
     
     def _on_action_load_bg(self):
         if name := self.controller.tabMaps.getActiveNameMap():
-            path, _ = QFileDialog.getOpenFileName(self, "Выберете фон", ".", "Image(*.png; *.jpg)")
+            path, _ = QFileDialog.getOpenFileName(self, "Выберете фон", ".", "Image(*.png *.jpg);;Animation(*.gif)")
             if path:
                 self.images[name] = path
                 self.controller.tabMaps.load_map(name, path)

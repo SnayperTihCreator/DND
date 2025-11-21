@@ -9,7 +9,7 @@ from .token_manager import TokenManager
 from .drawing_manager import DrawingManager
 from .view_controller import ViewController
 from .graphicsScene import GraphicsScene
-from CommonTools.map_widget.tokens_dnd import BaseToken, SpawnPlayerToken, MovedEvent
+from CommonTools.map_widget.tokens_dnd import *
 from CommonTools.core import ClientData
 
 
@@ -50,6 +50,20 @@ class MapWidget(QGraphicsView):
             'npcs': True,  # НПС не перемещаются в режиме игрока
             'spawn_point': True,  # Точка появления всегда перемещается только мастером
         }
+        
+    def clear(self):
+        self.view_controller.clear()
+        for item in self.items():
+            if isinstance(item, BaseToken):
+                self.token_manager.remove_token(item.mime())
+            elif isinstance(item, MapWithGridItem):
+                continue
+            else:
+                self.g_scene.removeItem(item)
+        del self.token_spawn
+        self.token_spawn = None
+        self.file_map = None
+    
     
     def _handle_context_menu(self, pos):
         if self.freeze or not self.client.name:

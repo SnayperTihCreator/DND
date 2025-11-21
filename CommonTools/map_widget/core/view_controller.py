@@ -1,5 +1,3 @@
-from typing import Optional
-
 from PySide6.QtCore import Qt, QPoint
 from PySide6.QtGui import QPixmap, QKeyEvent, QWheelEvent
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene
@@ -17,7 +15,7 @@ class ViewController:
         self.color_grid = "#4a4a4a"
         self.grid_visible = True
         
-        self.map_item: Optional[MapWithGridItem] = None
+        self.map_item: MapWithGridItem = MapWithGridItem()
         self.zoom_level = 1.0
         
         # Настройки масштабирования
@@ -25,13 +23,15 @@ class ViewController:
         self.zoom_min = 0.1
         self.zoom_max = 10.0
     
+    def clear(self):
+        self.map_item.clear()
+    
     def load_map(self, file_path):
         self.scene.clear()
-        self.map_item = None
         
         pixmap = QPixmap(file_path)
         if not pixmap.isNull():
-            self.map_item = MapWithGridItem(pixmap)
+            self.map_item.load(file_path)
             self.scene.addItem(self.map_item)
             self.scene.setSceneRect(self.map_item.boundingRect())
             self.updateGridRender()
