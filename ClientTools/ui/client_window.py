@@ -4,6 +4,9 @@ from functools import partial
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QMainWindow, QStackedWidget, QToolBar, QCheckBox, QGraphicsColorizeEffect
 from PySide6.QtGui import QColor
+from loguru import logger
+logger = logger.bind(pack="ClientWindow")
+
 
 from ClientTools.core.client_socket import WebSocketClient
 from CommonTools.core import Image
@@ -90,6 +93,7 @@ class PlayerGameTable(QMainWindow):
     def showErrorMessage(self, msg: str):
         self.applyErrorEffect()
         self.statusBar().showMessage(msg, 2000)
+        logger.error(msg)
         QTimer.singleShot(2000, self.resetEffect)
     
     def event(self, event):
@@ -118,7 +122,8 @@ class PlayerGameTable(QMainWindow):
     def _handle_image(self, image: Image):
         cache_image = self.cache_folder / f"{image.name}{image.suffix}"
         cache_image.write_bytes(image.image_data)
-        print(f"Get image {image.name}{image.suffix} as {image.strategy}")
+        logger.debug("Получено изображение {iname}{isuffix} через {istrategy}", iname=image.name,
+                    isuffix=image.suffix, istrategy=image.strategy)
         self.image_manager.handle(image.name, cache_image)
     
     def _handle_message(self, msg: BaseMessage):
@@ -135,10 +140,11 @@ class PlayerGameTable(QMainWindow):
                 self.activate_controller()
                 self.stacker.setCurrentWidget(self.controller)
                 self.socket.send_msg(GetAllMaps())
+                logger.info("Запуск сессии")
             case MapActionType.LOAD_BACKGROUND if self.controller.active:
                 self._handle_load_bg(msg)
             case _:
-                print(f"unhandled <{msg.type}>{msg}")
+                logger.info("Не обработанное сообщение: {mtype} - {msg}", mtype=msg.type, msg=msg)
     
     def _handle_load_bg(self, msg: MapLoadBackground):
         self.image_manager.register(msg.name, self._callback_load_bg)
@@ -146,6 +152,7 @@ class PlayerGameTable(QMainWindow):
         self.socket.send_msg(ImageNameRequest(name=msg.name, uid=uid))
     
     def _callback_load_bg(self, name, file_path):
+        self.statusBar().showMessage("Загрузка фона", 2000)
         self.controller.tabMaps.load_map(name, file_path)
         self.controller.clear_buffer(name)
         

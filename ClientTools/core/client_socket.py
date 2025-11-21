@@ -1,5 +1,8 @@
 from PySide6.QtCore import Signal, QUrl
 from PySide6.QtWebSockets import QWebSocket
+from loguru import logger
+
+logger = logger.bind(pack="SocketClient")
 
 from CommonTools.core import Socket
 from CommonTools.messages import *
@@ -29,10 +32,10 @@ class WebSocketClient(Socket):
             match msg.type:
                 case ClientActionType.CONNECT:
                     self.client.uid = msg.uid
-                    print(self.client.uid)
+                    logger.success("Подключен к серверу с uid {uid}", uid=msg.uid)
                 case _:
                     self.message_received.emit(message)
     
     def _handle_error(self, error):
-        msg_error = f"Error: {error}"
+        msg_error = f"Ошибка подключения: {error}"
         self.error_occurred.emit(msg_error)

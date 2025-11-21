@@ -1,5 +1,6 @@
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QPushButton, QMainWindow
+from loguru import logger
 
 from CommonTools.core import ClientData, Socket
 
@@ -42,6 +43,6 @@ class Loging(QMainWindow):
             return
         self.client_data.name = lineData
         self.client_data.cls = self.lineInputClass.text()
-        print(f"start {lineData}")
         self.socket.send_msg(ClientStartPlayer(
             name=self.client_data.name, cls=self.client_data.cls))
+        logger.info("Запрос запуска сессии под: {name}|{clas}", name=self.client_data.name, clas=self.client_data.cls)

@@ -137,7 +137,7 @@ class MasterGameTable(QMainWindow):
     
     def _handle_disconnect(self, uid):
         print("Disconnect", uid)
-        self.players.pop(uid)
+        self.players.pop(uid, None)
         self.controller.update_player_list(self.players)
         self.player_panel.removePlayer(uid)
         self.server.broadcast(ClientRemovePlayer(uid=uid), uid)

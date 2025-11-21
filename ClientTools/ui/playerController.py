@@ -39,3 +39,4 @@ class PlayerController(BaseController):
     def _handle_grid_data(self, msg: MapGridData):
         offset = QPoint(*msg.offset)
         self.tabMaps.call_all_method("setOffsetSize", offset, msg.size)
+        return True
