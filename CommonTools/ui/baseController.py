@@ -84,7 +84,7 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
             new_ids = set(self.players.keys())
             
             for player_id in current_ids - new_ids:
-                token = self.players_map[player_id]
+                token = self.players_map.pop(player_id)
                 self.tabMaps.removeToken(token)
             
             for player_id in new_ids - current_ids:

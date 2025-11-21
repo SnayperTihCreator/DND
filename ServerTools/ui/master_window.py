@@ -8,7 +8,7 @@ from CommonTools.components import ColorButton, GuidePanel
 from ServerTools.core.server_socket import WebSocketServer
 from CommonTools.messages import *
 from CommonTools.core import Image, ClientData
-from ServerTools.components import TokensPanel, DialogCreateMap
+from ServerTools.components import TokensPanel, DialogCreateMap, PlayerPanel
 from CommonTools.map_widget.tokens_dnd import BaseToken
 
 from .masterController import MasterController
@@ -42,6 +42,10 @@ class MasterGameTable(QMainWindow):
         self.guide_panel = GuidePanel("https://5e14.ttg.club/", "Справочник", f"Master{login}")
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.guide_panel)
         self.guide_panel.hide()
+        
+        self.player_panel = PlayerPanel()
+        self.player_panel.active_change.connect(self._handle_change_freeze)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.player_panel)
         
         self.topToolBar = QToolBar()
         self.addToolBar(Qt.ToolBarArea.TopToolBarArea, self.topToolBar)
@@ -88,6 +92,9 @@ class MasterGameTable(QMainWindow):
         
         self.guide_panel_action = self.menu_panels.addAction("Показать справочник")
         self.guide_panel_action.triggered.connect(self.guide_panel.show)
+        
+        self.player_panel_action = self.menu_panels.addAction("Показать панель игроков")
+        self.player_panel_action.triggered.connect(self.player_panel.show)
     
     def _on_action_add_map(self):
         if self.controller.tabMaps.isEmpty():
@@ -98,7 +105,7 @@ class MasterGameTable(QMainWindow):
                 "Дайте имя карте и будет ли видна карта игрокам")
         if name is not None:
             self.controller.addMap(name, visible)
-            
+    
     def _on_action_delete_map(self):
         if self.controller.tabMaps.isEmpty():
             return
@@ -111,16 +118,19 @@ class MasterGameTable(QMainWindow):
                 self.images[name] = path
                 self.controller.tabMaps.load_map(name, path)
                 self.server.broadcast(MapLoadBackground(name=name))
-                
+    
     def _on_action_active_map(self):
         if name := self.controller.tabMaps.getActiveNameMap():
             self.controller.activeMap(name)
-            
+    
     def _handle_offset_size_change(self, *_):
         offset = QPoint(self.offset_grid_x.value(), self.offset_grid_y.value())
         size = self.size_grid.value()
         self.controller.tabMaps.call_all_method("setOffsetSize", offset, size)
         self.server.broadcast(MapGridData(offset=offset.toTuple(), size=size))
+    
+    def _handle_change_freeze(self, uid, state):
+        print(uid, state)
     
     def _handle_connect(self, uid):
         print("Connect", uid)
@@ -129,6 +139,7 @@ class MasterGameTable(QMainWindow):
         print("Disconnect", uid)
         self.players.pop(uid)
         self.controller.update_player_list(self.players)
+        self.player_panel.removePlayer(uid)
         self.server.broadcast(ClientRemovePlayer(uid=uid), uid)
     
     def _handle_message_raw(self, uid, msg_raw: str):
@@ -141,8 +152,6 @@ class MasterGameTable(QMainWindow):
         match msg.type:
             case ClientActionType.START_PLAYER:
                 self._action_add_player(uid, msg)
-                self.players[uid] = self.server.clients[uid]
-                self.controller.update_player_list(self.players)
             case MapActionType.MAPS_ALL_DATA:
                 self._handle_all_data_maps(uid, msg)
             case ImageActionType.NAME_REQUEST:
@@ -162,6 +171,9 @@ class MasterGameTable(QMainWindow):
             QApplication.processEvents()
             if client.is_playing and uid_answer != uid:
                 self.server.answer(uid_answer, ClientAddPlayer(uid=uid, name=client.name, cls=client.cls))
+        self.players[uid_answer] = self.server.clients[uid_answer]
+        self.controller.update_player_list(self.players)
+        self.player_panel.addPlayer(uid_answer, msg.name, msg.cls)
     
     def closeEvent(self, event):
         self.server.stop_server()

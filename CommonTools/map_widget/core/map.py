@@ -50,7 +50,7 @@ class MapWidget(QGraphicsView):
             'npcs': True,  # НПС не перемещаются в режиме игрока
             'spawn_point': True,  # Точка появления всегда перемещается только мастером
         }
-        
+    
     def clear(self):
         self.view_controller.clear()
         for item in self.items():
@@ -63,7 +63,6 @@ class MapWidget(QGraphicsView):
         del self.token_spawn
         self.token_spawn = None
         self.file_map = None
-    
     
     def _handle_context_menu(self, pos):
         if self.freeze or not self.client.name:
@@ -180,7 +179,7 @@ class MapWidget(QGraphicsView):
     
     # Делегирование методов TokenManager
     def remove_token(self, mime_data: str):
-        self.token_manager.remove_token(mime_data)
+        return self.token_manager.remove_token(mime_data)
     
     def create_token(self, mime_data: str, position: QPointF):
         token = self.token_manager.create_token(mime_data, position)

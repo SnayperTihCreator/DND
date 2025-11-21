@@ -32,15 +32,14 @@ class MasterController(BaseController):
         if self.tabMaps.isEmpty():
             return
         self.socket.send_msg(MapRemoveToken(name=name, mime=token.mime()))
-        self.update_players()
         
     def _ohandle_move_token(self, name, token: BaseToken, pos: tuple[float, float]):
         if self.tabMaps.isEmpty():
             return
         self.socket.send_msg(MapMoveToken(name=name, mime=token.mime(), pos=pos))
         
-    def _ohandle_move_map(self, a, b, c):
-        print(a, b, c)
+    def _ohandle_move_map(self, from_map, token, to_map):
+        pass
     
     def addMap(self, name, visible):
         self.tabMaps.addMap(name, visible)

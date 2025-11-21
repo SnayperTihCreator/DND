@@ -2,7 +2,7 @@ from enum import IntEnum, auto
 
 from PySide6.QtGui import QMouseEvent, QPen, QColor
 from PySide6.QtWidgets import QListView, QStyledItemDelegate, QWidget, QStyleOptionButton, QStyle, QApplication, \
-    QVBoxLayout, QCheckBox
+    QVBoxLayout, QCheckBox, QDockWidget
 from PySide6.QtCore import QAbstractListModel, QModelIndex, Qt, QSize, QRect, QEvent, Signal
 from attrs import define, field
 
@@ -130,13 +130,15 @@ class PlayerPanelDelegate(QStyledItemDelegate):
         return super().editorEvent(event, model, option, index)
 
 
-class PlayerPanel(QWidget):
+class PlayerPanel(QDockWidget):
     active_change = Signal(str, bool)
     
     def __init__(self):
         super().__init__()
-        self.setMaximumWidth(210)
-        self.box = QVBoxLayout(self)
+        self.setWindowTitle("Панель игроков")
+        self.cw = QWidget()
+        self.setWidget(self.cw)
+        self.box = QVBoxLayout(self.cw)
         
         self.checkbox_active = QCheckBox("Все активны")
         self.checkbox_active.checkStateChanged.connect(self._handle_state_checkbox)
@@ -168,13 +170,16 @@ class PlayerPanel(QWidget):
             self.checkbox_active.setCheckState(Qt.CheckState.PartiallyChecked)
         else:
             self.checkbox_active.setCheckState(Qt.CheckState.Unchecked)
-        self.active_change.emit(uid, self.modelList.getPlayerByUid(uid).active)
+        if uid:
+            self.active_change.emit(uid, self.modelList.getPlayerByUid(uid).active)
     
     def addPlayer(self, uid, name, cls):
         self.modelList.addPlayer(PlayerItem(uid, name, cls))
+        self._handle_change_state(uid)
     
     def removePlayer(self, uid):
         self.modelList.removeByUidPlayer(uid)
+        self._handle_change_state("")
     
     def clear(self):
         self.modelList.clear()

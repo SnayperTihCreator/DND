@@ -110,6 +110,7 @@ class TabMapsWidget(QTabWidget):
         for mdata in self.maps.values():
             if token in mdata.mWidget.items():
                 mdata.mWidget.remove_token(token.mime())
+                return
     
     def move_token(self, name, mime, pos):
         mWidget = self.getMap(name)

@@ -35,7 +35,8 @@ class TokenManager(QObject):
     def remove_token(self, mime):
         if mime in self.tokens:
             self.scene.removeItem(self.tokens[mime])
-            del self.tokens[mime]
+            self.tokens.pop(mime, None)
+            return True
     
     def _create_token(self, mime: str, pos: QPointF) -> Optional[BaseToken]:
         match mime.split(":"):
