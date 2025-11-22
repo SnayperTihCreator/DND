@@ -4,7 +4,7 @@ from PySide6.QtCore import QPointF, Signal, QObject
 
 from ..tokens_dnd import *
 from ..utils import GridHelper
-from ClientTools.utils.twoInputDialog import TwoInputDialog
+from CommonTools.utils.twoInputDialog import TwoInputDialog
 from .graphicsScene import GraphicsScene
 
 

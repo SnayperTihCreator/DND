@@ -3,6 +3,8 @@ from typing import Any
 
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout
 from PySide6.QtCore import QObject
+from loguru import logger
+logger = logger.bind(pack="BaseController")
 
 from CommonTools.map_widget.tokens_dnd import BaseToken
 from CommonTools.messages import *
@@ -43,10 +45,10 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
     
     def clear_buffer(self, name_active):
         self.activeMaps.append(name_active)
+        logger.success("Activate map: {name}", name=name_active)
         removed = []
         for uid, pos in self.buffer_tokens.items():
             name, mime = uid.split("|")
-            print(name_active, name, mime, pos)
             if name_active == name:
                 self.add_token_nw(name, mime, pos)
                 removed.append(uid)

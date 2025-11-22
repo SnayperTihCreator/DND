@@ -3,6 +3,9 @@ from typing import Any
 
 from PySide6.QtCore import Qt, QPoint
 from PySide6.QtWidgets import QMainWindow, QToolBar, QSpinBox, QLabel, QCheckBox, QApplication, QFileDialog
+from loguru import logger
+
+logger = logger.bind(pack="ServerWindow")
 
 from CommonTools.components import ColorButton, GuidePanel
 from ServerTools.core.server_socket import WebSocketServer
@@ -130,17 +133,17 @@ class MasterGameTable(QMainWindow):
         self.server.broadcast(MapGridData(offset=offset.toTuple(), size=size))
     
     def _handle_change_freeze(self, uid, state):
-        print(uid, state)
+        logger.debug(f"change freeze {uid=} {state=}")
     
     def _handle_connect(self, uid):
-        print("Connect", uid)
+        logger.success("Клиент подключен с uid: {uid}", uid=uid)
     
     def _handle_disconnect(self, uid):
-        print("Disconnect", uid)
         self.players.pop(uid, None)
         self.controller.update_player_list(self.players)
         self.player_panel.removePlayer(uid)
         self.server.broadcast(ClientRemovePlayer(uid=uid), uid)
+        logger.success("Клиент отключен с uid: {uid}", uid=uid)
     
     def _handle_message_raw(self, uid, msg_raw: str):
         msg = BaseMessage.from_str(msg_raw)
@@ -157,12 +160,13 @@ class MasterGameTable(QMainWindow):
             case ImageActionType.NAME_REQUEST:
                 self._handle_name_map(uid, msg)
             case _:
-                print(f"unhadled {uid}:<{msg.type}>{msg}")
+                logger.info("Не обработанное сообщение: {mtype} - {msg}", mtype=msg.type, msg=msg)
     
     def _handle_image(self, image: Image):
         cache_image = self.cache_folder / f"{image.name}{image.suffix}"
         cache_image.write_bytes(image.image_data)
-        print(f"Get image {image.name}{image.suffix} as {image.strategy}")
+        logger.debug("Получено изображение {iname}{isuffix} через {istrategy}", iname=image.name,
+                     isuffix=image.suffix, istrategy=image.strategy)
     
     def _action_add_player(self, uid_answer: str, msg: ClientStartPlayer):
         self.server.answer(uid_answer, msg)
