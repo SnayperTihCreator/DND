@@ -99,8 +99,7 @@ class PlayerGameTable(QMainWindow):
     def event(self, event):
         if event.type() == MovedEvent.MovedEventType:
             self.client_data.send_msg(MapPlayerMoved(
-                uid=self.client_data.uid,
-                pos=event.pos.toTuple()
+                pos=event.pos_target.toTuple()
             ))
             return True
         return super().event(event)

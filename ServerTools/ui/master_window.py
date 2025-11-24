@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import Qt, QPoint
+from PySide6.QtCore import Qt, QPoint, QPointF
 from PySide6.QtWidgets import QMainWindow, QToolBar, QSpinBox, QLabel, QCheckBox, QApplication, QFileDialog
 from loguru import logger
 
@@ -160,6 +160,8 @@ class MasterGameTable(QMainWindow):
                 self._handle_all_data_maps(uid, msg)
             case ImageActionType.NAME_REQUEST:
                 self._handle_name_map(uid, msg)
+            case MapActionType.PLAYER_MOVED:
+                self._handle_player_moved(uid, msg)
             case _:
                 logger.info("Не обработанное сообщение: {mtype} - {msg}", mtype=msg.type, msg=msg)
     
@@ -179,6 +181,10 @@ class MasterGameTable(QMainWindow):
         self.players[uid_answer] = self.server.clients[uid_answer]
         self.controller.update_player_list(self.players)
         self.player_panel.addPlayer(uid_answer, msg.name, msg.cls)
+        
+    def _handle_player_moved(self, uid, msg: MapPlayerMoved):
+        token = self.controller.players_map[uid]
+        token.move_to(QPointF(*msg.pos))
     
     def closeEvent(self, event):
         self.server.stop_server()

@@ -26,7 +26,6 @@ class GetAllMaps(BaseMessage, type=MapActionType.MAPS_ALL_DATA):
 
 
 class MapPlayerMoved(BaseMessage, type=MapActionType.PLAYER_MOVED):
-    uid: str
     pos: tuple[float, float]
 
 

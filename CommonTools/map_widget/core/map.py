@@ -65,7 +65,6 @@ class MapWidget(QGraphicsView):
         self.file_map = None
     
     def _handle_context_menu(self, pos):
-        print(self.freeze, self.client)
         if not self.freeze:
             return
         menu = QMenu()
@@ -74,7 +73,7 @@ class MapWidget(QGraphicsView):
         
         action = menu.exec(QCursor.pos())
         if action == action_move:
-            QApplication.postEvent(QApplication.instance(), MovedEvent(pos))
+            QApplication.postEvent(QApplication.activeWindow(), MovedEvent(pos))
     
     def setFreezeToken(self, value):
         self.freeze = value

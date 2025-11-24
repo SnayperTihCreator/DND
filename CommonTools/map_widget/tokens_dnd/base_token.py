@@ -85,6 +85,7 @@ class BaseToken(QGraphicsEllipseItem):
     def mousePressEvent(self, event):
         self.animation.stop()
         self.is_running_anim = False
+        self.old_anim_pos = self.pos()
         super().mousePressEvent(event)
     
     def stopMoved(self):
