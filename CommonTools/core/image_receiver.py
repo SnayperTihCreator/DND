@@ -2,6 +2,7 @@ import base64
 from typing import Optional
 
 from attrs import define, field
+from loguru import logger
 from PySide6.QtCore import QObject, Signal
 
 from CommonTools.messages import *
@@ -64,6 +65,7 @@ class ImageReceiver(QObject):
                 msg.name,
                 msg.suffix
             ))
+            logger.success("Принято изображение прямым способом")
             return True
         except Exception as e:
             msg_error = f"Error: {e}"
@@ -79,6 +81,7 @@ class ImageReceiver(QObject):
                 msg.name,
                 msg.suffix
             ))
+            logger.success("Принято изображение сжатым способом")
             return True
         except Exception as e:
             msg_error = f"Error: {e}"
@@ -95,7 +98,7 @@ class ImageReceiver(QObject):
                 msg.name,
                 msg.suffix
             )
-            print(f"Start chunked {suid}: {msg.total_chunks}")
+            logger.success("Начало чанковой передачи {suid}", suid=suid)
             return True
         except Exception as e:
             msg_error = f"Error: {e}"
@@ -117,6 +120,7 @@ class ImageReceiver(QObject):
             
             pp = (session.received_chunks / session.total_chunks * 100)
             self.chunk_progress.emit(suid, pp)
+            logger.success("Получен чанк {cidx} для {suid}", cidx=idx, suid=suid)
             return True
         except Exception as e:
             msg_error = f"Error: {e}"
@@ -129,7 +133,6 @@ class ImageReceiver(QObject):
             if suid not in self.active_sessions:
                 print("Session uid not find")
                 return
-            print(f"End chunked {suid}")
             session = self.active_sessions[suid]
             image_data = b"".join(session.chunks)
             
@@ -139,6 +142,7 @@ class ImageReceiver(QObject):
                 session.name,
                 session.suffix
             ))
+            logger.success("Завершина передача для {suid}", suid=suid)
             return True
         except Exception as e:
             msg_error = f"Error: {e}"

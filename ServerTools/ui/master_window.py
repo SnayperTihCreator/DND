@@ -133,7 +133,8 @@ class MasterGameTable(QMainWindow):
         self.server.broadcast(MapGridData(offset=offset.toTuple(), size=size))
     
     def _handle_change_freeze(self, uid, state):
-        logger.debug(f"change freeze {uid=} {state=}")
+        logger.info("Изменения состояния заморозки у {uid}:{state}", uid=uid, state=state)
+        self.server.answer(uid, MapFreezePlayer(freeze=state))
     
     def _handle_connect(self, uid):
         logger.success("Клиент подключен с uid: {uid}", uid=uid)
@@ -186,7 +187,7 @@ class MasterGameTable(QMainWindow):
     def _handle_all_data_maps(self, uid, _):
         offset: QPoint
         offset, size = self.controller.tabMaps.getOffsetSize()
-        self.server.answer(uid, MapChangeGridOffset(offset=offset.toTuple(), size=size))
+        self.server.answer(uid, MapGridData(offset=offset.toTuple(), size=size))
         for map_name in self.controller.tabMaps.maps.keys():
             QApplication.processEvents()
             mdata, tokens = self.controller.tabMaps.getMapData(map_name)

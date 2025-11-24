@@ -5,6 +5,8 @@ from contextlib import contextmanager
 import time
 from pathlib import Path
 
+from loguru import logger
+
 
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QApplication
@@ -66,6 +68,7 @@ class ImageSender(QObject):
                 data=image_data,
                 suffix=Path(path).suffix
             ))
+            logger.success("Успешная отправка прямым способом")
             return True
         except Exception as e:
             msg_error = f"Error: {e}"
@@ -83,6 +86,7 @@ class ImageSender(QObject):
                 data=image_data,
                 suffix=suffix
             ))
+            logger.success("Успешная отправка сжатым способом")
             return True
         except Exception as e:
             msg_error = f"Error: {e}"
@@ -105,7 +109,7 @@ class ImageSender(QObject):
                 chunk_size=chunk_size,
                 suffix=suffix
             ))
-            
+            logger.success("Запуск чанковой передачи {suid}", suid=current_session)
             for i, chunk in enumerate(chunks):
                 QApplication.processEvents()
                 socket.send_msg(ImageSendChunk(
@@ -113,10 +117,12 @@ class ImageSender(QObject):
                     chunk_index=i,
                     data=chunk.decode("utf-8")
                 ))
+                logger.success("Отправлен чанк {cidx} {suid}", suid=current_session, cidx=i)
             
             socket.send_msg(ImageSendChunkEnd(
                 session_id=current_session
             ))
+            logger.success("Чанковая передача завершина", suid=current_session)
             return True
         except Exception as e:
             msg_error = f"Error: {e}"

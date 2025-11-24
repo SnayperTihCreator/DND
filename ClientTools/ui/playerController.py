@@ -26,17 +26,23 @@ class PlayerController(BaseController):
                 return self._handle_active_map(msg)
             case MapActionType.MAP_GRID_DATA:
                 return self._handle_grid_data(msg)
+            case MapActionType.PLAYER_FREEZE:
+                return self._handle_change_freeze(msg)
     
     def _handle_create_map(self, msg: MapCreateMap):
         return self.tabMaps.addMap(msg.name, msg.visible)
     
     def _handle_delete_map(self, msg: MapDeleteMap):
         return self.tabMaps.removeMap(msg.name)
-        
+    
     def _handle_active_map(self, msg: MapActiveMap):
         return self.tabMaps.activeMap(msg.name)
     
     def _handle_grid_data(self, msg: MapGridData):
         offset = QPoint(*msg.offset)
         self.tabMaps.call_all_method("setOffsetSize", offset, msg.size)
+        return True
+    
+    def _handle_change_freeze(self, msg: MapFreezePlayer):
+        self.tabMaps.call_all_method("setFreezeToken", msg.freeze)
         return True

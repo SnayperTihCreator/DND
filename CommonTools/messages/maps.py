@@ -30,36 +30,36 @@ class MapPlayerMoved(BaseMessage, type=MapActionType.PLAYER_MOVED):
     pos: tuple[float, float]
 
 
-class MapLoadBackground(BaseMessage, type=MapActionType.LOAD_BACKGROUND):
+class MapsGroup(BaseMessage):
     name: str
+
+
+class MapLoadBackground(MapsGroup, type=MapActionType.LOAD_BACKGROUND):
     uid: str = Field("")
 
 
-class MapCreateMap(BaseMessage, type=MapActionType.MAP_CREATE):
-    name: str
+class MapCreateMap(MapsGroup, type=MapActionType.MAP_CREATE):
     visible: bool
 
 
-class MapDeleteMap(BaseMessage, type=MapActionType.MAP_DELETE):
-    name: str
+class MapDeleteMap(MapsGroup, type=MapActionType.MAP_DELETE):
+    pass
 
 
-class MapActiveMap(BaseMessage, type=MapActionType.MAP_ACTIVE):
-    name: str
+class MapActiveMap(MapsGroup, type=MapActionType.MAP_ACTIVE):
+    pass
 
 
-class MapMessageToken(BaseMessage):
-    name: str
+class MapMessageToken(MapsGroup):
     mime: str
+
+
+class MapFreezePlayer(BaseMessage, type=MapActionType.PLAYER_FREEZE):
+    freeze: bool
 
 
 class MapAddToken(MapMessageToken, type=MapActionType.ADD_TOKEN):
     pos: tuple[float, float]
-
-
-class MapFreezePlayer(BaseMessage, type=MapActionType.PLAYER_FREEZE):
-    uid: str
-    freeze: bool
 
 
 class MapRemoveToken(MapMessageToken, type=MapActionType.REMOVE_TOKEN):
@@ -75,9 +75,7 @@ class MapGridData(BaseMessage, type=MapActionType.MAP_GRID_DATA):
     size: int
 
 
-class MapMovedMap(BaseMessage, type=MapActionType.MAP_MOVE_MAP):
-    name: str
-    mime: str
+class MapMovedMap(MapMessageToken, type=MapActionType.MAP_MOVE_MAP):
     name_target: str
 
 
@@ -86,6 +84,6 @@ __all__ = ["MapActionType",
            "MapLoadBackground",
            
            "MapCreateMap", "MapDeleteMap", "MapActiveMap",
-           "MapMovedMap",  "GetAllMaps",
+           "MapMovedMap", "GetAllMaps",
            
-           "MapAddToken", "MapRemoveToken", "MapMoveToken",  "MapPlayerMoved"]
+           "MapAddToken", "MapRemoveToken", "MapMoveToken", "MapPlayerMoved"]

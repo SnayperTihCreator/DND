@@ -65,7 +65,8 @@ class MapWidget(QGraphicsView):
         self.file_map = None
     
     def _handle_context_menu(self, pos):
-        if self.freeze or not self.client.name:
+        print(self.freeze, self.client)
+        if not self.freeze:
             return
         menu = QMenu()
         
