@@ -1,8 +1,9 @@
-from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QPushButton, QMainWindow
+from PySide6.QtCore import Signal, QSize
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QPushButton, QMainWindow, QComboBox
+from PySide6.QtGui import QIcon
 from loguru import logger
 
-from CommonTools.core import ClientData, Socket
+from CommonTools.core import ClientData, Socket, classes
 
 from CommonTools.messages import *
 
@@ -20,16 +21,17 @@ class Loging(QMainWindow):
         
         self.lineInputData = QLineEdit()
         self.lineInputData.setPlaceholderText("Имя персонажа")
+        self.lineInputData.returnPressed.connect(self.on_press_button)
         self.box.addWidget(self.lineInputData)
         
-        self.lineInputClass = QLineEdit()
-        self.lineInputClass.setPlaceholderText("Класс")
-        self.box.addWidget(self.lineInputClass)
-        
+        self.comboClass = QComboBox()
+        self.comboClass.setIconSize(QSize(1, 1)*32)
+        for cls, icon in classes.items():
+            self.comboClass.addItem(QIcon(f":/icons/cls/{icon}.png"), cls)
+        self.box.addWidget(self.comboClass)
         self.btn = QPushButton("Начать")
         self.box.addWidget(self.btn)
         self.btn.pressed.connect(self.on_press_button)
-        
         self.setCentralWidget(self.cw)
     
     def on_press_button(self):
@@ -42,7 +44,7 @@ class Loging(QMainWindow):
             self.error_occurred.emit("Ник не должен содержать ':' или '|'")
             return
         self.client_data.name = lineData
-        self.client_data.cls = self.lineInputClass.text()
+        self.client_data.cls = self.comboClass.currentText()
         self.socket.send_msg(ClientStartPlayer(
             name=self.client_data.name, cls=self.client_data.cls))
         logger.info("Запрос запуска сессии под: {name}|{clas}", name=self.client_data.name, clas=self.client_data.cls)

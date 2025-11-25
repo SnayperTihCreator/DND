@@ -1,9 +1,20 @@
 <RCC>
-    <qresource prefix="default_map">
-        <file alias="map1.png">resource/img.png</file>
+    <qresource prefix="icons">
+        <file alias="main.png">resource/icon.png</file>
     </qresource>
-    <qresource prefix="img">
-        <file alias="wood_wall.png">resource/wood_wall.png</file>
-        <file alias="wood_floor.png">resource/wood_floor.png</file>
+    <qresource prefix="icons/cls">
+        <file alias="bard.png">resource/classes/bard.png</file>
+        <file alias="barbarian.png">resource/classes/barbarian.png</file>
+        <file alias="fighter.png">resource/classes/fighter.png</file>
+        <file alias="wizard.png">resource/classes/wizard.png</file>
+        <file alias="druid.png">resource/classes/druid.png</file>
+        <file alias="cleric.png">resource/classes/cleric.png</file>
+        <file alias="artificer.png">resource/classes/artificer.png</file>
+        <file alias="warlock.png">resource/classes/warlock.png</file>
+        <file alias="monk.png">resource/classes/monk.png</file>
+        <file alias="paladin.png">resource/classes/paladin.png</file>
+        <file alias="rogue.png">resource/classes/rogue.png</file>
+        <file alias="ranger.png">resource/classes/ranger.png</file>
+        <file alias="sorcerer.png">resource/classes/sorcerer.png</file>
     </qresource>
 </RCC>

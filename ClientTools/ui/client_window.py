@@ -3,13 +3,13 @@ from functools import partial
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QMainWindow, QStackedWidget, QToolBar, QCheckBox, QGraphicsColorizeEffect
-from PySide6.QtGui import QColor
+from PySide6.QtGui import QColor, QIcon
 from loguru import logger
 logger = logger.bind(pack="ClientWindow")
 
 
 from ClientTools.core.client_socket import WebSocketClient
-from CommonTools.core import Image
+from CommonTools.core import Image, classes
 from .connector_widget import Connector
 from .login_widget import Loging
 from .playerController import PlayerController
@@ -22,6 +22,7 @@ class PlayerGameTable(QMainWindow):
     def __init__(self, login):
         super().__init__()
         self.setMinimumSize(1000, 700)
+        self.setWindowIcon(QIcon(":/icons/main.png"))
         self.setWindowTitle("Виртуальный стол: Игрок")
         
         self.image_manager = ImageManager()
@@ -57,9 +58,16 @@ class PlayerGameTable(QMainWindow):
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.player_panel)
         self.player_panel.hide()
         
+        self.player_cls_panel = GuidePanel("https://5e14.ttg.club/classes", "Лист класса", f"{login}-cls")
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.player_cls_panel)
+        self.player_cls_panel.hide()
+        
         self.menu_docker = self.menuBar().addMenu("Панели")
         self.player_panel_action = self.menu_docker.addAction("Открыть лист персонажа")
         self.player_panel_action.triggered.connect(self.player_panel.show)
+        
+        self.player_cls_panel_action = self.menu_docker.addAction("Открыть лист класса")
+        self.player_cls_panel_action.triggered.connect(self._on_action_show_player_cls)
         
         self.bottomToolBar = QToolBar()
         self.addToolBar(Qt.ToolBarArea.BottomToolBarArea, self.bottomToolBar)
@@ -74,6 +82,15 @@ class PlayerGameTable(QMainWindow):
         self.bottomToolBar.addWidget(self.checkBoxVisibleGrid)
         
         self.deactivate_controller()
+        
+    def _on_action_show_player_cls(self):
+        if self.client_data.cls:
+            self.player_cls_panel.handle_load_url(
+                f"https://5e14.ttg.club/classes/{classes[self.client_data.cls]}"
+            )
+            self.player_cls_panel.show()
+        else:
+            self.showErrorMessage("Вы еще не выбрали класс")
     
     def deactivate_controller(self):
         self.bottomToolBar.hide()

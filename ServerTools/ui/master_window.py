@@ -1,8 +1,10 @@
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import Qt, QPoint, QPointF
-from PySide6.QtWidgets import QMainWindow, QToolBar, QSpinBox, QLabel, QCheckBox, QApplication, QFileDialog
+from PySide6.QtCore import Qt, QPoint, QPointF, QTimer
+from PySide6.QtWidgets import QMainWindow, QToolBar, QSpinBox, QLabel, QCheckBox, QApplication, QFileDialog, \
+    QGraphicsColorizeEffect
+from PySide6.QtGui import QIcon, QColor
 from loguru import logger
 
 logger = logger.bind(pack="ServerWindow")
@@ -22,6 +24,7 @@ class MasterGameTable(QMainWindow):
         super().__init__()
         self.setMinimumSize(1000, 700)
         self.setWindowTitle("Виртуальный стол: Мастер")
+        self.setWindowIcon(QIcon(":/icons/main.png"))
         
         self.images: dict[str, Any] = {}
         self.players: dict[str, ClientData] = {}
@@ -37,6 +40,7 @@ class MasterGameTable(QMainWindow):
         self.cache_folder.mkdir(exist_ok=True, parents=True)
         
         self.controller = MasterController(self.server)
+        self.controller.error.connect(self.showErrorMessage)
         self.setCentralWidget(self.controller)
         
         self.token_panel = TokensPanel()
@@ -84,7 +88,10 @@ class MasterGameTable(QMainWindow):
         self.bottomToolBar.addWidget(QLabel("\t"))
         
         self.btnColorGrid = ColorButton(color="#4a4a4a")
+        self.btnColorGrid.color_changed.connect(self._handle_change_color)
         self.checkBoxVisibleGrid = QCheckBox("Сетка")
+        self.checkBoxVisibleGrid.setChecked(True)
+        self.checkBoxVisibleGrid.toggled.connect(self._handle_change_vgrid)
         
         self.bottomToolBar.addWidget(self.btnColorGrid)
         self.bottomToolBar.addWidget(self.checkBoxVisibleGrid)
@@ -98,6 +105,21 @@ class MasterGameTable(QMainWindow):
         
         self.player_panel_action = self.menu_panels.addAction("Показать панель игроков")
         self.player_panel_action.triggered.connect(self.player_panel.show)
+    
+    def applyErrorEffect(self):
+        colorize = QGraphicsColorizeEffect(self)
+        colorize.setColor(QColor("#f00"))
+        
+        self.statusBar().setGraphicsEffect(colorize)
+    
+    def resetEffect(self):
+        self.statusBar().setGraphicsEffect(None)
+    
+    def showErrorMessage(self, msg: str):
+        self.applyErrorEffect()
+        self.statusBar().showMessage(msg, 2000)
+        logger.error(msg)
+        QTimer.singleShot(2000, self.resetEffect)
     
     def _on_action_add_map(self):
         if self.controller.tabMaps.isEmpty():
@@ -138,6 +160,12 @@ class MasterGameTable(QMainWindow):
     
     def _handle_connect(self, uid):
         logger.success("Клиент подключен с uid: {uid}", uid=uid)
+    
+    def _handle_change_color(self, color):
+        self.controller.tabMaps.call_all_method("setColorGrid", color)
+    
+    def _handle_change_vgrid(self, visible):
+        self.controller.tabMaps.call_all_method("setVisibleGrid", visible)
     
     def _handle_disconnect(self, uid):
         self.players.pop(uid, None)

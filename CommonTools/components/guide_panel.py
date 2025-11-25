@@ -21,7 +21,7 @@ class GuidePanel(QDockWidget):
         self.btnBack.pressed.connect(self._handle_back)
         navigation_panel.addWidget(self.btnBack)
         self.lineUrl = QLineEdit()
-        self.lineUrl.returnPressed.connect(self._handle_load_url)
+        self.lineUrl.returnPressed.connect(self.handle_load_url)
         navigation_panel.addWidget(self.lineUrl)
         
         self.box.addLayout(navigation_panel)
@@ -39,17 +39,18 @@ class GuidePanel(QDockWidget):
         
         self.box.addWidget(self.webEngine)
         
-        self._handle_load_url(QUrl(url))
+        self.handle_load_url(QUrl(url))
         
         self.setWidget(self.cw)
     
     def _handle_update_url(self, url: QUrl):
         self.lineUrl.setText(url.toString())
     
-    def _handle_load_url(self, url=None):
+    def handle_load_url(self, url=None):
         if url is None:
             url = QUrl(self.lineUrl.text())
-        self.webEngine.load(url)
+        if self.web_page.url() != url:
+            self.webEngine.load(url)
     
     def _handle_back(self):
         self.webEngine.back()

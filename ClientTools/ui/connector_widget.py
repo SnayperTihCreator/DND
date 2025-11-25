@@ -16,6 +16,7 @@ class Connector(QWidget):
         self.lineInputIp = QLineEdit()
         self.lineInputIp.setPlaceholderText("xxx.xxx.xxx.xxx")
         self.lineInputIp.setText("127.0.0.1")
+        self.lineInputIp.returnPressed.connect(self.on_press_button)
         self.box.addWidget(self.lineInputIp)
         
         self.btn = QPushButton("Connect")

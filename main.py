@@ -26,9 +26,9 @@ if __name__ == "__main__":
         
         window = None
         match RunDialog.getWhatRunner(app.quit):
-            case ["Master", login]:
+            case ["master", login]:
                 window = MasterGameTable(login)
-            case ["Player", login]:
+            case ["player", login]:
                 window = PlayerGameTable(login)
         if window is not None:
             window.show()

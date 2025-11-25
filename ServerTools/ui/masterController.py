@@ -1,4 +1,4 @@
-from PySide6.QtCore import QPoint
+from PySide6.QtCore import QPoint, Signal, QPointF
 
 from CommonTools.core import Socket, ClientData
 from CommonTools.messages import *
@@ -7,6 +7,7 @@ from CommonTools.map_widget.tokens_dnd import BaseToken
 
 
 class MasterController(BaseController):
+    error = Signal(str)
     def __init__(self, socket: Socket):
         super().__init__(socket, ClientData("", "", "", None))
         
@@ -38,8 +39,22 @@ class MasterController(BaseController):
             return
         self.socket.send_msg(MapMoveToken(name=name, mime=token.mime(), pos=pos))
         
-    def _ohandle_move_map(self, from_map, token, to_map):
-        pass
+    def _ohandle_move_map(self, from_map: str, token: BaseToken, to_map: str):
+        mapTo = self.tabMaps.getMap(to_map)
+        if mapTo is None:
+            self.error.emit(f"Error: Не найдена карта с именем <{to_map}>")
+            return
+        if mapTo.file_map is None:
+            self.error.emit(f"Error: карта не загружена, загрузите карту")
+            return
+        mapFrom = self.tabMaps.getMap(from_map)
+        mapFrom.remove_token(token.mime())
+        if mapTo.token_spawn is not None:
+            spawn_pos = mapTo.token_spawn.pos()
+        else:
+            spawn_pos = QPointF(0, 0)
+        mapTo.create_token(token.mime(), spawn_pos)
+        
     
     def addMap(self, name, visible):
         self.tabMaps.addMap(name, visible)
