@@ -6,8 +6,8 @@ from .base_token import BaseToken
 class NPCToken(BaseToken):
     ttype = "npc"
     
-    def __init__(self, x, y, name, function):
-        super().__init__(x, y, 35, QColor("#113f2e"), name)
+    def __init__(self, x, y, name, function, scale=1):
+        super().__init__(x, y, 35, QColor("#113f2e"), name, scale)
         self.name = name
         self.function = function
     

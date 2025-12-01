@@ -4,6 +4,7 @@ from PySide6.QtGui import QIcon
 from loguru import logger
 
 from CommonTools.core import ClientData, Socket, classes
+from CommonTools.utils import FORBIDDEN_CHARS
 
 from CommonTools.messages import *
 
@@ -40,8 +41,8 @@ class Loging(QMainWindow):
             self.error_occurred.emit("Пустое поле")
             return
         
-        if (":" in lineData) or ("|" in lineData):
-            self.error_occurred.emit("Ник не должен содержать ':' или '|'")
+        if FORBIDDEN_CHARS.search(lineData):
+            self.error_occurred.emit(f"Ник не должен содержать {FORBIDDEN_CHARS.pattern[1:-1]}")
             return
         self.client_data.name = lineData
         self.client_data.cls = self.comboClass.currentText()

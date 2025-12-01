@@ -112,7 +112,7 @@ class PrintManager:
             "sep": kwargs.get("sep", " "),
             "flush": kwargs.get("flush", False),
         }
-        self._original_print(full_text, **print_args)
+        return self._original_print(full_text, **print_args)
 
     def __enter__(self) -> "PrintManager":
         """Поддержка контекстного менеджера."""

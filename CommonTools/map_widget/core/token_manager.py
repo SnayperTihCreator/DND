@@ -4,7 +4,7 @@ from PySide6.QtCore import QPointF, Signal, QObject
 
 from ..tokens_dnd import *
 from ..utils import GridHelper
-from CommonTools.utils.twoInputDialog import TwoInputDialog
+from CommonTools.utils.dialog_create_token import DialogCreateToken
 from .graphicsScene import GraphicsScene
 
 
@@ -37,6 +37,7 @@ class TokenManager(QObject):
             self.scene.removeItem(self.tokens[mime])
             self.tokens.pop(mime, None)
             return True
+        return None
     
     def _create_token(self, mime: str, pos: QPointF) -> Optional[BaseToken]:
         match mime.split(":"):
@@ -49,15 +50,15 @@ class TokenManager(QObject):
             case ["mob", name, number]:
                 return self._create_mob(pos, name, number)
             case ["mob", "request"]:
-                name, number = TwoInputDialog.request("Какое имя и номер у моба?", "Имя", "Номер")
-                return self._create_mob(pos, name, number)
+                name, number, scale = DialogCreateToken.request("Номер")
+                return self._create_mob(pos, name, number, scale)
             case ["mob", name]:
                 return self._create_mob(pos, name)
             case ["npc", name, function]:
                 return self._create_npc(pos, name, function)
             case ["npc", "request"]:
-                name, function = TwoInputDialog.request("Какое название и функция у NPC", "Название", "Функция")
-                return self._create_npc(pos, name, function)
+                name, function, scale = DialogCreateToken.request("Функция")
+                return self._create_npc(pos, name, function, scale)
             case ["npc", name]:
                 return self._create_npc(pos, name, "")
     
@@ -70,12 +71,12 @@ class TokenManager(QObject):
                 self.scene.removeItem(item)
         return SpawnPlayerToken(pos.x(), pos.y())
     
-    def _create_mob(self, pos, name, number="#"):
+    def _create_mob(self, pos, name, number="#", scale=1):
         if name is None:
             return None
-        return MobToken(pos.x(), pos.y(), name, number)
+        return MobToken(pos.x(), pos.y(), name, number, scale)
     
-    def _create_npc(self, pos, name, function):
+    def _create_npc(self, pos, name, function, scale=1):
         if name is None:
             return None
-        return NPCToken(pos.x(), pos.y(), name, function)
+        return NPCToken(pos.x(), pos.y(), name, function, scale)

@@ -209,7 +209,7 @@ class MasterGameTable(QMainWindow):
         self.players[uid_answer] = self.server.clients[uid_answer]
         self.controller.update_player_list(self.players)
         self.player_panel.addPlayer(uid_answer, msg.name, msg.cls)
-        
+    
     def _handle_player_moved(self, uid, msg: MapPlayerMoved):
         token = self.controller.players_map[uid]
         token.move_to(QPointF(*msg.pos))

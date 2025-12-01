@@ -14,10 +14,12 @@ class MovedEvent(QEvent):
 class BaseToken(QGraphicsEllipseItem):
     ttype = "service"
     
-    def __init__(self, x, y, size=40, color=QColor("#fff"), text=""):
+    def __init__(self, x, y, size=40, color=QColor("#fff"), text="", scale=1.0):
         super().__init__(0, 0, size, size)
         self.text = text
         self.size = size
+        
+        self.base_scale = scale
         
         self.old_pos = self.pos()
         self.animation = QVariantAnimation()
@@ -27,6 +29,9 @@ class BaseToken(QGraphicsEllipseItem):
         self.is_running_anim = False
         
         self._setup_token(x, y, size, color)
+        
+    def setScale(self, scale):
+        return super().setScale(scale*self.base_scale+0.25)
     
     def setPPSize(self, size):
         aspect = size / 50
