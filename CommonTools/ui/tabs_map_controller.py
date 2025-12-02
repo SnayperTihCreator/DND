@@ -97,29 +97,33 @@ class TabMapsWidget(QTabWidget):
         return not bool(self.maps)
     
     # noinspection PyArgumentList
-    def create_token(self, name: str, mime: str, pos: tuple[float, float]):
+    def create_token(self, name: str, mime: str, pos: tuple[float, float], scale=1):
         point = QPointF(*pos)
         mWidget = self.getMap(name)
         if mWidget is None:
-            return
-        return mWidget.create_token(mime, point)
+            return None
+        mWidget.update()
+        return mWidget.create_token(mime, point, scale)
     
     def removeTokenByMime(self, name: str, mime: str):
         mWidget = self.getMap(name)
         if mWidget is None:
             return
+        mWidget.update()
         mWidget.remove_token(mime)
     
     def removeToken(self, token: BaseToken):
         for mdata in self.maps.values():
             if token in mdata.mWidget.items():
                 mdata.mWidget.remove_token(token.mime())
+                mdata.mWidget.update()
                 return
     
     def move_token(self, name, mime, pos):
         mWidget = self.getMap(name)
         if mWidget is None:
             return
+        mWidget.update()
         mWidget.setTokenMimePos(mime, pos)
     
     def call_all_method(self, name, *args):

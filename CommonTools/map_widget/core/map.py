@@ -180,20 +180,13 @@ class MapWidget(QGraphicsView):
     def remove_token(self, mime_data: str):
         return self.token_manager.remove_token(mime_data)
     
-    def create_token(self, mime_data: str, position: QPointF):
-        token = self.token_manager.create_token(mime_data, position)
+    def create_token(self, mime_data: str, position: QPointF, scale=1):
+        token = self.token_manager.create_token(mime_data, position, scale)
         if token is not None:
             token.show()
             self.scene().addItem(token)
             self._apply_movement_setting_to_token(token)
         return token
-    
-    def create_player_spawn(self, pos):
-        self.token_spawn = self.token_manager.create_token("player:spawn", pos)
-        if self.token_spawn is not None:
-            self.scene().addItem(self.token_spawn)
-            self._apply_movement_setting_to_token(self.token_spawn)
-        return self.token_spawn
     
     def create_player(self, name, cls, uid):
         token = self.token_manager.create_token(f"player:{name}:{cls}:{uid}", self.token_spawn.pos())
@@ -201,29 +194,6 @@ class MapWidget(QGraphicsView):
             self.scene().addItem(token)
             self._apply_movement_setting_to_token(token)
         return token
-    
-    def create_mob(self, pos, name, number=1):
-        token = self.token_manager.create_token(f"player:{name}:{number}", pos)
-        if token is not None:
-            self.scene().addItem(token)
-            self._apply_movement_setting_to_token(token)
-        return token
-    
-    def create_npc(self, pos, name, function):
-        token = self.token_manager.create_token(f"player:{name}:{function}", pos)
-        if token is not None:
-            self.scene().addItem(token)
-            self._apply_movement_setting_to_token(token)
-        return
-    
-    # Делегирование методов DrawingManager
-    def set_interaction_mode(self, mode):
-        self.drawing_manager.set_interaction_mode(mode)
-        # Обновляем режим drag в зависимости от режима рисования
-        if mode == "draw":
-            self.setDragMode(QGraphicsView.DragMode.NoDrag)
-        else:
-            self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
     
     def set_drawing_color(self, color):
         self.drawing_manager.set_drawing_color(color)

@@ -1,3 +1,4 @@
+import re
 from typing import Optional
 
 from PySide6.QtCore import QPointF, Signal, QObject
@@ -20,20 +21,19 @@ class TokenManager(QObject):
     
     def create_token(self, mime: str, pos: QPointF, scale=1.0):
         
-        # mime_rf, scale = self._normalize_mime(mime.strip(), scale)
-        # if mime_rf is None:
-        #     return None
-        #
-        # if mime_rf in self.tokens:
-        #     if mime_rf == "spawn:player:None":
-        #         self.remove_token(mime_rf)
-        #     mime_rf = self._reroll_id(mime_rf)
+        mime_rf, scale = self._normalize_mime(mime.strip(), scale)
+        if mime_rf is None:
+            return None
         
-        if mime in self.tokens:
-            return
+        if mime_rf in self.tokens:
+            if mime_rf == "spawn:player:None":
+                self.remove_token(mime_rf)
+            else:
+                mime_rf = self._reroll_id(mime_rf)
+        
         aligned_pos = self.grid_helper.align_to_grid(pos)
-        token = self._create_token(mime, aligned_pos)
-        if token is not None:
+        token = self._create_token(MIME_RUNTIME_FORMAT.match(mime_rf), aligned_pos, scale)
+        if token:
             self.tokens[token.mime()] = token
             token.setPPSize(self.grid_helper.get_grid_size())
         return token
@@ -92,45 +92,42 @@ class TokenManager(QObject):
             return True
         return None
     
-    def _create_token(self, mime: str, pos: QPointF) -> Optional[BaseToken]:
-        match mime.split(":"):
+    def _create_token(self, mime: re.Match[str], pos: QPointF, scale: float) -> Optional[BaseToken]:
+        match list(mime.groups()):
             case ["player", name, cls, uid]:
                 return self._create_player(pos, name, cls, uid)
-            case ["spawn", "player"]:
+            case ["spawn", "player", "None", None]:
                 return self._create_spawn(pos)
-            case ["player", uid]:
-                return self._create_player(pos, "<unknown>", "", uid)
-            case ["mob", name, number]:
-                return self._create_mob(pos, name, number)
-            case ["mob", "request"]:
-                name, scale = DialogCreateToken.request("Моба")
-                number = self._get_next_number(name)
+            case ["mob", name, number, None]:
                 return self._create_mob(pos, name, number, scale)
-            case ["mob", name]:
-                return self._create_mob(pos, name)
-            case ["npc", name, function]:
-                return self._create_npc(pos, name, function)
-            case ["npc", "request"]:
-                name, scale = DialogCreateToken.request("NPC")
-                return self._create_npc(pos, name, scale)
-            case ["npc", name]:
-                return self._create_npc(pos, name, "")
+            case ["mob", name, None, None]:
+                number = self._get_next_number(f"mob:{name}")
+                return self._create_mob(pos, name, number, scale)
+            case ["npc", name, number, None]:
+                return self._create_npc(pos, name, number, scale)
+            case ["npc", name, None, None]:
+                number = self._get_next_number(f"npc:{name}")
+                return self._create_npc(pos, name, number, scale)
     
-    def _create_player(self, pos, name, cls, uid):
+    @staticmethod
+    def _create_player(pos, name, cls, uid):
         return PlayerToken(pos.x(), pos.y(), name, cls, uid)
     
     def _create_spawn(self, pos):
         for item in self.scene.items():
             if isinstance(item, SpawnPlayerToken):
                 self.scene.removeItem(item)
+                del self.tokens[item.mime]
         return SpawnPlayerToken(pos.x(), pos.y())
     
-    def _create_mob(self, pos, name, number="#", scale=1):
-        if name is None:
+    @staticmethod
+    def _create_mob(pos, name, number, scale=1):
+        if (name is None) or (name == "%"):
             return None
         return MobToken(pos.x(), pos.y(), name, number, scale)
     
-    def _create_npc(self, pos, name, function, scale=1):
-        if name is None:
+    @staticmethod
+    def _create_npc(pos, name, number, scale=1):
+        if (name is None) or (name == "%"):
             return None
-        return NPCToken(pos.x(), pos.y(), name, function, scale)
+        return NPCToken(pos.x(), pos.y(), name, number, scale)

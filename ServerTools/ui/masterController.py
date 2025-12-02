@@ -26,7 +26,12 @@ class MasterController(BaseController):
     def _ohandle_add_token(self, name, token: BaseToken):
         if self.tabMaps.isEmpty():
             return
-        self.socket.send_msg(MapAddToken(name=name, mime=token.mime(), pos=token.pos().toTuple()))
+        self.socket.send_msg(MapAddToken(
+            name=name,
+            mime=token.mime(),
+            pos=token.pos().toTuple(),
+            scale=token.base_scale
+        ))
         self.update_players()
             
     def _ohandle_remove_token(self, name, token: BaseToken):

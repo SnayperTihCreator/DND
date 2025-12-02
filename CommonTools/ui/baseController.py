@@ -2,7 +2,7 @@ from abc import ABCMeta, ABC, abstractmethod
 from typing import Any
 
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, QPointF
 from loguru import logger
 logger = logger.bind(pack="BaseController")
 
@@ -33,8 +33,8 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
         self.main_box.addWidget(self.tabMaps)
         
         self.bufferActive = False
-        self.activeMaps: list[str] = []
-        self.buffer_tokens: dict[str, Any] = {}
+        self.activeMaps: set[str] = set()
+        self.buffer_tokens: dict[tuple[str, str], tuple[QPointF, float]] = {}
         
         self.visible_tokens = {
             "players": True,
@@ -44,19 +44,20 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
         }
     
     def clear_buffer(self, name_active):
-        self.activeMaps.append(name_active)
+        self.activeMaps.add(name_active)
         logger.success("Activate map: {name}", name=name_active)
+        
         removed = []
-        for uid, pos in self.buffer_tokens.items():
-            name, mime = uid.split("|")
-            if name_active == name:
-                self.add_token_nw(name, mime, pos)
-                removed.append(uid)
+        for (name_map, mime), (pos, scale) in self.buffer_tokens.items():
+            if name_active == name_map:
+                self.add_token_nw(name_map, mime, pos, scale)
+                removed.append((name_map, mime))
         
         for uid in removed:
             del self.buffer_tokens[uid]
     
     def _apply_visible_token(self, token: BaseToken):
+        visible = True
         match getattr(token, 'ttype', None):
             case "player":
                 visible = self.visible_tokens['players']
@@ -66,8 +67,6 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
                 visible = self.visible_tokens['npcs']
             case 'spawn':
                 visible = self.visible_tokens['spawn_point']
-            case _:
-                visible = True  # Остальные токены не перемещаются по умолчанию
         
         token.setVisible(visible)
     
@@ -108,7 +107,7 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
                 return self._handle_custom_message(msg)
     
     def _handle_add_token(self, msg: MapAddToken):
-        self.add_token(msg.name, msg.mime, msg.pos)
+        self.add_token(msg.name, msg.mime, msg.pos, msg.scale)
         return True
     
     def _handle_remove_token(self, msg: MapRemoveToken):
@@ -123,26 +122,28 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
     def _handle_custom_message(self, msg: BaseMessage):
         pass
     
-    def add_token(self, name, mime, pos):
+    def add_token(self, name, mime, pos, scale):
         if self.bufferActive and (name not in self.activeMaps):
-            self.buffer_tokens[f"{name}|{mime}"] = pos
+            self.buffer_tokens[(name, mime)] = (pos, scale)
         else:
-            self.add_token_nw(name, mime, pos)
+            self.add_token_nw(name, mime, pos, scale)
     
     def remove_token(self, name, mime):
         if self.bufferActive and (name not in self.activeMaps):
-            del self.buffer_tokens[f"{name}|{mime}"]
+            self.buffer_tokens.pop((name, mime))
         else:
             self.remove_token_nw(name, mime)
     
     def move_token(self, name, mime, pos):
         if self.bufferActive and (name not in self.activeMaps):
-            self.buffer_tokens[f"{name}|{mime}"] = pos
+            key = (name, mime)
+            _, current_scale = self.buffer_tokens[key]
+            self.buffer_tokens[key] = (pos, current_scale)
         else:
             self.move_token_nw(name, mime, pos)
     
-    def add_token_nw(self, name, mime, pos):
-        token = self.tabMaps.create_token(name, mime, pos)
+    def add_token_nw(self, name, mime, pos, scale=1):
+        token = self.tabMaps.create_token(name, mime, pos, scale)
         if token is not None:
             self._apply_visible_token(token)
         self.update_players()
