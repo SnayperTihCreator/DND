@@ -59,7 +59,7 @@ class MapFreezePlayer(BaseMessage, type=MapActionType.PLAYER_FREEZE):
 
 class MapAddToken(MapMessageToken, type=MapActionType.ADD_TOKEN):
     pos: tuple[float, float]
-    scale: float
+    scale: float = Field(1.0)
 
 
 class MapRemoveToken(MapMessageToken, type=MapActionType.REMOVE_TOKEN):

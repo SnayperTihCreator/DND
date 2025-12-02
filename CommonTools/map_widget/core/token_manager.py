@@ -30,7 +30,9 @@ class TokenManager(QObject):
                 self.remove_token(mime_rf)
             else:
                 mime_rf = self._reroll_id(mime_rf)
-        
+                
+        if mime_rf is None:
+            return None
         aligned_pos = self.grid_helper.align_to_grid(pos)
         token = self._create_token(MIME_RUNTIME_FORMAT.match(mime_rf), aligned_pos, scale)
         if token:
@@ -77,6 +79,8 @@ class TokenManager(QObject):
         match_runtime = MIME_RUNTIME_FORMAT.match(mime)
         
         ttype, name, number, _ = match_runtime.groups()
+        if ttype == "player":
+            return None
         if number == "None":
             return mime
         ext_number = self._token_unique_cache.get(f"{ttype}:{name}", 0)
