@@ -23,11 +23,12 @@ class BaseDialog(QDialog):
         self.buttonBox.rejected.connect(self.reject)
     
     def _handle_request(self):
-        if self._handle_forbidden():
-            QMessageBox.warning(self, "Не разрешенные символы!",
-                                f"Найдены запрещенные символы: {FORBIDDEN_CHARS.pattern[1:-1]}")
-        else:
-            self.accept()
+        # if self._handle_forbidden():
+        #     QMessageBox.warning(self, "Не разрешенные символы!",
+        #                         f"Найдены запрещенные символы: {FORBIDDEN_CHARS.pattern[1:-1]}")
+        # else:
+        #     self.accept()
+        self.accept()
     
     def _handle_forbidden(self):
         return FORBIDDEN_CHARS.match(self.lineEditName.text()) is not None
