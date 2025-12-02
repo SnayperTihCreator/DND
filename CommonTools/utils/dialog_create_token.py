@@ -30,7 +30,7 @@ class BaseDialog(QDialog):
             self.accept()
     
     def _handle_forbidden(self):
-        return FORBIDDEN_CHARS.match(self.lineEditName.text()) is None
+        return FORBIDDEN_CHARS.match(self.lineEditName.text()) is not None
     
     def initBtnDialog(self):
         self.box.addRow(self.buttonBox)
@@ -43,10 +43,7 @@ class BaseDialog(QDialog):
 class DialogCreateToken(BaseDialog):
     def __init__(self, sndTitle, parent=None):
         super().__init__(parent)
-        self.setDescription("Ввидите имя и номер моба")
-        
-        self.lineEditFn = QLineEdit()
-        self.box.addRow(sndTitle, self.lineEditFn)
+        self.setDescription(f"Ввидите имя {sndTitle}")
         
         self.boxScale = QComboBox()
         self.boxScale.addItem("Мелкий", 0.25)
@@ -60,13 +57,10 @@ class DialogCreateToken(BaseDialog):
         
         self.initBtnDialog()
     
-    def _handle_forbidden(self):
-        return super()._handle_forbidden() or (FORBIDDEN_CHARS.search(self.lineEditFn.text()) is None)
-    
     @classmethod
     def request(cls, sndTitle, parent=None):
         dialog = cls(sndTitle, parent)
         if dialog.exec_() == QDialog.DialogCode.Accepted:
-            return dialog.lineEditName.text(), dialog.lineEditFn.text(), dialog.boxScale.itemData(
+            return dialog.lineEditName.text(), dialog.boxScale.itemData(
                 dialog.boxScale.currentIndex(), Qt.ItemDataRole.UserRole)
         return None, None, None

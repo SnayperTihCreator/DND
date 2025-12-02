@@ -159,7 +159,6 @@ class MapWidget(QGraphicsView):
         for item in self.items():
             if isinstance(item, BaseToken):
                 item.setPPSize(size)
-        self.token_manager.base_size = size
     
     def load_map(self, file_path):
         self.file_map = file_path
