@@ -5,7 +5,7 @@ from PySide6.QtCore import QPointF, Signal, QObject
 from ..tokens_dnd import *
 from ..utils import GridHelper
 from CommonTools.utils.dialog_create_token import DialogCreateToken
-from CommonTools.utils import MIME_STORAGE_FORMAT, MIME_RUNTIME_FORMAT, MIME_INPUT_FORMAT
+from CommonTools.utils import MIME_RUNTIME_FORMAT, MIME_INPUT_FORMAT
 from .graphicsScene import GraphicsScene
 
 
@@ -19,28 +19,18 @@ class TokenManager(QObject):
         self._token_unique_cache: dict[str, int] = {}
     
     def create_token(self, mime: str, pos: QPointF, scale=1.0):
-        if mime in self.tokens:
-            return
         
-        # mime_rf = ""
-        # match_storage = MIME_STORAGE_FORMAT.match(mime.strip())
-        #
-        # # Проверяем если это STORAGE FORMAT
-        # if match_storage is not None:
-        #     mime_rf = match_storage.group(1)
-        #     pos = QPointF(*map(float, match_storage.groups()[1:]))
-        # else:
-        #     mime_rf, scale = self._normalize_mime(mime.strip(), scale)
-        #     if mime_rf is None:
-        #         return None
+        # mime_rf, scale = self._normalize_mime(mime.strip(), scale)
+        # if mime_rf is None:
+        #     return None
         #
         # if mime_rf in self.tokens:
         #     if mime_rf == "spawn:player:None":
         #         self.remove_token(mime_rf)
         #     mime_rf = self._reroll_id(mime_rf)
         
-            
-        
+        if mime in self.tokens:
+            return
         aligned_pos = self.grid_helper.align_to_grid(pos)
         token = self._create_token(mime, aligned_pos)
         if token is not None:
@@ -94,7 +84,6 @@ class TokenManager(QObject):
             number = self._get_next_number(f"{ttype}:{name}")
             mime = f"{ttype}:{name}:{number}"
         return mime
-        
     
     def remove_token(self, mime):
         if mime in self.tokens:

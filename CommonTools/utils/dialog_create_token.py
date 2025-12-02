@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QDialog, QFormLayout, QDialogButtonBox, QTextBrowser, QLineEdit, QComboBox, QMessageBox
+from PySide6.QtWidgets import QDialog, QFormLayout, QDialogButtonBox, QTextBrowser, QLineEdit, QComboBox, QMessageBox, QCheckBox
 from PySide6.QtCore import Qt
 
 from .name_utils import FORBIDDEN_CHARS
@@ -23,12 +23,11 @@ class BaseDialog(QDialog):
         self.buttonBox.rejected.connect(self.reject)
     
     def _handle_request(self):
-        # if self._handle_forbidden():
-        #     QMessageBox.warning(self, "Не разрешенные символы!",
-        #                         f"Найдены запрещенные символы: {FORBIDDEN_CHARS.pattern[1:-1]}")
-        # else:
-        #     self.accept()
-        self.accept()
+        if self._handle_forbidden():
+            QMessageBox.warning(self, "Не разрешенные символы!",
+                                f"Найдены запрещенные символы: {FORBIDDEN_CHARS.pattern[1:-1]}")
+        else:
+            self.accept()
     
     def _handle_forbidden(self):
         return FORBIDDEN_CHARS.match(self.lineEditName.text()) is not None
@@ -46,6 +45,9 @@ class DialogCreateToken(BaseDialog):
         super().__init__(parent)
         self.setDescription(f"Ввидите имя {sndTitle}")
         
+        self.checkBox = QCheckBox()
+        self.box.addRow("Уникальный", self.checkBox)
+        
         self.boxScale = QComboBox()
         self.boxScale.addItem("Мелкий", 0.25)
         self.boxScale.addItem("Маленький", 0.75)
@@ -62,6 +64,9 @@ class DialogCreateToken(BaseDialog):
     def request(cls, sndTitle, parent=None):
         dialog = cls(sndTitle, parent)
         if dialog.exec_() == QDialog.DialogCode.Accepted:
-            return dialog.lineEditName.text(), dialog.boxScale.itemData(
-                dialog.boxScale.currentIndex(), Qt.ItemDataRole.UserRole)
-        return None, None, None
+            if dialog.checkBox.isChecked():
+                name = f"%{dialog.lineEditName.text()}"
+            else:
+                name = dialog.lineEditName.text()
+            return name, dialog.boxScale.itemData(dialog.boxScale.currentIndex(), Qt.ItemDataRole.UserRole)
+        return None, "None"
