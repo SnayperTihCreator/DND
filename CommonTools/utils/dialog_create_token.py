@@ -24,8 +24,8 @@ class BaseDialog(QDialog):
     
     def _handle_request(self):
         if self._handle_forbidden():
-            QMessageBox.warning(self, "Не разрешенные символы!",
-                                f"Найдены запрещенные символы: {FORBIDDEN_CHARS.pattern[1:-1]}")
+            QMessageBox.critical(self, "ОШИБКА БЛЯТЬ!!!",
+                                f"ТЫ ВИДИШЬ ЭТИ БУКВЫ: {FORBIDDEN_CHARS.pattern[1:-1]}\nИХ НЕЛЬЗЯ ИСПОЛЬЗОВАТЬ!!\nДОЛБОЯЩЕР!!")
         else:
             self.accept()
     
@@ -63,7 +63,7 @@ class DialogCreateToken(BaseDialog):
     @classmethod
     def request(cls, sndTitle, parent=None):
         dialog = cls(sndTitle, parent)
-        if dialog.exec_() == QDialog.DialogCode.Accepted:
+        if dialog.exec() == QDialog.DialogCode.Accepted:
             if dialog.checkBox.isChecked():
                 name = f"%{dialog.lineEditName.text()}"
             else:

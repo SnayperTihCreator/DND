@@ -8,6 +8,7 @@ from CommonTools.map_widget.tokens_dnd import BaseToken
 
 class MasterController(BaseController):
     error = Signal(str)
+    
     def __init__(self, socket: Socket):
         super().__init__(socket, ClientData("", "", "", None))
         
@@ -33,17 +34,17 @@ class MasterController(BaseController):
             scale=token.base_scale
         ))
         self.update_players()
-            
+    
     def _ohandle_remove_token(self, name, token: BaseToken):
         if self.tabMaps.isEmpty():
             return
         self.socket.send_msg(MapRemoveToken(name=name, mime=token.mime()))
-        
+    
     def _ohandle_move_token(self, name, token: BaseToken, pos: tuple[float, float]):
         if self.tabMaps.isEmpty():
             return
         self.socket.send_msg(MapMoveToken(name=name, mime=token.mime(), pos=pos))
-        
+    
     def _ohandle_move_map(self, from_map: str, token: BaseToken, to_map: str):
         mapTo = self.tabMaps.getMap(to_map)
         if mapTo is None:
@@ -59,19 +60,18 @@ class MasterController(BaseController):
         else:
             spawn_pos = QPointF(0, 0)
         mapTo.create_token(token.mime(), spawn_pos)
-        
     
     def addMap(self, name, visible):
         self.tabMaps.addMap(name, visible)
         self.socket.send_msg(MapCreateMap(name=name, visible=visible))
-        
+    
     def removeMap(self, name):
         self.tabMaps.removeMap(name)
         self.socket.send_msg(MapDeleteMap(name=name))
     
     def removeActiveMap(self):
         self.removeMap(self.tabMaps.getActiveNameMap())
-        
+    
     def activeMap(self, name):
         if self.tabMaps.getMap(name):
             self.tabMaps.activeMap(name)

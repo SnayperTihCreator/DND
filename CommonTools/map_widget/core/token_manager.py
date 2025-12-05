@@ -1,7 +1,7 @@
 import re
 from typing import Optional
 
-from PySide6.QtCore import QPointF, Signal, QObject
+from PySide6.QtCore import QPointF, QObject
 
 from ..tokens_dnd import *
 from ..utils import GridHelper
@@ -22,6 +22,7 @@ class TokenManager(QObject):
     def create_token(self, mime: str, pos: QPointF, scale=1.0):
         
         mime_rf, scale = self._normalize_mime(mime.strip(), scale)
+        
         if mime_rf is None:
             return None
         
@@ -30,7 +31,7 @@ class TokenManager(QObject):
                 self.remove_token(mime_rf)
             else:
                 mime_rf = self._reroll_id(mime_rf)
-                
+        
         if mime_rf is None:
             return None
         aligned_pos = self.grid_helper.align_to_grid(pos)
@@ -50,6 +51,8 @@ class TokenManager(QObject):
         match list(match_input.groups()):
             case ["mob", "request"]:
                 name, scale = DialogCreateToken.request("Моба")
+                if name is None:
+                    return None, scale
                 number = self._get_next_number(f"mob:{name}")
                 return f"mob:{name.replace('%', '')}:{number}", scale
             case ["mob", name]:
@@ -60,6 +63,8 @@ class TokenManager(QObject):
                 return f"npc:{name.replace('%', '')}:{number}", scale
             case ["npc", "request"]:
                 name, scale = DialogCreateToken.request("NPC")
+                if name is None:
+                    return None, scale
                 number = self._get_next_number(f"npc:{name}")
                 return f"npc:{name.replace('%', '')}:{number}", scale
             case ["spawn", "player"]:

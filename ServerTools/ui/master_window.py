@@ -1,9 +1,9 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from PySide6.QtCore import Qt, QPoint, QPointF, QTimer
 from PySide6.QtWidgets import QMainWindow, QToolBar, QSpinBox, QLabel, QCheckBox, QApplication, QFileDialog, \
-    QGraphicsColorizeEffect
+    QGraphicsColorizeEffect, QMessageBox
 from PySide6.QtGui import QIcon, QColor
 from loguru import logger
 
@@ -96,6 +96,8 @@ class MasterGameTable(QMainWindow):
         self.bottomToolBar.addWidget(self.btnColorGrid)
         self.bottomToolBar.addWidget(self.checkBoxVisibleGrid)
         
+        self.controller.tabMaps.currentMapChanged.connect(self._handle_current_map)
+        
         self.menu_panels = self.menuBar().addMenu("Панели")
         self.token_panel_action = self.menu_panels.addAction("Показать панель токенов")
         self.token_panel_action.triggered.connect(self.token_panel.show)
@@ -105,6 +107,8 @@ class MasterGameTable(QMainWindow):
         
         self.player_panel_action = self.menu_panels.addAction("Показать панель игроков")
         self.player_panel_action.triggered.connect(self.player_panel.show)
+        
+        self._handle_current_map(None)
     
     def applyErrorEffect(self):
         colorize = QGraphicsColorizeEffect(self)
@@ -130,6 +134,7 @@ class MasterGameTable(QMainWindow):
                 "Дайте имя карте и будет ли видна карта игрокам")
         if name is not None:
             self.controller.addMap(name, visible)
+        self._handle_current_map(name)
     
     def _on_action_delete_map(self):
         if self.controller.tabMaps.isEmpty():
@@ -143,6 +148,7 @@ class MasterGameTable(QMainWindow):
                 self.images[name] = path
                 self.controller.tabMaps.load_map(name, path)
                 self.server.broadcast(MapLoadBackground(name=name))
+            self._handle_current_map(name)
     
     def _on_action_active_map(self):
         if name := self.controller.tabMaps.getActiveNameMap():
@@ -240,3 +246,21 @@ class MasterGameTable(QMainWindow):
             self.server.answer_image(uid, file_path, msg.name)
         else:
             self.server.answer(uid, IgnoreCallback(uid_callback=msg.uid))
+    
+    def _handle_current_map(self, name: Optional[str]):
+        if name is None:
+            self._deactivate_control()
+        if name is not None:
+            self.load_bg_action.setDisabled(False)
+            self.active_map_action.setDisabled(False)
+            self.delete_map_action.setDisabled(False)
+            mWidget = self.controller.tabMaps.getMap(name)
+            if mWidget.file_map:
+                self.bottomToolBar.setDisabled(False)
+    
+    def _deactivate_control(self):
+        self.bottomToolBar.setDisabled(True)
+        self.load_bg_action.setDisabled(True)
+        self.delete_map_action.setDisabled(True)
+        self.save_map_action.setDisabled(True)
+        self.active_map_action.setDisabled(True)

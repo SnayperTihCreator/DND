@@ -3,7 +3,7 @@ from typing import Optional
 
 from PySide6.QtCore import Qt, QPointF, Signal, QPoint
 from PySide6.QtGui import QMouseEvent, QKeyEvent, QWheelEvent, QPainter, QCursor
-from PySide6.QtWidgets import QGraphicsView, QGraphicsItem, QMenu, QApplication
+from PySide6.QtWidgets import QGraphicsView, QGraphicsItem, QMenu, QApplication, QMessageBox
 
 from .token_manager import TokenManager
 from .drawing_manager import DrawingManager
@@ -232,7 +232,7 @@ class MapWidget(QGraphicsView):
         super().mouseDoubleClickEvent(event)
     
     def dragEnterEvent(self, event):
-        if event.mimeData().hasText() and self.file_map:
+        if event.mimeData().hasText():
             event.acceptProposedAction()
     
     def dragMoveEvent(self, event):
@@ -240,6 +240,10 @@ class MapWidget(QGraphicsView):
     
     def dropEvent(self, event):
         pos = self.mapToScene(event.pos())
+        if not self.file_map:
+            QMessageBox.critical(self, "ОШИБКА!!", "ТЫ ЗАЕБАЛ ЗАГРУЗИ ФОН КАРТЫ БЛЯТЬ!")
+            event.proposedAction()
+            return
         data = event.mimeData().text()
         self.create_token(data, pos)
         event.acceptProposedAction()

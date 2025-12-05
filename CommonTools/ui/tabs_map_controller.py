@@ -17,11 +17,13 @@ class TabMapsWidget(QTabWidget):
     token_moved = Signal(str, object, tuple)
     
     token_moved_map = Signal(str, object, str)
+    currentMapChanged = Signal(str)
     
     def __init__(self, client):
         super().__init__()
         self.client: ClientData = client
         self.maps: dict[str, MapData] = {}
+        self.maps_idx: dict[int, str] = {}
         
         self.movement_settings = {
             'players': True,
@@ -32,6 +34,7 @@ class TabMapsWidget(QTabWidget):
         
         self.calls_saved: dict[str, tuple[Any, ...]] = {}
         self.visible_always = False
+        self.currentMapChanged.connect(self._handle_map_changed)
         
     def clearMaps(self):
         for name, mData in self.maps.items():
@@ -55,13 +58,15 @@ class TabMapsWidget(QTabWidget):
             idx = self.addTab(mWidget, name)
             self.setTabVisible(idx, visible or self.visible_always)
             self.maps[name] = MapData(name, visible, mWidget)
+            self.maps_idx[idx] = name
             return True
         return None
     
     def removeMap(self, name):
         if mWidget := self.getMap(name):
             self.removeTab(self.indexOf(mWidget))
-            del self.maps[name]
+            self.maps.pop(name, None)
+            self.maps_idx.pop(self.indexOf(mWidget), None)
             return True
         return None
     
@@ -85,7 +90,7 @@ class TabMapsWidget(QTabWidget):
     def getActiveNameMap(self):
         if not self.maps:
             return None
-        return list(self.maps.keys())[self.currentIndex()]
+        return self.maps_idx[self.currentIndex()]
     
     def getMap(self, name) -> Optional[MapWidget]:
         mdata = self.maps.get(name, None)
@@ -152,3 +157,6 @@ class TabMapsWidget(QTabWidget):
                     yield name, item
             if fname and (fname == name):
                 return
+
+    def _handle_map_changed(self, idx):
+        self.currentMapChanged.emit(self.maps_idx[idx])
