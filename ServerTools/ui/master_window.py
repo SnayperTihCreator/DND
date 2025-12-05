@@ -248,15 +248,16 @@ class MasterGameTable(QMainWindow):
             self.server.answer(uid, IgnoreCallback(uid_callback=msg.uid))
     
     def _handle_current_map(self, name: Optional[str]):
+        self._deactivate_control()
         if name is None:
-            self._deactivate_control()
-        if name is not None:
-            self.load_bg_action.setDisabled(False)
-            self.active_map_action.setDisabled(False)
-            self.delete_map_action.setDisabled(False)
-            mWidget = self.controller.tabMaps.getMap(name)
-            if mWidget.file_map:
-                self.bottomToolBar.setDisabled(False)
+            return
+        self.load_bg_action.setDisabled(False)
+        self.active_map_action.setDisabled(False)
+        self.delete_map_action.setDisabled(False)
+        name_map = self.controller.tabMaps.getActiveNameMap()
+        mWidget = self.controller.tabMaps.getMap(name_map)
+        if mWidget and mWidget.file_map:
+            self.bottomToolBar.setDisabled(False)
     
     def _deactivate_control(self):
         self.bottomToolBar.setDisabled(True)

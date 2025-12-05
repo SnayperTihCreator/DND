@@ -34,7 +34,7 @@ class TabMapsWidget(QTabWidget):
         
         self.calls_saved: dict[str, tuple[Any, ...]] = {}
         self.visible_always = False
-        self.currentMapChanged.connect(self._handle_map_changed)
+        self.currentChanged.connect(self._handle_map_changed)
         
     def clearMaps(self):
         for name, mData in self.maps.items():
@@ -55,10 +55,10 @@ class TabMapsWidget(QTabWidget):
                 if impl is None:
                     continue
                 impl(*args)
+            self.maps_idx[self.count()] = name
             idx = self.addTab(mWidget, name)
             self.setTabVisible(idx, visible or self.visible_always)
             self.maps[name] = MapData(name, visible, mWidget)
-            self.maps_idx[idx] = name
             return True
         return None
     
