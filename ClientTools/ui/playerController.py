@@ -9,6 +9,7 @@ class PlayerController(BaseController):
     def __init__(self, socket: Socket):
         super().__init__(socket, socket.client)
         self.tabMaps.set_token_movement(["players", "mobs", "npcs", "spawn_point"], False)
+        self.tabMaps.call_all_method("setMasterView", False)
         self.tabMaps.call_all_method("setOffsetSize", QPoint(0, 0), 50)
         self.tabMaps.call_all_method("setFreezeToken", True)
         

@@ -8,6 +8,7 @@ from PySide6.QtWidgets import QGraphicsView, QGraphicsItem, QMenu, QApplication,
 from .token_manager import TokenManager
 from .drawing_manager import DrawingManager
 from .view_controller import ViewController
+from .fog_manager import VectorFogManager
 from .graphicsScene import GraphicsScene
 from CommonTools.map_widget.tokens_dnd import *
 from CommonTools.core import ClientData
@@ -36,6 +37,7 @@ class MapWidget(QGraphicsView):
         self.view_controller = ViewController(self)
         self.token_manager = TokenManager(self.g_scene)
         self.drawing_manager = DrawingManager(self.g_scene)
+        self.fog_manager = VectorFogManager(self.g_scene)
         
         self.client: ClientData = client
         self.token_spawn: Optional[SpawnPlayerToken] = None
@@ -63,6 +65,7 @@ class MapWidget(QGraphicsView):
         del self.token_spawn
         self.token_spawn = None
         self.file_map = None
+        self.fog_manager.clear()
     
     def _handle_context_menu(self, pos):
         if not self.freeze:
@@ -162,7 +165,10 @@ class MapWidget(QGraphicsView):
     
     def load_map(self, file_path):
         self.file_map = file_path
-        return self.view_controller.load_map(file_path)
+        result = self.view_controller.load_map(file_path)
+        rect = self.scene().sceneRect()
+        self.fog_manager.init_fog(rect)
+        return result
     
     def fit_to_view(self):
         self.view_controller.fit_to_view()
@@ -180,7 +186,7 @@ class MapWidget(QGraphicsView):
     def remove_token(self, mime_data: str):
         return self.token_manager.remove_token(mime_data)
     
-    def create_token(self, mime_data: str, position: QPointF, scale=1):
+    def create_token(self, mime_data: str, position: QPointF, scale=1.0):
         token = self.token_manager.create_token(mime_data, position, scale)
         if token is not None:
             token.show()
@@ -209,16 +215,23 @@ class MapWidget(QGraphicsView):
         self.view_controller.keyPressEvent(event)
     
     def mousePressEvent(self, event: QMouseEvent):
+        if self.fog_manager.handle_mouse_press(event, self.mapToScene):
+            return
         if self.drawing_manager.handle_mouse_press(event):
             return
         super().mousePressEvent(event)
     
     def mouseMoveEvent(self, event: QMouseEvent):
+        if self.fog_manager.handle_mouse_move(event, self.mapToScene):
+            return
         if self.drawing_manager.handle_mouse_move(event, self.mapToScene):
             return
         super().mouseMoveEvent(event)
     
     def mouseReleaseEvent(self, event: QMouseEvent):
+        if self.fog_manager.handle_mouse_release(event):
+            return
+        
         if self.drawing_manager.handle_mouse_release(event):
             return
         super().mouseReleaseEvent(event)
@@ -251,3 +264,31 @@ class MapWidget(QGraphicsView):
     @property
     def zoom_level(self):
         return self.view_controller.zoom_level
+    
+    def setFogMode(self, active: bool, reveal: bool = True):
+        """
+        Включает режим редактирования тумана.
+        active: True = режим включен (двигать карту нельзя, рисуем туман)
+        reveal: True = Ластик (открываем карту), False = Кисть (закрываем)
+        """
+        self.fog_manager.is_active = active
+        self.fog_manager.is_revealing = reveal
+        
+        if active:
+            self.drawing_manager.active = False
+            self.setCursor(Qt.CursorShape.CrossCursor)
+            self.setDragMode(QGraphicsView.DragMode.NoDrag)
+        else:
+            self.setCursor(Qt.CursorShape.ArrowCursor)
+            self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+    
+    def setFogBrushSize(self, size: int):
+        """Размер кисти (диаметр)"""
+        self.fog_manager.brush_size = size
+    
+    def setMasterView(self, is_master: bool):
+        """
+        True: Туман полупрозрачный (50%)
+        False: Туман черный (100%)
+        """
+        self.fog_manager.set_view_mode(is_master)

@@ -2,11 +2,13 @@ import re
 from typing import Optional
 
 from PySide6.QtCore import QPointF, QObject
+from PySide6.QtGui import QColor
 
 from ..tokens_dnd import *
 from ..utils import GridHelper
-from CommonTools.utils.dialog_create_token import DialogCreateToken
+from CommonTools.utils.dialog_create_token import DataDialog, DialogCreateToken
 from CommonTools.utils import MIME_RUNTIME_FORMAT, MIME_INPUT_FORMAT
+from CommonTools.core import PlayerTokenConfig, SpawnPlayerTokenConfig, ModNpcTokenConfig
 from .graphicsScene import GraphicsScene
 
 
@@ -21,7 +23,7 @@ class TokenManager(QObject):
     
     def create_token(self, mime: str, pos: QPointF, scale=1.0):
         
-        mime_rf, scale = self._normalize_mime(mime.strip(), scale)
+        mime_rf, result = self._normalize_mime(mime.strip())
         
         if mime_rf is None:
             return None
@@ -32,48 +34,58 @@ class TokenManager(QObject):
             else:
                 mime_rf = self._reroll_id(mime_rf)
         
-        if mime_rf is None:
-            return None
         aligned_pos = self.grid_helper.align_to_grid(pos)
-        token = self._create_token(MIME_RUNTIME_FORMAT.match(mime_rf), aligned_pos, scale)
+        result = self._normalize_result(mime_rf, result, scale)
+        token = self._create_token(mime_rf, aligned_pos, result)
         if token:
             self.tokens[token.mime()] = token
             token.setPPSize(self.grid_helper.get_grid_size())
         return token
     
-    def _normalize_mime(self, mime, scale):
+    @staticmethod
+    def _normalize_result(mime: str, result: DataDialog, scale: float):
+        match = MIME_RUNTIME_FORMAT.match(mime)
+        if not match:
+            return None
+        if result is None:
+            result = DataDialog("None", "", 10, False, 10, scale)
+        result.name = match.group(1)
+        match list(match.groups()):
+            case ["mob" | "npc", _, "None", None]:
+                result.unique = True
+                return result
+            case _:
+                return result
+    
+    def _normalize_mime(self, mime):
         if MIME_RUNTIME_FORMAT.match(mime) is not None:
-            return mime, scale
+            return mime, None
         
         if (match_input := MIME_INPUT_FORMAT.match(mime)) is None:
             return None, None
         
         match list(match_input.groups()):
             case ["mob", "request"]:
-                name, scale = DialogCreateToken.request("Моба")
-                if name is None:
-                    return None, scale
-                number = self._get_next_number(f"mob:{name}")
-                return f"mob:{name.replace('%', '')}:{number}", scale
-            case ["mob", name]:
-                number = self._get_next_number(mime)
-                return f"mob:{name.replace('%', '')}:{number}", scale
-            case ["npc", name]:
-                number = self._get_next_number(mime)
-                return f"npc:{name.replace('%', '')}:{number}", scale
+                result = DialogCreateToken.request("Моба")
+                if result is None:
+                    return None, None
+                number = self._get_next_number(result.cttype("mob"), result.unique)
+                mime_rf = result.cttypeAndNumber("mob", number)
+                return mime_rf, result
             case ["npc", "request"]:
-                name, scale = DialogCreateToken.request("NPC")
-                if name is None:
-                    return None, scale
-                number = self._get_next_number(f"npc:{name}")
-                return f"npc:{name.replace('%', '')}:{number}", scale
+                result = DialogCreateToken.request("NPC")
+                if result is None:
+                    return None, None
+                number = self._get_next_number(result.cttype("npc"), result.unique)
+                mime_rf = result.cttypeAndNumber("npc", number)
+                return mime_rf, result
             case ["spawn", "player"]:
-                return "spawn:player:None", scale
+                return "spawn:player:None", None
             case _:
-                return mime, scale
+                return mime, None
     
-    def _get_next_number(self, mime: str):
-        if "%" in mime:
+    def _get_next_number(self, mime: str, unique: bool = False):
+        if unique:
             return "None"
         
         uid = self._token_unique_cache.get(mime, 0) + 1
@@ -101,42 +113,39 @@ class TokenManager(QObject):
             return True
         return None
     
-    def _create_token(self, mime: re.Match[str], pos: QPointF, scale: float) -> Optional[BaseToken]:
-        match list(mime.groups()):
+    def _create_token(self, mime: str, pos: QPointF, result: Optional[DataDialog]) -> Optional[BaseToken]:
+        match_res = MIME_RUNTIME_FORMAT.match(mime)
+        if not match_res:
+            return None
+        
+        match list(match_res.groups()):
             case ["player", name, cls, uid]:
-                return self._create_player(pos, name, cls, uid)
+                return PlayerToken(PlayerTokenConfig(pos, QColor("#0883f1"), result.scale, 40, 100, name, cls, uid))
             case ["spawn", "player", "None", None]:
-                return self._create_spawn(pos)
+                return self._create_spawn(pos, result)
             case ["mob", name, number, None]:
-                return self._create_mob(pos, name, number, scale)
-            case ["mob", name, None, None]:
-                number = self._get_next_number(f"mob:{name}")
-                return self._create_mob(pos, name, number, scale)
-            case ["npc", name, number, None]:
-                return self._create_npc(pos, name, number, scale)
-            case ["npc", name, None, None]:
-                number = self._get_next_number(f"npc:{name}")
-                return self._create_npc(pos, name, number, scale)
+                return MobToken(ModNpcTokenConfig(
+                    pos, QColor("#0883f1"), result.scale, result.kd, name, number,
+                    result.unique, result.hp, result.description, 35))
+            case ["mob" | "npc" as ttype, name, number, None]:
+                if number is None:
+                    number = self._get_next_number(result.cttype(ttype), result.unique)
+                
+                color = QColor("#8833f1") if ttype == "mob" else QColor("#113f2e")
+                
+                config = ModNpcTokenConfig(
+                    pos, color, result.scale, result.kd, name, number,
+                    result.unique, result.hp, result.description, 35
+                )
+                
+                if ttype == "mob":
+                    return MobToken(config)
+                else:
+                    return NPCToken(config)
     
-    @staticmethod
-    def _create_player(pos, name, cls, uid):
-        return PlayerToken(pos.x(), pos.y(), name, cls, uid)
-    
-    def _create_spawn(self, pos):
-        for item in self.scene.items():
-            if isinstance(item, SpawnPlayerToken):
-                self.scene.removeItem(item)
-                del self.tokens[item.mime]
-        return SpawnPlayerToken(pos.x(), pos.y())
-    
-    @staticmethod
-    def _create_mob(pos, name, number, scale=1):
-        if (name is None) or (name == "%"):
-            return None
-        return MobToken(pos.x(), pos.y(), name, number, scale)
-    
-    @staticmethod
-    def _create_npc(pos, name, number, scale=1):
-        if (name is None) or (name == "%"):
-            return None
-        return NPCToken(pos.x(), pos.y(), name, number, scale)
+    def _create_spawn(self, pos, result):
+        item = self.tokens.get("spawn:player:None", None)
+        if item is not None:
+            self.scene.removeItem(item)
+            del self.tokens[item.mime]
+        return SpawnPlayerToken(SpawnPlayerTokenConfig(pos, QColor("#450549"), result.scale, 40))

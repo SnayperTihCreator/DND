@@ -1,6 +1,11 @@
+from typing import Optional
+
 from PySide6.QtCore import Qt, QVariantAnimation, QEasingCurve, QPointF, QEvent
 from PySide6.QtGui import QPen, QPainter, QColor
-from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsItem, QMenu, QApplication, QInputDialog
+from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsItem, QMenu, QInputDialog
+
+from CommonTools.core import TokenConfig
+from CommonTools.map_widget.core.tooltip_token import ToolTipToken
 
 
 class MovedEvent(QEvent):
@@ -14,12 +19,9 @@ class MovedEvent(QEvent):
 class BaseToken(QGraphicsEllipseItem):
     ttype = "service"
     
-    def __init__(self, x, y, size=40, color=QColor("#fff"), text="", scale=1.0):
-        super().__init__(0, 0, size, size)
-        self.text = text
-        self.size = size
-        
-        self.base_scale = scale
+    def __init__(self, config: TokenConfig):
+        super().__init__(0, 0, config.size, config.size)
+        self.cfg = config
         
         self.old_pos = self.pos()
         self.animation = QVariantAnimation()
@@ -28,10 +30,24 @@ class BaseToken(QGraphicsEllipseItem):
         self.old_anim_pos = self.pos()
         self.is_running_anim = False
         
-        self._setup_token(x, y, size, color)
+        x, y = self.cfg.pos.toTuple()
+        size = self.cfg.size
+        self.setPos(x - size / 2, y - size / 2)  # Центрируем
+        self.setBrush(self.cfg.color)
+        self.setPen(QPen(QColor("#000"), 2))
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsScenePositionChanges)
+        self.setAcceptHoverEvents(True)
         
+        self._tooltip_item: Optional[ToolTipToken] = None
+    
+    @property
+    def isSideClient(self):
+        return not (self.flags() & QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+    
     def setScale(self, scale):
-        return super().setScale(scale*self.base_scale+0.25)
+        return super().setScale(scale * self.cfg.scale + 0.25)
     
     def setPPSize(self, size):
         aspect = size / 50
@@ -66,15 +82,6 @@ class BaseToken(QGraphicsEllipseItem):
         self.animation.setEasingCurve(QEasingCurve.Type.Linear)
         self.animation.start()
     
-    def _setup_token(self, x, y, size, color):
-        """Настройка базовых параметров токена"""
-        self.setPos(x - size / 2, y - size / 2)  # Центрируем
-        self.setBrush(color)
-        self.setPen(QPen(QColor("#000"), 2))
-        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
-        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
-        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsScenePositionChanges)
-    
     def itemChange(self, change, value):
         match change:
             case QGraphicsItem.GraphicsItemChange.ItemPositionChange:
@@ -92,6 +99,18 @@ class BaseToken(QGraphicsEllipseItem):
         self.is_running_anim = False
         self.old_anim_pos = self.pos()
         super().mousePressEvent(event)
+        
+    def hoverEnterEvent(self, event):
+        if self.isSideClient or not self.cfg.tooltip:
+            return
+        scene_pos = self.mapToScene(self.rect().width() / 2, 0)
+        self.scene().show_tooltip(self.cfg.tooltip, scene_pos)
+        
+        super().hoverEnterEvent(event)
+        
+    def hoverLeaveEvent(self, event):
+        self.scene().hide_tooltip()
+        super().hoverLeaveEvent(event)
     
     def stopMoved(self):
         self.animation.stop()
@@ -119,7 +138,7 @@ class BaseToken(QGraphicsEllipseItem):
     
     def _get_display_text(self):
         """Возвращает текст для отображения (обрезанный при необходимости)"""
-        return self.text if len(self.text) <= 10 else f"{self.text[:10]}..."
+        return text if len(text := self.cfg.text) <= 10 else f"{text[:10]}..."
     
     def _get_text_color(self):
         """Определяет цвет текста на основе фона"""
@@ -127,7 +146,7 @@ class BaseToken(QGraphicsEllipseItem):
         brightness = (bg_color.red() * 0.299 +
                       bg_color.green() * 0.587 +
                       bg_color.blue() * 0.114)
-        return Qt.black if brightness > 186 else Qt.white
+        return Qt.GlobalColor.black if brightness > 186 else Qt.GlobalColor.white
     
     def mouseMoveEvent(self, event):
         """Обновление сцены при перемещении"""
@@ -136,7 +155,7 @@ class BaseToken(QGraphicsEllipseItem):
             self.scene().update()
     
     def contextMenuEvent(self, event):
-        if not (self.flags() & QGraphicsItem.GraphicsItemFlag.ItemIsMovable):
+        if self.isSideClient:
             return
         menu = QMenu()
         
@@ -156,8 +175,5 @@ class BaseToken(QGraphicsEllipseItem):
         if ok:
             self.scene().item_moved2.emit(self, text)
     
-    def mime_data(self):
-        return []
-    
     def mime(self):
-        return f"{self.ttype}:{':'.join(map(str, self.mime_data()))}"
+        return self.cfg.mime(self.ttype)

@@ -1,11 +1,7 @@
-import os
-
 from PySide6.QtWebEngineCore import QWebEngineProfile, QWebEnginePage
 from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit, QWidget, QDockWidget
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtCore import QUrl
-
-os.environ['QTWEBENGINE_CHROMIUM_FLAGS'] = '--disable-web-security --ignore-certificate-errors'
 
 
 class GuidePanel(QDockWidget):
@@ -29,7 +25,9 @@ class GuidePanel(QDockWidget):
         self.profile = QWebEngineProfile(login, self)
         self.profile.setPersistentCookiesPolicy(QWebEngineProfile.ForcePersistentCookies)
         self.profile.setHttpCacheType(QWebEngineProfile.DiskHttpCache)
-        self.profile.setHttpUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+        self.profile.setHttpUserAgent(
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 "
+            "Safari/537.36")
         
         self.web_page = QWebEnginePage(self.profile, self)
         self.web_page.urlChanged.connect(self._handle_update_url)

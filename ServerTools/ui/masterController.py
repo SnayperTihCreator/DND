@@ -13,6 +13,7 @@ class MasterController(BaseController):
         super().__init__(socket, ClientData("", "", "", None))
         
         self.tabMaps.set_token_movement(["players", "mobs", "npcs", "spawn_point"], True)
+        self.tabMaps.call_all_method("setMasterView", True)
         self.tabMaps.call_all_method("setOffsetSize", QPoint(0, 0), 50)
         self.tabMaps.visible_always = True
         
@@ -31,7 +32,7 @@ class MasterController(BaseController):
             name=name,
             mime=token.mime(),
             pos=token.pos().toTuple(),
-            scale=token.base_scale
+            scale=token.cfg.scale
         ))
         self.update_players()
     

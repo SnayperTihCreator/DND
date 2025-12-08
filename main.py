@@ -15,6 +15,8 @@ import assets_rc
 # noinspection PyUnresolvedReferences
 import log
 
+sys.argv += ['--ignore-certificate-errors', '--ignore-ssl-errors']
+
 if __name__ == "__main__":
     with PrintManager() as pm:
         pm.show_caller_info(True)

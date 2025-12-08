@@ -2,6 +2,7 @@ from .client_data import ClientData
 from .socket import Socket
 from .image_receiver import ImageReceiver, Image
 from .image_sender import ImageSender
+from .config import *
 
 classes = {
     "Бард": "bard", "Варвар": "barbarian", "Воин": "fighter", "Волшебник": "wizard",
