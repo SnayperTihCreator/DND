@@ -17,6 +17,7 @@ class PlayerController(BaseController):
         self.active = False
         self.bufferActive = True
     
+    # noinspection PyTypeChecker
     def _handle_custom_message(self, msg: BaseMessage):
         match msg.type:
             case MapActionType.MAP_CREATE:
@@ -40,7 +41,7 @@ class PlayerController(BaseController):
         return self.tabMaps.activeMap(msg.name)
     
     def _handle_grid_data(self, msg: MapGridData):
-        offset = QPoint(*msg.offset)
+        offset = QPoint(msg.offset[0], msg.offset[1])
         self.tabMaps.call_all_method("setOffsetSize", offset, msg.size)
         return True
     

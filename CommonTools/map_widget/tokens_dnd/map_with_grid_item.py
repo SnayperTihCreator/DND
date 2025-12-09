@@ -28,9 +28,11 @@ class MapWithGridItem(QGraphicsPixmapItem):
                 self._loadDynamic()
     
     def _loadStatic(self):
+        self.clear()
         self.setPixmap(QPixmap(self.file_path))
     
     def _loadDynamic(self):
+        self.clear()
         self.movie.setFileName(self.file_path.as_posix())
         if not self.movie.isValid():
             self._loadStatic()
@@ -44,7 +46,8 @@ class MapWithGridItem(QGraphicsPixmapItem):
         self.setPixmap(QPixmap())
         self.movie.stop()
         self.movie.setFileName("")
-        self.scene().update()
+        if self.scene():
+            self.scene().update()
     
     def _updateFrame(self, _):
         if not self.movie.isValid():

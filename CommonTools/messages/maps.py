@@ -7,6 +7,8 @@ class MapActionType(BaseActionType):
     MAPS_ALL_DATA = "map", "maps", "data"
     PLAYER_FREEZE = "map", "player", "freeze"
     PLAYER_MOVED = "map", "player", "move"
+    FOG_CHANGED = "map", "fog", "changed"
+    FOG_FULL = "map", "fog", "full"
     
     LOAD_BACKGROUND = "map", "background", "data"
     
@@ -49,6 +51,14 @@ class MapActiveMap(MapsGroup, type=MapActionType.MAP_ACTIVE):
     pass
 
 
+class MapFogChanged(MapsGroup, type=MapActionType.FOG_CHANGED):
+    reveal: bool
+    data: list
+    
+class MapFogFull(MapsGroup, type=MapActionType.FOG_FULL):
+    data: list
+
+
 class MapMessageToken(MapsGroup):
     mime: str
 
@@ -71,7 +81,7 @@ class MapMoveToken(MapMessageToken, type=MapActionType.MOVE_TOKEN):
 
 
 class MapGridData(BaseMessage, type=MapActionType.MAP_GRID_DATA):
-    offset: tuple[float, float]
+    offset: tuple[int, int]
     size: int
 
 
@@ -84,6 +94,6 @@ __all__ = ["MapActionType",
            "MapLoadBackground",
            
            "MapCreateMap", "MapDeleteMap", "MapActiveMap",
-           "MapMovedMap", "GetAllMaps",
+           "MapMovedMap", "GetAllMaps", "MapFogChanged", "MapFogFull",
            
            "MapAddToken", "MapRemoveToken", "MapMoveToken", "MapPlayerMoved"]

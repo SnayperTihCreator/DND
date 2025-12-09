@@ -1,15 +1,21 @@
 from abc import ABCMeta, ABC, abstractmethod
-from typing import Any
+from enum import Enum, auto
 
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout
 from PySide6.QtCore import QObject, QPointF
 from loguru import logger
+
 logger = logger.bind(pack="BaseController")
 
 from CommonTools.map_widget.tokens_dnd import BaseToken
 from CommonTools.messages import *
 from CommonTools.core import Socket, ClientData
 from CommonTools.ui.tabs_map_controller import TabMapsWidget
+
+
+class ViewFog(Enum):
+    FULL = auto()
+    DIFF = auto()
 
 
 class MetaQABC(ABCMeta, type(QObject)):
@@ -35,6 +41,7 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
         self.bufferActive = False
         self.activeMaps: set[str] = set()
         self.buffer_tokens: dict[tuple[str, str], tuple[QPointF, float]] = {}
+        self.buffer_fog: dict[str, list[tuple[ViewFog, bool, list]]] = {}
         
         self.visible_tokens = {
             "players": True,
@@ -55,6 +62,9 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
         
         for uid in removed:
             del self.buffer_tokens[uid]
+        
+        fog_history = self.buffer_fog.pop(name_active)
+        self.apply_fog_nw(name_active, fog_history)
     
     def _apply_visible_token(self, token: BaseToken):
         visible = True
@@ -103,6 +113,10 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
                 return self._handle_remove_token(msg)
             case MapActionType.MOVE_TOKEN:
                 return self._handle_move_token(msg)
+            case MapActionType.FOG_CHANGED:
+                return self._handle_fog_change(msg)
+            case MapActionType.FOG_FULL:
+                return self._handle_fog_full(msg)
             case _:
                 return self._handle_custom_message(msg)
     
@@ -116,6 +130,21 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
     
     def _handle_move_token(self, msg: MapMoveToken):
         self.move_token(msg.name, msg.mime, msg.pos)
+        return True
+    
+    def _handle_fog_change(self, msg: MapFogChanged):
+        if self.bufferActive and (msg.name not in self.activeMaps):
+            self.buffer_fog.setdefault(msg.name, [])
+            self.buffer_fog[msg.name].append((ViewFog.DIFF, msg.reveal, msg.data))
+        else:
+            self.apply_fog_nw(msg.name, [(ViewFog.DIFF, msg.reveal, msg.data)])
+        return True
+    
+    def _handle_fog_full(self, msg: MapFogFull):
+        if self.bufferActive and (msg.name not in self.activeMaps):
+            self.buffer_fog[msg.name] = [(ViewFog.FULL, True, msg.data)]
+        else:
+            self.apply_fog_nw(msg.name, [(ViewFog.FULL, True, msg.data)])
         return True
     
     @abstractmethod
@@ -154,3 +183,13 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
     
     def move_token_nw(self, name, mime, pos):
         self.tabMaps.move_token(name, mime, pos)
+    
+    def apply_fog_nw(self, name, fogs: list[tuple[ViewFog, bool, list]]):
+        if not (mWidget := self.tabMaps.getMap(name)):
+            return
+        for view, reveal, data in fogs:
+            match view:
+                case ViewFog.DIFF:
+                    mWidget.setFogChange(reveal, data)
+                case ViewFog.FULL:
+                    mWidget.setFullFog(data)

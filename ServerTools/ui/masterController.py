@@ -21,9 +21,14 @@ class MasterController(BaseController):
         self.tabMaps.token_removed.connect(self._ohandle_remove_token)
         self.tabMaps.token_moved.connect(self._ohandle_move_token)
         self.tabMaps.token_moved_map.connect(self._ohandle_move_map)
+        
+        self.tabMaps.fog_changed.connect(self._ohandle_fog_change)
     
     def _handle_custom_message(self, msg: BaseMessage):
         return
+    
+    def _ohandle_fog_change(self, name, revealing, data):
+        self.socket.send_msg(MapFogChanged(name=name, reveal=revealing, data=data))
     
     def _ohandle_add_token(self, name, token: BaseToken):
         if self.tabMaps.isEmpty():

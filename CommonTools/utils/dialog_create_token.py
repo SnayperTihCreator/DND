@@ -6,7 +6,7 @@ from attrs import define
 
 from PySide6.QtWidgets import QDialog, QFormLayout, QDialogButtonBox, QTextBrowser, QLineEdit, QComboBox, QMessageBox, \
     QCheckBox, QWidget, QTextEdit, QSpinBox
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
 
 from .name_utils import FORBIDDEN_CHARS
 
@@ -33,13 +33,38 @@ class DataDialog:
         return f"{ttype}:{self.name}:{number}"
 
 
+
+
+class AutoResizingTextBrowser(QTextBrowser):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.textChanged.connect(self.updateGeometry)
+    
+    def sizeHint(self):
+        return QSize(self.width(), self.fit_height())
+    
+    def fit_height(self):
+        doc = self.document()
+        doc.setTextWidth(self.viewport().width())
+        
+        height = doc.size().height()
+        height += self.frameWidth() * 2
+        return int(height + 5)
+    
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.updateGeometry()
+
+
 class BaseDialog(QDialog, ABC, metaclass=QMetaABC):
     def __init__(self, sndTitle, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Создание токена")
         
         self.box = QFormLayout(self)
-        self.description_text = QTextBrowser()
+        self.description_text = AutoResizingTextBrowser()
         self.description_text.setReadOnly(True)
         self.setDescription(f"Ввидите имя {sndTitle}")
         self.box.addRow(self.description_text)
@@ -85,7 +110,6 @@ class BaseDialog(QDialog, ABC, metaclass=QMetaABC):
     
     def setDescription(self, text):
         self.description_text.setPlainText(text)
-        self.description_text.adjustSize()
     
     @abstractmethod
     def getResult(self) -> DataDialog:
@@ -107,7 +131,6 @@ class DialogCreateToken(BaseDialog):
             maximum=10 ** 6,
             minimum=0,
             singleStep=1,
-            suffix="hp"
         )
         self.box.addRow("Здоровье", self.spinBoxHp)
         
@@ -116,7 +139,6 @@ class DialogCreateToken(BaseDialog):
             minimum=5,
             maximum=100,
             singleStep=1,
-            suffix="kd"
         )
         self.box.addRow("КД", self.spinBoxKd)
     

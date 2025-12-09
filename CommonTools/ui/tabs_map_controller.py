@@ -18,12 +18,12 @@ class TabMapsWidget(QTabWidget):
     
     token_moved_map = Signal(str, object, str)
     currentMapChanged = Signal(str)
+    fog_changed = Signal(str, bool, list)
     
     def __init__(self, client):
         super().__init__()
         self.client: ClientData = client
         self.maps: dict[str, MapData] = {}
-        self.maps_idx: dict[int, str] = {}
         
         self.movement_settings = {
             'players': True,
@@ -42,20 +42,20 @@ class TabMapsWidget(QTabWidget):
     
     def addMap(self, name, visible=True):
         if self.maps.get(name, None) is None:
-            mWidget = MapWidget(self.client)
+            mWidget = MapWidget(name, self.client)
             mWidget.set_token_movement([k for k, v in self.movement_settings.items() if v], True)
             mWidget.set_token_movement([k for k, v in self.movement_settings.items() if not v], False)
             mWidget.token_added.connect(partial(self.token_added.emit, name))
             mWidget.token_removed.connect(partial(self.token_removed.emit, name))
             mWidget.token_moved.connect(partial(self.token_moved.emit, name))
             mWidget.token_moved_map.connect(partial(self.token_moved_map.emit, name))
+            mWidget.fog_changed.connect(partial(self.fog_changed.emit, name))
             
             for fname, args in self.calls_saved.items():
                 impl = getattr(mWidget, fname, None)
                 if impl is None:
                     continue
                 impl(*args)
-            self.maps_idx[self.count()] = name
             idx = self.addTab(mWidget, name)
             self.setTabVisible(idx, visible or self.visible_always)
             self.maps[name] = MapData(name, visible, mWidget)
@@ -66,7 +66,6 @@ class TabMapsWidget(QTabWidget):
         if mWidget := self.getMap(name):
             self.removeTab(self.indexOf(mWidget))
             self.maps.pop(name, None)
-            self.maps_idx.pop(self.indexOf(mWidget), None)
             return True
         return None
     
@@ -90,7 +89,10 @@ class TabMapsWidget(QTabWidget):
     def getActiveNameMap(self):
         if not self.maps:
             return None
-        return self.maps_idx[self.currentIndex()]
+        current_widget = self.currentWidget()
+        if isinstance(current_widget, MapWidget):
+            return current_widget.name
+        return None
     
     def getMap(self, name) -> Optional[MapWidget]:
         mdata = self.maps.get(name, None)
@@ -159,4 +161,7 @@ class TabMapsWidget(QTabWidget):
                 return
 
     def _handle_map_changed(self, idx):
-        self.currentMapChanged.emit(self.maps_idx[idx])
+        if idx == -1: return
+        widget = self.widget(idx)
+        if isinstance(widget, MapWidget):
+            self.currentMapChanged.emit(widget.name)

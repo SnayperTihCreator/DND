@@ -24,4 +24,7 @@
     <qresource prefix="css">
         <file alias="tooltip.css">resource/css/tooltip.css</file>
     </qresource>
+    <qresource prefix="textures">
+        <file alias="fog.png">resource/fog.png</file>
+    </qresource>
 </RCC>

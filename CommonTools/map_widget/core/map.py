@@ -20,9 +20,11 @@ class MapWidget(QGraphicsView):
     token_moved = Signal(object, tuple)
     
     token_moved_map = Signal(object, str)
+    fog_changed = Signal(bool, list)
     
-    def __init__(self, client: ClientData):
+    def __init__(self, name, client: ClientData):
         super().__init__()
+        self.name = name
         self.setMinimumSize(500, 500)
         
         self.g_scene = GraphicsScene()
@@ -38,6 +40,7 @@ class MapWidget(QGraphicsView):
         self.token_manager = TokenManager(self.g_scene)
         self.drawing_manager = DrawingManager(self.g_scene)
         self.fog_manager = VectorFogManager(self.g_scene)
+        self.fog_manager.fog_changed.connect(self.fog_changed)
         
         self.client: ClientData = client
         self.token_spawn: Optional[SpawnPlayerToken] = None
@@ -298,3 +301,18 @@ class MapWidget(QGraphicsView):
         False: Туман черный (100%)
         """
         self.fog_manager.set_view_mode(is_master)
+        
+    def setFogChange(self, is_revealing: bool, stroke_data: list):
+        self.fog_manager.apply_diff(is_revealing, stroke_data)
+    
+    def getFullFog(self):
+        return self.fog_manager.get_full_state()
+    
+    def setFullFog(self, state_data: list):
+        self.fog_manager.set_full_state(state_data)
+    
+    def resetFog(self):
+        self.fog_manager.fill_all()
+    
+    def clearFog(self):
+        self.fog_manager.reveal_all()

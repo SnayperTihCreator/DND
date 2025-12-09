@@ -1,9 +1,10 @@
 from pathlib import Path
 from typing import Any, Optional
+from functools import partial
 
 from PySide6.QtCore import Qt, QPoint, QPointF, QTimer
 from PySide6.QtWidgets import QMainWindow, QToolBar, QSpinBox, QLabel, QCheckBox, QApplication, QFileDialog, \
-    QGraphicsColorizeEffect, QMessageBox
+    QGraphicsColorizeEffect
 from PySide6.QtGui import QIcon, QColor
 from loguru import logger
 
@@ -105,8 +106,15 @@ class MasterGameTable(QMainWindow):
         self.changeDragPaint.triggered.connect(self._on_action_change_drag_paint)
         self.changeDrawErase = self.topPaintBar.addAction("Стирать")
         self.changeDrawErase.triggered.connect(self._on_action_change_erase)
-        self.brushSize = QSpinBox(value=50)
+        self.brushSize = QSpinBox(value=50, minimum=1, maximum=10 ** 6, singleStep=1)
         self.topPaintBar.addWidget(self.brushSize)
+        self.brushSize.valueChanged.connect(self._on_action_change_size_brush)
+        
+        self.actionClearFog = self.topPaintBar.addAction("Очистить туман")
+        self.actionClearFog.triggered.connect(self._on_action_clear_fog)
+        
+        self.actionResetFog = self.topPaintBar.addAction("Восстановить туман")
+        self.actionResetFog.triggered.connect(self._on_action_reset_fog)
         
         self.controller.tabMaps.currentMapChanged.connect(self._handle_current_map)
         
@@ -121,6 +129,7 @@ class MasterGameTable(QMainWindow):
         self.player_panel_action.triggered.connect(self.player_panel.show)
         
         self._handle_current_map(None)
+        self._deactivate_control()
     
     def applyErrorEffect(self):
         colorize = QGraphicsColorizeEffect(self)
@@ -171,21 +180,36 @@ class MasterGameTable(QMainWindow):
             mWidget = self.controller.tabMaps.getMap(name)
             mWidget.setFogMode(not mWidget.isActiveFogMode(), mWidget.isRevealFogMode())
             self._handle_change_state_fog(mWidget)
-            
+    
     def _on_action_change_erase(self):
         if name := self.controller.tabMaps.getActiveNameMap():
             mWidget = self.controller.tabMaps.getMap(name)
             mWidget.setFogMode(mWidget.isActiveFogMode(), not mWidget.isRevealFogMode())
             self._handle_change_state_fog(mWidget)
+    
+    def _on_action_change_size_brush(self, value):
+        self.controller.tabMaps.call_all_method("setFogBrushSize", value)
+    
+    def _on_action_clear_fog(self):
+        if name := self.controller.tabMaps.getActiveNameMap():
+            mWidget = self.controller.tabMaps.getMap(name)
+            mWidget.clearFog()
             
+    def _on_action_reset_fog(self):
+        if name := self.controller.tabMaps.getActiveNameMap():
+            mWidget = self.controller.tabMaps.getMap(name)
+            mWidget.resetFog()
+    
     def _handle_change_state_fog(self, mWidget: MapWidget):
         if mWidget.isActiveFogMode():
             self.changeDragPaint.setText("Перемещение токенов")
             self.changeDrawErase.setDisabled(False)
+            self.brushSize.setDisabled(False)
         else:
             self.changeDragPaint.setText("Редактирование тумана")
             self.changeDrawErase.setDisabled(True)
-            
+            self.brushSize.setDisabled(True)
+        
         if mWidget.isRevealFogMode():
             self.changeDrawErase.setText("Стирать")
         else:
@@ -276,6 +300,7 @@ class MasterGameTable(QMainWindow):
                 QApplication.processEvents()
                 if isinstance(item, BaseToken):
                     self.server.answer(uid, MapAddToken(name=map_name, mime=item.mime(), pos=item.pos().toTuple()))
+            self.server.answer(uid, MapFogFull(name=map_name, data=mdata.mWidget.getFullFog()))
     
     def _handle_name_map(self, uid, msg: ImageNameRequest):
         if file_path := self.images.get(msg.name, None):
@@ -285,9 +310,9 @@ class MasterGameTable(QMainWindow):
             self.server.answer(uid, IgnoreCallback(uid_callback=msg.uid))
     
     def _handle_current_map(self, name: Optional[str]):
-        self._deactivate_control()
         if name is None:
             return
+        self._deactivate_control()
         self.load_bg_action.setDisabled(False)
         self.active_map_action.setDisabled(False)
         self.delete_map_action.setDisabled(False)
@@ -299,6 +324,7 @@ class MasterGameTable(QMainWindow):
             self._handle_change_state_fog(mWidget)
     
     def _deactivate_control(self):
+        self.topPaintBar.setDisabled(True)
         self.bottomToolBar.setDisabled(True)
         self.topPaintBar.setDisabled(True)
         self.load_bg_action.setDisabled(True)
