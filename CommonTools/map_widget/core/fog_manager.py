@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QGraphicsPathItem, QGraphicsScene, QGraphicsPolygonItem, QGraphicsItemGroup
 from PySide6.QtGui import QPainterPath, QColor, QBrush, QPen, QPolygonF
-from PySide6.QtCore import Qt, QPointF, QRectF, Signal
+from PySide6.QtCore import Qt, QPointF, QRectF, Signal, QObject
 import math
 
 
@@ -27,10 +27,11 @@ def deserialize_path(data: list) -> QPainterPath:
     return path
 
 
-class VectorFogManager:
+class VectorFogManager(QObject):
     fog_changed = Signal(bool, list)
     
     def __init__(self, scene: QGraphicsScene):
+        super().__init__()
         self.scene = scene
         
         self.fog_path_item: QGraphicsPathItem | None = None
@@ -98,6 +99,7 @@ class VectorFogManager:
     
     def start_stroke(self):
         self.stroke_path = QPainterPath()
+        self.stroke_path.setFillRule(Qt.FillRule.WindingFill)
         self.last_pos = None  # Сброс последней позиции
         
         # Очистка визуала
@@ -114,6 +116,7 @@ class VectorFogManager:
                 return  # Слишком маленькое движение, пропускаем
         
         self.last_pos = scene_pos
+        
         
         # ОПТИМИЗАЦИЯ 2: Использование полигона вместо addEllipse
         poly_shape = self._get_brush_polygon(self.brush_size)
@@ -137,7 +140,8 @@ class VectorFogManager:
     
     def finish_stroke(self):
         """Завершение рисования Мастером"""
-        if not self.fog_path_item: return
+        if not self.fog_path_item:
+            return
         
         # Удаляем временные элементы
         for child in self.temp_group.childItems():

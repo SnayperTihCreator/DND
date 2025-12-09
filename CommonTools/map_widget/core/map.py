@@ -281,6 +281,12 @@ class MapWidget(QGraphicsView):
         else:
             self.setCursor(Qt.CursorShape.ArrowCursor)
             self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+            
+    def isActiveFogMode(self):
+        return self.fog_manager.is_active
+    
+    def isRevealFogMode(self):
+        return self.fog_manager.is_revealing
     
     def setFogBrushSize(self, size: int):
         """Размер кисти (диаметр)"""
