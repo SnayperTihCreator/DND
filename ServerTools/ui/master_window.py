@@ -1,10 +1,9 @@
 from pathlib import Path
 from typing import Any, Optional
-from functools import partial
 
 from PySide6.QtCore import Qt, QPoint, QPointF, QTimer
 from PySide6.QtWidgets import QMainWindow, QToolBar, QSpinBox, QLabel, QCheckBox, QApplication, QFileDialog, \
-    QGraphicsColorizeEffect
+    QGraphicsColorizeEffect, QMessageBox
 from PySide6.QtGui import QIcon, QColor
 from loguru import logger
 
@@ -18,6 +17,7 @@ from CommonTools.messages import *
 from CommonTools.core import Image, ClientData
 from ServerTools.components import TokensPanel, DialogCreateMap, PlayerPanel
 from CommonTools.map_widget.tokens_dnd import BaseToken
+from CommonTools.utils import validate_and_resize_image
 
 from .masterController import MasterController
 
@@ -165,7 +165,23 @@ class MasterGameTable(QMainWindow):
     def _on_action_load_bg(self):
         if name := self.controller.tabMaps.getActiveNameMap():
             path, _ = QFileDialog.getOpenFileName(self, "Выберете фон", ".", "Image(*.png *.jpg);;Animation(*.gif)")
+            
             if path:
+                # Пытаемся обработать
+                processed_path = validate_and_resize_image(path, self.cache_folder, max_size=4096)
+                
+                # --- ПРОВЕРКА ОШИБКИ ---
+                if processed_path is None:
+                    QMessageBox.critical(
+                        self,
+                        "Ошибка загрузки",
+                        "Не удалось загрузить изображение!\n\n"
+                        "Возможные причины:\n"
+                        "1. Файл поврежден.\n"
+                        "2. Изображение слишком огромное (не хватает оперативной памяти для обработки).\n"
+                        "3. Формат файла не поддерживается."
+                    )
+                    return  # Блокируем дальнейшее выполнение
                 self.images[name] = path
                 self.controller.tabMaps.load_map(name, path)
                 self.server.broadcast(MapLoadBackground(name=name))

@@ -5,8 +5,8 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QMainWindow, QStackedWidget, QToolBar, QCheckBox, QGraphicsColorizeEffect
 from PySide6.QtGui import QColor, QIcon
 from loguru import logger
-logger = logger.bind(pack="ClientWindow")
 
+logger = logger.bind(pack="ClientWindow")
 
 from ClientTools.core.client_socket import WebSocketClient
 from CommonTools.core import Image, classes
@@ -82,7 +82,7 @@ class PlayerGameTable(QMainWindow):
         self.bottomToolBar.addWidget(self.checkBoxVisibleGrid)
         
         self.deactivate_controller()
-        
+    
     def _on_action_show_player_cls(self):
         if self.client_data.cls:
             self.player_cls_panel.handle_load_url(
@@ -139,7 +139,7 @@ class PlayerGameTable(QMainWindow):
         cache_image = self.cache_folder / f"{image.name}{image.suffix}"
         cache_image.write_bytes(image.image_data)
         logger.debug("Получено изображение {iname}{isuffix} через {istrategy}", iname=image.name,
-                    isuffix=image.suffix, istrategy=image.strategy)
+                     isuffix=image.suffix, istrategy=image.strategy)
         self.image_manager.handle(image.name, cache_image)
     
     def _handle_message(self, msg: BaseMessage):
@@ -171,9 +171,9 @@ class PlayerGameTable(QMainWindow):
         self.statusBar().showMessage("Загрузка фона", 2000)
         self.controller.tabMaps.load_map(name, file_path)
         self.controller.clear_buffer(name)
-        
+    
     def _handle_change_color(self, color):
         self.controller.tabMaps.call_all_method("setColorGrid", color)
-        
+    
     def _handle_change_vgrid(self, visible):
         self.controller.tabMaps.call_all_method("setVisibleGrid", visible)
