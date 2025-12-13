@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 from PySide6.QtCore import Qt, QPoint, QPointF, QTimer
 from PySide6.QtWidgets import QMainWindow, QToolBar, QSpinBox, QLabel, QCheckBox, QApplication, QFileDialog, \
@@ -11,16 +11,16 @@ from CommonTools.map_widget import MapWidget
 
 logger = logger.bind(pack="ServerWindow")
 
-from CommonTools.components import ColorButton, GuidePanel
+from CommonTools.components import ColorButton, GuidePanel, Register, MessageRouter
 from ServerTools.core.server_socket import WebSocketServer
 from CommonTools.messages import *
 from CommonTools.core import Image, ClientData
 from ServerTools.components import TokensPanel, DialogCreateMap, PlayerPanel
-from CommonTools.map_widget.tokens_dnd import BaseToken
 from CommonTools.utils import validate_and_resize_image
 
 from .masterController import MasterController
 
+router = MessageRouter()
 
 class MasterGameTable(QMainWindow):
     def __init__(self, login):
@@ -29,7 +29,7 @@ class MasterGameTable(QMainWindow):
         self.setWindowTitle("Виртуальный стол: Мастер")
         self.setWindowIcon(QIcon(":/icons/main.png"))
         
-        self.images: dict[str, Any] = {}
+        self.images = Register()
         self.players: dict[str, ClientData] = {}
         self.server = WebSocketServer()
         self.server.client_connected.connect(self._handle_connect)
@@ -128,7 +128,6 @@ class MasterGameTable(QMainWindow):
         self.player_panel_action = self.menu_panels.addAction("Показать панель игроков")
         self.player_panel_action.triggered.connect(self.player_panel.show)
         
-        self._handle_current_map(None)
         self._deactivate_control()
     
     def applyErrorEffect(self):
@@ -163,29 +162,23 @@ class MasterGameTable(QMainWindow):
         self.controller.removeActiveMap()
     
     def _on_action_load_bg(self):
-        if name := self.controller.tabMaps.getActiveNameMap():
-            path, _ = QFileDialog.getOpenFileName(self, "Выберете фон", ".", "Image(*.png *.jpg);;Animation(*.gif)")
-            
-            if path:
-                # Пытаемся обработать
-                processed_path = validate_and_resize_image(path, self.cache_folder, max_size=4096)
-                
-                # --- ПРОВЕРКА ОШИБКИ ---
-                if processed_path is None:
-                    QMessageBox.critical(
-                        self,
-                        "Ошибка загрузки",
-                        "Не удалось загрузить изображение!\n\n"
-                        "Возможные причины:\n"
-                        "1. Файл поврежден.\n"
-                        "2. Изображение слишком огромное (не хватает оперативной памяти для обработки).\n"
-                        "3. Формат файла не поддерживается."
-                    )
-                    return  # Блокируем дальнейшее выполнение
-                self.images[name] = path
-                self.controller.tabMaps.load_map(name, path)
-                self.server.broadcast(MapLoadBackground(name=name))
-            self._handle_current_map(name)
+        if not (name := self.controller.tabMaps.getActiveNameMap()):
+            return
+        path, _ = QFileDialog.getOpenFileName(self, "Выберете фон", ".", "Image(*.png *.jpg);;Animation(*.gif)")
+        
+        if not path:
+            return
+        
+        path2 = validate_and_resize_image(path, self.cache_folder, max_size=4096)
+        
+        if path2 is None:
+            QMessageBox.critical(self, "Ошибка", "Не удалось загрузить изображение (слишком большое или битое)["
+                                                 "4000*4000 макс пикселей].")
+            return
+        self.images.create(name, path2)
+        self.controller.tabMaps.load_map(name, path2)
+        self.server.broadcast(MapLoadBackground(name=name))
+        self._handle_current_map(name)
     
     def _on_action_active_map(self):
         if name := self.controller.tabMaps.getActiveNameMap():
@@ -210,7 +203,7 @@ class MasterGameTable(QMainWindow):
         if name := self.controller.tabMaps.getActiveNameMap():
             mWidget = self.controller.tabMaps.getMap(name)
             mWidget.clearFog()
-            
+    
     def _on_action_reset_fog(self):
         if name := self.controller.tabMaps.getActiveNameMap():
             mWidget = self.controller.tabMaps.getMap(name)
@@ -264,17 +257,11 @@ class MasterGameTable(QMainWindow):
     def _handle_message(self, uid, msg: BaseMessage):
         if self.controller.handle_message(msg):
             return
-        match msg.type:
-            case ClientActionType.START_PLAYER:
-                self._action_add_player(uid, msg)
-            case MapActionType.MAPS_ALL_DATA:
-                self._handle_all_data_maps(uid, msg)
-            case ImageActionType.NAME_REQUEST:
-                self._handle_name_map(uid, msg)
-            case MapActionType.PLAYER_MOVED:
-                self._handle_player_moved(uid, msg)
-            case _:
-                logger.info("Не обработанное сообщение: {mtype} - {msg}", mtype=msg.type, msg=msg)
+        
+        if router.dispatch(self, uid, msg):
+            return
+        
+        logger.info("Не обработанное сообщение: {mtype} - {msg}", mtype=msg.type, msg=msg)
     
     def _handle_image(self, image: Image):
         cache_image = self.cache_folder / f"{image.name}{image.suffix}"
@@ -282,6 +269,7 @@ class MasterGameTable(QMainWindow):
         logger.debug("Получено изображение {iname}{isuffix} через {istrategy}", iname=image.name,
                      isuffix=image.suffix, istrategy=image.strategy)
     
+    @router.handler(ClientActionType.START_PLAYER)
     def _action_add_player(self, uid_answer: str, msg: ClientStartPlayer):
         self.server.answer(uid_answer, msg)
         self.server.broadcast(ClientAddPlayer(uid=uid_answer, name=msg.name, cls=msg.cls), uid_answer)
@@ -292,34 +280,23 @@ class MasterGameTable(QMainWindow):
         self.players[uid_answer] = self.server.clients[uid_answer]
         self.controller.update_player_list(self.players)
         self.player_panel.addPlayer(uid_answer, msg.name, msg.cls)
+        
+    @router.handler(MapActionType.MAPS_ALL_DATA)
+    def _action_get_all_data(self, uid, _: GetAllMaps):
+        self.controller.sync_client_data(uid)
     
+    @router.handler(MapActionType.PLAYER_MOVED)
     def _handle_player_moved(self, uid, msg: MapPlayerMoved):
         token = self.controller.players_map[uid]
-        token.move_to(QPointF(*msg.pos))
+        token.move_to(QPointF(msg.pos[0], msg.pos[1]))
     
     def closeEvent(self, event):
         self.server.stop_server()
         return super().closeEvent(event)
     
-    def _handle_all_data_maps(self, uid, _):
-        offset: QPoint
-        offset, size = self.controller.tabMaps.getOffsetSize()
-        self.server.answer(uid, MapGridData(offset=offset.toTuple(), size=size))
-        for map_name in self.controller.tabMaps.maps.keys():
-            QApplication.processEvents()
-            mdata, tokens = self.controller.tabMaps.getMapData(map_name)
-            
-            self.server.answer(uid, MapCreateMap(name=mdata.name, visible=mdata.visible))
-            if mdata.mWidget.file_map:
-                self.server.answer(uid, MapLoadBackground(name=map_name))
-            for item in mdata.mWidget.items():
-                QApplication.processEvents()
-                if isinstance(item, BaseToken):
-                    self.server.answer(uid, MapAddToken(name=map_name, mime=item.mime(), pos=item.pos().toTuple()))
-            self.server.answer(uid, MapFogFull(name=map_name, data=mdata.mWidget.getFullFog()))
-    
+    @router.handler(ImageActionType.NAME_REQUEST)
     def _handle_name_map(self, uid, msg: ImageNameRequest):
-        if file_path := self.images.get(msg.name, None):
+        if file_path := self.images.get(msg.name):
             self.server.answer(uid, DoneCallback(uid_callback=msg.uid))
             self.server.answer_image(uid, file_path, msg.name)
         else:

@@ -1,12 +1,15 @@
 from PySide6.QtCore import QPoint, Signal, QPointF
+from PySide6.QtWidgets import QApplication
 
 from CommonTools.core import Socket, ClientData
+from ServerTools.core.server_socket import WebSocketServer
 from CommonTools.messages import *
 from CommonTools.ui.baseController import BaseController
 from CommonTools.map_widget.tokens_dnd import BaseToken
 
 
 class MasterController(BaseController):
+    socket: WebSocketServer
     error = Signal(str)
     
     def __init__(self, socket: Socket):
@@ -40,6 +43,22 @@ class MasterController(BaseController):
             scale=token.cfg.scale
         ))
         self.update_players()
+        
+    def sync_client_data(self, uid: str):
+        offset, size = self.tabMaps.getOffsetSize()
+        self.socket.answer(uid, MapGridData(offset=offset.toTuple(), size=size))
+        for map_name in self.tabMaps.maps.keys():
+            mdata, tokens = self.tabMaps.getMapData(map_name)
+            
+            self.socket.answer(uid, MapCreateMap(name=mdata.name, visible=mdata.visible))
+            if mdata.mWidget.file_map:
+                self.socket.answer(uid, MapLoadBackground(name=map_name))
+            for item in mdata.mWidget.items():
+                QApplication.processEvents()
+                QApplication.processEvents()
+                if isinstance(item, BaseToken):
+                    self.socket.answer(uid, MapAddToken(name=map_name, mime=item.mime(), pos=item.pos().toTuple()))
+            self.socket.answer(uid, MapFogFull(name=map_name, data=mdata.mWidget.getFullFog()))
     
     def _ohandle_remove_token(self, name, token: BaseToken):
         if self.tabMaps.isEmpty():

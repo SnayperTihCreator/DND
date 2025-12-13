@@ -80,7 +80,7 @@ class TabMapsWidget(QTabWidget):
         mdata = self.maps[name]
         return mdata, [item for item in mdata.mWidget.items() if isinstance(item, BaseToken)]
     
-    def getOffsetSize(self):
+    def getOffsetSize(self) -> tuple[QPointF, int]:
         return copy(self.calls_saved["setOffsetSize"])
     
     def load_map(self, name, file_path):

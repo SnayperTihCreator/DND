@@ -12,21 +12,24 @@ class ErrorMessage(BaseMessage, type=CommonActionType.ERROR):
     error: str
 
 
-class DoneCallback(BaseMessage, type=CommonActionType.DONE_CALL):
+class RequestMessage(BaseMessage):
     uid_callback: str
 
 
-class ErrorCallback(BaseMessage, type=CommonActionType.ERROR_CALL):
-    uid_callback: str
+class DoneCallback(RequestMessage, type=CommonActionType.DONE_CALL):
+    pass
+
+
+class ErrorCallback(RequestMessage, type=CommonActionType.ERROR_CALL):
     error: str
 
 
-class IgnoreCallback(BaseMessage, type=CommonActionType.IGNORE_CALL):
-    uid_callback: str
+class IgnoreCallback(RequestMessage, type=CommonActionType.IGNORE_CALL):
+    pass
 
 
 __all__ = [
-    "CommonActionType",
+    "CommonActionType", "RequestMessage",
     "ErrorMessage", "ErrorCallback",
     "IgnoreCallback", "DoneCallback"
 ]

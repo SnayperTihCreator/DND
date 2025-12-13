@@ -1,21 +1,27 @@
-from pathlib import Path
 from functools import partial
+from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtWidgets import QMainWindow, QStackedWidget, QToolBar, QCheckBox, QGraphicsColorizeEffect
 from PySide6.QtGui import QColor, QIcon
+from PySide6.QtWidgets import (
+    QMainWindow, QStackedWidget, QToolBar, QCheckBox,
+    QGraphicsColorizeEffect
+)
 from loguru import logger
-
-logger = logger.bind(pack="ClientWindow")
 
 from ClientTools.core.client_socket import WebSocketClient
 from CommonTools.core import Image, classes
+from CommonTools.components import GuidePanel, ColorButton, AsyncRequestManager, ImageContext, Register
+from CommonTools.map_widget.tokens_dnd import MovedEvent
+from CommonTools.messages import (
+    BaseMessage, ClientActionType, MapActionType, MapPlayerMoved,
+    GetAllMaps, MapLoadBackground, ImageNameRequest
+)
 from .connector_widget import Connector
 from .login_widget import Loging
 from .playerController import PlayerController
-from CommonTools.components import GuidePanel, ColorButton, ImageManager, CallbackManager
-from CommonTools.messages import *
-from CommonTools.map_widget.tokens_dnd import MovedEvent
+
+logger = logger.bind(pack="ClientWindow")
 
 
 class PlayerGameTable(QMainWindow):
@@ -25,22 +31,28 @@ class PlayerGameTable(QMainWindow):
         self.setWindowIcon(QIcon(":/icons/main.png"))
         self.setWindowTitle("Виртуальный стол: Игрок")
         
-        self.image_manager = ImageManager()
-        self.callback_manager = CallbackManager()
+        self.cache_folder = Path("./.cache")
+        self.cache_folder.mkdir(exist_ok=True, parents=True)
+        
+        # Managers
+        self.async_manager = AsyncRequestManager()
+        self.register = Register()
+        
+        # Socket setup
         self.socket = WebSocketClient()
         self.client_data = self.socket.client
+        
         self.socket.error_occurred.connect(self.showErrorMessage)
         self.socket.connected.connect(self._handle_connect)
         self.socket.disconnected.connect(self._handle_disconnect)
         self.socket.message_received.connect(self._handle_message_raw)
         self.socket.image_received.connect(self._handle_image)
         
-        self.cache_folder = Path("./.cache")
-        self.cache_folder.mkdir(exist_ok=True, parents=True)
-        
+        # UI Setup
         self.stacker = QStackedWidget()
         self.setCentralWidget(self.stacker)
         
+        # Pages
         self.controller = PlayerController(self.socket)
         self.stacker.addWidget(self.controller)
         
@@ -54,26 +66,39 @@ class PlayerGameTable(QMainWindow):
         
         self.stacker.setCurrentWidget(self.connector)
         
-        self.player_panel = GuidePanel("https://longstoryshort.app/characters/list/", "Лист персонажа", login)
+        # Docks
+        self.player_panel = GuidePanel(
+            "https://longstoryshort.app/characters/list/",
+            "Лист персонажа",
+            login
+        )
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.player_panel)
         self.player_panel.hide()
         
-        self.player_cls_panel = GuidePanel("https://5e14.ttg.club/classes", "Лист класса", f"{login}-cls")
+        self.player_cls_panel = GuidePanel(
+            "https://5e14.ttg.club/classes",
+            "Лист класса",
+            f"{login}-cls"
+        )
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.player_cls_panel)
         self.player_cls_panel.hide()
         
+        # Menu
         self.menu_docker = self.menuBar().addMenu("Панели")
+        
         self.player_panel_action = self.menu_docker.addAction("Открыть лист персонажа")
         self.player_panel_action.triggered.connect(self.player_panel.show)
         
         self.player_cls_panel_action = self.menu_docker.addAction("Открыть лист класса")
         self.player_cls_panel_action.triggered.connect(self._on_action_show_player_cls)
         
+        # Toolbar
         self.bottomToolBar = QToolBar()
         self.addToolBar(Qt.ToolBarArea.BottomToolBarArea, self.bottomToolBar)
         
         self.btnColorGrid = ColorButton(color="#4a4a4a")
         self.btnColorGrid.color_changed.connect(self._handle_change_color)
+        
         self.checkBoxVisibleGrid = QCheckBox("Сетка")
         self.checkBoxVisibleGrid.setChecked(True)
         self.checkBoxVisibleGrid.toggled.connect(self._handle_change_vgrid)
@@ -85,9 +110,8 @@ class PlayerGameTable(QMainWindow):
     
     def _on_action_show_player_cls(self):
         if self.client_data.cls:
-            self.player_cls_panel.handle_load_url(
-                f"https://5e14.ttg.club/classes/{classes[self.client_data.cls]}"
-            )
+            url = f"https://5e14.ttg.club/classes/{classes.get(self.client_data.cls, '')}"
+            self.player_cls_panel.handle_load_url(url)
             self.player_cls_panel.show()
         else:
             self.showErrorMessage("Вы еще не выбрали класс")
@@ -101,7 +125,6 @@ class PlayerGameTable(QMainWindow):
     def applyErrorEffect(self):
         colorize = QGraphicsColorizeEffect(self)
         colorize.setColor(QColor("#f00"))
-        
         self.statusBar().setGraphicsEffect(colorize)
     
     def resetEffect(self):
@@ -113,13 +136,11 @@ class PlayerGameTable(QMainWindow):
         logger.error(msg)
         QTimer.singleShot(2000, self.resetEffect)
     
-    def event(self, event):
+    def customEvent(self, event: MovedEvent):
         if event.type() == MovedEvent.MovedEventType:
-            self.client_data.send_msg(MapPlayerMoved(
-                pos=event.pos_target.toTuple()
-            ))
-            return True
-        return super().event(event)
+            self.client_data.send_msg(MapPlayerMoved(pos=event.pos_target.toTuple()))
+            event.accept()
+        super().customEvent(event)
     
     def _handle_connect(self):
         self.statusBar().clearMessage()
@@ -138,12 +159,13 @@ class PlayerGameTable(QMainWindow):
     def _handle_image(self, image: Image):
         cache_image = self.cache_folder / f"{image.name}{image.suffix}"
         cache_image.write_bytes(image.image_data)
-        logger.debug("Получено изображение {iname}{isuffix} через {istrategy}", iname=image.name,
-                     isuffix=image.suffix, istrategy=image.strategy)
-        self.image_manager.handle(image.name, cache_image)
+        
+        logger.debug("Получено изображение {iname}{isuffix} через {istrategy}",
+                     iname=image.name, isuffix=image.suffix, istrategy=image.strategy)
+        self.async_manager.handle_resource("images", image.name, cache_image)
     
     def _handle_message(self, msg: BaseMessage):
-        if self.callback_manager.handle(msg):
+        if self.async_manager.handle_message(msg):
             return
         
         if self.controller.handle_message(msg):
@@ -163,14 +185,15 @@ class PlayerGameTable(QMainWindow):
                 logger.info("Не обработанное сообщение: {mtype} - {msg}", mtype=msg.type, msg=msg)
     
     def _handle_load_bg(self, msg: MapLoadBackground):
-        self.image_manager.register(msg.name, self._callback_load_bg)
-        uid = self.callback_manager.register(True, ignore=partial(self.image_manager.unregister, msg.name))
-        self.socket.send_msg(ImageNameRequest(name=msg.name, uid=uid))
+        ctx = ImageContext(None, self._callback_load_bg, msg.name)
+        self.async_manager.register(ctx)
+        self.socket.send_msg(ImageNameRequest(name=ctx.name, uid=ctx.uid))
     
-    def _callback_load_bg(self, name, file_path):
+    def _callback_load_bg(self, ctx: ImageContext, file_path):
+        logger.info("Загрузка фона")
         self.statusBar().showMessage("Загрузка фона", 2000)
-        self.controller.tabMaps.load_map(name, file_path)
-        self.controller.clear_buffer(name)
+        self.controller.tabMaps.load_map(ctx.name, file_path)
+        self.controller.clear_buffer(ctx.name)
     
     def _handle_change_color(self, color):
         self.controller.tabMaps.call_all_method("setColorGrid", color)
