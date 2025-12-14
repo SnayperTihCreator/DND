@@ -198,10 +198,18 @@ class MapWidget(QGraphicsView):
         return token
     
     def create_player(self, name, cls, uid):
+        for path in Path(".cache").glob(f"token_{uid}"):
+            file = path.as_posix()
+            break
+        else:
+            file = None
         token = self.token_manager.create_token(f"player:{name}:{cls}:{uid}", self.token_spawn.pos())
-        if token is not None:
+        if token:
             self.scene().addItem(token)
             self._apply_movement_setting_to_token(token)
+            
+        if token and file:
+            token.setPixmap(file)
         return token
     
     def set_drawing_color(self, color):

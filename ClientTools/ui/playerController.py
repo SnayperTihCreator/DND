@@ -15,7 +15,7 @@ class PlayerController(BaseController):
         
         self.set_visible_token(["spawn_point"], False)
         self.active = False
-        self.bufferActive = True
+        self.buffer.enable(True)
     
     # noinspection PyTypeChecker
     def _handle_custom_message(self, msg: BaseMessage):

@@ -42,7 +42,9 @@ class MasterController(BaseController):
             pos=token.pos().toTuple(),
             scale=token.cfg.scale
         ))
-        self.update_players()
+        
+        if token.ttype == "spawn":
+            self.update_players()
         
     def sync_client_data(self, uid: str):
         offset, size = self.tabMaps.getOffsetSize()

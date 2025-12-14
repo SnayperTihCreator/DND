@@ -22,6 +22,7 @@ from .masterController import MasterController
 
 router = MessageRouter()
 
+
 class MasterGameTable(QMainWindow):
     def __init__(self, login):
         super().__init__()
@@ -266,21 +267,29 @@ class MasterGameTable(QMainWindow):
     def _handle_image(self, image: Image):
         cache_image = self.cache_folder / f"{image.name}{image.suffix}"
         cache_image.write_bytes(image.image_data)
+        self.images.create(image.name, cache_image.as_posix())
+        if image.name.startswith("token_"):
+            self.controller.setPixmapPlayerUid(image.name.replace("token_", ""), cache_image.as_posix())
         logger.debug("Получено изображение {iname}{isuffix} через {istrategy}", iname=image.name,
                      isuffix=image.suffix, istrategy=image.strategy)
     
     @router.handler(ClientActionType.START_PLAYER)
     def _action_add_player(self, uid_answer: str, msg: ClientStartPlayer):
         self.server.answer(uid_answer, msg)
-        self.server.broadcast(ClientAddPlayer(uid=uid_answer, name=msg.name, cls=msg.cls), uid_answer)
+        self.server.clients[uid_answer].iname = msg.iname
+        self.server.broadcast(ClientAddPlayer(uid=uid_answer, name=msg.name, cls=msg.cls, iname=msg.iname), uid_answer)
         for uid, client in self.server.clients.items():
             QApplication.processEvents()
             if client.is_playing and uid_answer != uid:
-                self.server.answer(uid_answer, ClientAddPlayer(uid=uid, name=client.name, cls=client.cls))
+                self.server.answer(uid_answer, ClientAddPlayer(
+                    uid=uid, name=client.name, cls=client.cls, iname=client.iname
+                ))
         self.players[uid_answer] = self.server.clients[uid_answer]
         self.controller.update_player_list(self.players)
+        if msg.iname and (file := self.images.get(msg.iname)):
+            self.controller.setPixmapPlayerUid(uid_answer, file)
         self.player_panel.addPlayer(uid_answer, msg.name, msg.cls)
-        
+    
     @router.handler(MapActionType.MAPS_ALL_DATA)
     def _action_get_all_data(self, uid, _: GetAllMaps):
         self.controller.sync_client_data(uid)

@@ -1,3 +1,4 @@
+from typing import Optional
 from .core import BaseMessage, BaseActionType
 
 
@@ -16,12 +17,14 @@ class ClientConnect(BaseMessage, type=ClientActionType.CONNECT):
 class ClientStartPlayer(BaseMessage, type=ClientActionType.START_PLAYER):
     name: str
     cls: str
+    iname: Optional[str] = None
 
 
 class ClientAddPlayer(BaseMessage, type=ClientActionType.ADD_PLAYER):
     uid: str
     name: str
     cls: str
+    iname: Optional[str] = None
 
 
 class ClientRemovePlayer(BaseMessage, type=ClientActionType.REMOVE_PLAYER):

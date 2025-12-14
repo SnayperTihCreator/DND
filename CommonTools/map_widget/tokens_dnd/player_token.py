@@ -1,5 +1,3 @@
-from PySide6.QtGui import QColor
-
 from .base_token import BaseToken
 from CommonTools.core import PlayerTokenConfig
 

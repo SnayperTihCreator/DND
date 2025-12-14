@@ -24,7 +24,6 @@ class TokenManager(QObject):
     def create_token(self, mime: str, pos: QPointF, scale=1.0):
         
         mime_rf, result = self._normalize_mime(mime.strip())
-        
         if mime_rf is None:
             return None
         
@@ -97,7 +96,7 @@ class TokenManager(QObject):
         
         ttype, name, number, _ = match_runtime.groups()
         if ttype == "player":
-            return None
+            return mime
         if number == "None":
             return mime
         ext_number = self._token_unique_cache.get(f"{ttype}:{name}", 0)

@@ -1,21 +1,15 @@
 from abc import ABCMeta, ABC, abstractmethod
-from enum import Enum, auto
 
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout
-from PySide6.QtCore import QObject, QPointF
+from PySide6.QtCore import QObject
 from loguru import logger
 
 logger = logger.bind(pack="BaseController")
 
-from CommonTools.map_widget.tokens_dnd import BaseToken
+from CommonTools.map_widget.tokens_dnd import BaseToken, PlayerToken
 from CommonTools.messages import *
-from CommonTools.core import Socket, ClientData
+from CommonTools.core import Socket, ClientData, BufferManager, ViewFog
 from CommonTools.ui.tabs_map_controller import TabMapsWidget
-
-
-class ViewFog(Enum):
-    FULL = auto()
-    DIFF = auto()
 
 
 class MetaQABC(ABCMeta, type(QObject)):
@@ -38,10 +32,7 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
         
         self.main_box.addWidget(self.tabMaps)
         
-        self.bufferActive = False
-        self.activeMaps: set[str] = set()
-        self.buffer_tokens: dict[tuple[str, str], tuple[QPointF, float]] = {}
-        self.buffer_fog: dict[str, list[tuple[ViewFog, bool, list]]] = {}
+        self.buffer = BufferManager()
         
         self.visible_tokens = {
             "players": True,
@@ -51,20 +42,13 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
         }
     
     def clear_buffer(self, name_active):
-        self.activeMaps.add(name_active)
         logger.success("Activate map: {name}", name=name_active)
+        self.buffer.mark_active(name_active)
         
-        removed = []
-        for (name_map, mime), (pos, scale) in self.buffer_tokens.items():
-            if name_active == name_map:
-                self.add_token_nw(name_map, mime, pos, scale)
-                removed.append((name_map, mime))
+        for mime, pos, scale in self.buffer.popTokens(name_active):
+            self.add_token_nw(name_active, mime, pos, scale)
         
-        for uid in removed:
-            del self.buffer_tokens[uid]
-        
-        fog_history = self.buffer_fog.pop(name_active)
-        self.apply_fog_nw(name_active, fog_history)
+        self.apply_fog_nw(name_active, self.buffer.popFog(name_active))
     
     def _apply_visible_token(self, token: BaseToken):
         visible = True
@@ -100,7 +84,9 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
             
             for player_id in new_ids - current_ids:
                 cd = self.players[player_id]
-                self.players_map[player_id] = map_main.create_player(cd.name, cd.cls, player_id)
+                token = self.players_map[player_id] = map_main.create_player(cd.name, cd.cls, player_id)
+                if file := self.buffer.getImage(player_id):
+                    token.setPixmap(file)
     
     # noinspection PyTypeChecker
     def handle_message(self, msg: BaseMessage):
@@ -133,16 +119,15 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
         return True
     
     def _handle_fog_change(self, msg: MapFogChanged):
-        if self.bufferActive and (msg.name not in self.activeMaps):
-            self.buffer_fog.setdefault(msg.name, [])
-            self.buffer_fog[msg.name].append((ViewFog.DIFF, msg.reveal, msg.data))
+        if self.buffer.should_buffer(msg.name):
+            self.buffer.addFog(msg.name, ViewFog.DIFF, msg.reveal, msg.data)
         else:
             self.apply_fog_nw(msg.name, [(ViewFog.DIFF, msg.reveal, msg.data)])
         return True
     
     def _handle_fog_full(self, msg: MapFogFull):
-        if self.bufferActive and (msg.name not in self.activeMaps):
-            self.buffer_fog[msg.name] = [(ViewFog.FULL, True, msg.data)]
+        if self.buffer.should_buffer(msg.name):
+            self.buffer.addFog(msg.name, ViewFog.FULL, True, msg.data)
         else:
             self.apply_fog_nw(msg.name, [(ViewFog.FULL, True, msg.data)])
         return True
@@ -151,23 +136,29 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
     def _handle_custom_message(self, msg: BaseMessage):
         pass
     
+    def setPixmapPlayerUid(self, uid, file_name):
+        self.buffer.addImage(uid, file_name)
+        self.setPixmapPlayerUid_nw(uid, file_name)
+    
+    def setPixmapPlayerUid_nw(self, uid, file_name):
+        if uid in self.players_map:
+            self.players_map[uid].setPixmap(file_name)
+    
     def add_token(self, name, mime, pos, scale):
-        if self.bufferActive and (name not in self.activeMaps):
-            self.buffer_tokens[(name, mime)] = (pos, scale)
+        if self.buffer.should_buffer(name):
+            self.buffer.addToken(name, mime, pos, scale)
         else:
             self.add_token_nw(name, mime, pos, scale)
     
     def remove_token(self, name, mime):
-        if self.bufferActive and (name not in self.activeMaps):
-            self.buffer_tokens.pop((name, mime))
+        if self.buffer.should_buffer(name):
+            self.buffer.removeToken(name, mime)
         else:
             self.remove_token_nw(name, mime)
     
     def move_token(self, name, mime, pos):
-        if self.bufferActive and (name not in self.activeMaps):
-            key = (name, mime)
-            _, current_scale = self.buffer_tokens[key]
-            self.buffer_tokens[key] = (pos, current_scale)
+        if self.buffer.should_buffer(name):
+            self.buffer.moveToken(name, mime, pos)
         else:
             self.move_token_nw(name, mime, pos)
     
@@ -175,7 +166,8 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
         token = self.tabMaps.create_token(name, mime, pos, scale)
         if token is not None:
             self._apply_visible_token(token)
-        self.update_players()
+            if isinstance(token, PlayerToken) and (img := self.buffer.getImage(token.cfg.uid)):
+                token.setPixmap(img)
         return token
     
     def remove_token_nw(self, name, mime):

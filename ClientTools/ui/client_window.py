@@ -11,17 +11,19 @@ from loguru import logger
 
 from ClientTools.core.client_socket import WebSocketClient
 from CommonTools.core import Image, classes
-from CommonTools.components import GuidePanel, ColorButton, AsyncRequestManager, ImageContext, Register
+from CommonTools.components import GuidePanel, ColorButton, AsyncRequestManager, ImageContext, Register, MessageRouter
 from CommonTools.map_widget.tokens_dnd import MovedEvent
 from CommonTools.messages import (
     BaseMessage, ClientActionType, MapActionType, MapPlayerMoved,
-    GetAllMaps, MapLoadBackground, ImageNameRequest
+    GetAllMaps, MapLoadBackground, ImageNameRequest, ClientStartPlayer, ClientAddPlayer
 )
 from .connector_widget import Connector
 from .login_widget import Loging
 from .playerController import PlayerController
 
 logger = logger.bind(pack="ClientWindow")
+
+router = MessageRouter()
 
 
 class PlayerGameTable(QMainWindow):
@@ -162,7 +164,7 @@ class PlayerGameTable(QMainWindow):
         
         logger.debug("Получено изображение {iname}{isuffix} через {istrategy}",
                      iname=image.name, isuffix=image.suffix, istrategy=image.strategy)
-        self.async_manager.handle_resource("images", image.name, cache_image)
+        self.async_manager.handle_resource("images", image.name, cache_image.as_posix())
     
     def _handle_message(self, msg: BaseMessage):
         if self.async_manager.handle_message(msg):
@@ -171,20 +173,27 @@ class PlayerGameTable(QMainWindow):
         if self.controller.handle_message(msg):
             return
         
-        match msg.type:
-            case ClientActionType.START_PLAYER:
-                self.client_data.is_playing = True
-                self.controller.active = True
-                self.activate_controller()
-                self.stacker.setCurrentWidget(self.controller)
-                self.socket.send_msg(GetAllMaps())
-                logger.info("Запуск сессии")
-            case MapActionType.LOAD_BACKGROUND if self.controller.active:
-                self._handle_load_bg(msg)
-            case _:
-                logger.info("Не обработанное сообщение: {mtype} - {msg}", mtype=msg.type, msg=msg)
+        if router.dispatch(self, self.client_data, msg):
+            return
+        logger.info("Не обработанное сообщение: {mtype} - {msg}", mtype=msg.type, msg=msg)
     
-    def _handle_load_bg(self, msg: MapLoadBackground):
+    @router.handler(ClientActionType.START_PLAYER)
+    def _handle_start_player(self, uid, msg: ClientStartPlayer):
+        self.client_data.is_playing = True
+        self.controller.active = True
+        self.activate_controller()
+        self.stacker.setCurrentWidget(self.controller)
+        self.socket.send_msg(GetAllMaps())
+        
+        if msg.iname:
+            ctx = ImageContext(None, self._callback_add_player, msg.iname)
+            self.async_manager.register(ctx)
+            self.socket.send_msg(ImageNameRequest(name=msg.iname, uid=ctx.uid))
+        logger.info("Запуск сессии")
+    
+    @router.handler(MapActionType.LOAD_BACKGROUND)
+    def _handle_load_bg(self, _uid, msg: MapLoadBackground):
+        if not self.controller.active: return
         ctx = ImageContext(None, self._callback_load_bg, msg.name)
         self.async_manager.register(ctx)
         self.socket.send_msg(ImageNameRequest(name=ctx.name, uid=ctx.uid))
@@ -194,6 +203,16 @@ class PlayerGameTable(QMainWindow):
         self.statusBar().showMessage("Загрузка фона", 2000)
         self.controller.tabMaps.load_map(ctx.name, file_path)
         self.controller.clear_buffer(ctx.name)
+    
+    @router.handler(ClientActionType.ADD_PLAYER)
+    def _handle_add_player(self, _uid, msg: ClientAddPlayer):
+        ctx = ImageContext(None, self._callback_add_player, f"token_{msg.uid}")
+        self.async_manager.register(ctx)
+        self.socket.send_msg(ImageNameRequest(name=ctx.name, uid=ctx.uid))
+    
+    def _callback_add_player(self, ctx: ImageContext, file_path):
+        uid = ctx.name.replace("token_", "")
+        self.controller.setPixmapPlayerUid(uid, file_path)
     
     def _handle_change_color(self, color):
         self.controller.tabMaps.call_all_method("setColorGrid", color)

@@ -1,7 +1,7 @@
 from typing import Optional
 
-from PySide6.QtCore import Qt, QVariantAnimation, QEasingCurve, QPointF, QEvent
-from PySide6.QtGui import QPen, QPainter, QColor
+from PySide6.QtCore import Qt, QVariantAnimation, QEasingCurve, QPointF, QEvent, QRect
+from PySide6.QtGui import QPen, QPainter, QColor, QPixmap, QPainterPath
 from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsItem, QMenu, QInputDialog
 
 from CommonTools.core import TokenConfig
@@ -23,6 +23,8 @@ class BaseToken(QGraphicsEllipseItem):
         super().__init__(0, 0, config.size, config.size)
         self.cfg = config
         
+        self._pixmap: Optional[QPixmap] = None
+        
         self.old_pos = self.pos()
         self.animation = QVariantAnimation()
         self.animation.valueChanged.connect(self.on_animation_update)
@@ -36,11 +38,34 @@ class BaseToken(QGraphicsEllipseItem):
         self.setBrush(self.cfg.color)
         self.setPen(QPen(QColor("#000"), 2))
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
-        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsScenePositionChanges)
         self.setAcceptHoverEvents(True)
+    
+    def setPixmap(self, pixmap: str | bytes | QPixmap):
+        original = QPixmap()
+        if isinstance(pixmap, str):
+            original.load(pixmap)
+        elif isinstance(pixmap, bytes):
+            original.loadFromData(pixmap)
+        elif isinstance(pixmap, QPixmap):
+            original = pixmap.copy()
         
-        self._tooltip_item: Optional[ToolTipToken] = None
+        if original.isNull():
+            return
+        
+        size = min(original.width(), original.height())
+        x = (original.width() - size) // 2
+        y = (original.height() - size) // 2
+        cropped = original.copy(QRect(x, y, size, size))
+        
+        TEXTURE_SIZE = 512
+        self._pixmap = cropped.scaled(
+            TEXTURE_SIZE, TEXTURE_SIZE,
+            Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+            Qt.TransformationMode.SmoothTransformation
+        )
+        
+        self.update()
     
     @property
     def isSideClient(self):
@@ -99,7 +124,7 @@ class BaseToken(QGraphicsEllipseItem):
         self.is_running_anim = False
         self.old_anim_pos = self.pos()
         super().mousePressEvent(event)
-        
+    
     def hoverEnterEvent(self, event):
         if self.isSideClient or not self.cfg.tooltip:
             return
@@ -107,7 +132,7 @@ class BaseToken(QGraphicsEllipseItem):
         self.scene().show_tooltip(self.cfg.tooltip, scene_pos)
         
         super().hoverEnterEvent(event)
-        
+    
     def hoverLeaveEvent(self, event):
         self.scene().hide_tooltip()
         super().hoverLeaveEvent(event)
@@ -118,7 +143,20 @@ class BaseToken(QGraphicsEllipseItem):
     
     def paint(self, painter, option, widget=None):
         """Отрисовка токена с текстом"""
-        super().paint(painter, option, widget)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+        if self._pixmap:
+            path = QPainterPath()
+            path.addEllipse(self.rect())
+            painter.save()
+            painter.setClipPath(path)
+            painter.drawPixmap(self.rect().toRect(), self._pixmap)
+            painter.restore()
+            
+            painter.setPen(self.pen())
+            painter.drawEllipse(self.rect())
+        else:
+            super().paint(painter, option, widget)
         self._draw_text(painter)
     
     def _draw_text(self, painter: QPainter):
@@ -142,6 +180,8 @@ class BaseToken(QGraphicsEllipseItem):
     
     def _get_text_color(self):
         """Определяет цвет текста на основе фона"""
+        if self._pixmap:
+            return Qt.GlobalColor.white
         bg_color = self.brush().color()
         brightness = (bg_color.red() * 0.299 +
                       bg_color.green() * 0.587 +
