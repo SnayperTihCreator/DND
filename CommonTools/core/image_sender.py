@@ -7,7 +7,6 @@ from pathlib import Path
 
 from loguru import logger
 
-
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QApplication
 
@@ -22,8 +21,6 @@ class ImageSender(QObject):
     def __init__(self):
         super().__init__()
         self.client: Optional[ClientData] = None
-        
-        self.current_session: Optional[str] = None
     
     @contextmanager
     def bind_socket(self, socket: ClientData):
@@ -37,14 +34,18 @@ class ImageSender(QObject):
         if self.client is None:
             self.error_occurred.emit("Не найден сокет")
             return False
-        match os.path.getsize(path) / 1024:
-            case size if size < 500:
+        match [os.path.getsize(path) / 1024, Path(path).suffix.lower()]:
+            case [size, ".gif"] if size < 1024:
                 return self.send_image_direct(path, name, self.client)
+            case [size, _] if size < 500:
+                return self.send_image_direct(path, name, self.client)
+            case [_, ".gif"]:
+                return self.send_image_chunked_raw(path, name, self.client)
             case size if size < 1024:
                 return self.send_image_compress(path, name, self.client)
             case _:
                 return self.send_image_chunked(path, name, self.client)
-        
+    
     def send_image_socket(self, path, name, socket: ClientData):
         if socket is None:
             self.error_occurred.emit("Не найден сокет")
@@ -127,4 +128,39 @@ class ImageSender(QObject):
         except Exception as e:
             msg_error = f"Error: {e}"
             self.error_occurred.emit(msg_error)
+            return False
+    
+    def send_image_chunked_raw(self, path, name, socket: ClientData, chunk_size=64 * 1024):
+        try:
+            with open(path, "rb") as f:
+                raw_bytes = f.read()
+            image_data = base64.b64encode(raw_bytes).decode("utf-8")
+            suffix = Path(path).suffix
+            chunks = [image_data[i:i + chunk_size] for i in range(0, len(image_data), chunk_size)]
+            current_session = f"session_{int(time.time() * 1000)}"
+            socket.send_msg(ImageSendChunkStart(
+                session_id=current_session,
+                name=name,
+                total_chunks=len(chunks),
+                total_size=len(image_data),
+                quality=100,
+                chunk_size=chunk_size,
+                suffix=suffix
+            ))
+            
+            for i, chunk in enumerate(chunks):
+                QApplication.processEvents()
+                socket.send_msg(ImageSendChunk(
+                    session_id=current_session,
+                    chunk_index=i,
+                    data=chunk
+                ))
+            
+            socket.send_msg(ImageSendChunkEnd(
+                session_id=current_session
+            ))
+            logger.success("Отправлен оригинал чанками (GIF/RAW)")
+            return True
+        except Exception as e:
+            self.error_occurred.emit(f"Error: {e}")
             return False
