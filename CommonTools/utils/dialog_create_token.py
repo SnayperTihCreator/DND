@@ -5,8 +5,8 @@ from functools import cache
 from attrs import define
 
 from PySide6.QtWidgets import QDialog, QFormLayout, QDialogButtonBox, QTextBrowser, QLineEdit, QComboBox, QMessageBox, \
-    QCheckBox, QWidget, QTextEdit, QSpinBox
-from PySide6.QtCore import Qt, QSize
+    QCheckBox, QWidget, QTextEdit, QSpinBox, QPushButton, QWhatsThis, QHBoxLayout, QLabel
+from PySide6.QtCore import Qt, QSize, QPoint
 
 from .name_utils import FORBIDDEN_CHARS
 
@@ -33,12 +33,10 @@ class DataDialog:
         return f"{ttype}:{self.name}:{number}"
 
 
-
-
 class AutoResizingTextBrowser(QTextBrowser):
     def __init__(self, parent=None):
         super().__init__(parent)
-
+        
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.textChanged.connect(self.updateGeometry)
     
@@ -84,13 +82,29 @@ class BaseDialog(QDialog, ABC, metaclass=QMetaABC):
         self.boxScale.addItem("Огромный", 3.0)
         self.boxScale.addItem("Гиганский", 4.0)
         self.boxScale.setCurrentText("Обычный")
-        self.box.addRow("Масштаб", self.boxScale)
+        
+        self.btnHelp = QPushButton("?")
+        self.btnHelp.setWhatsThis("<img src=':/textures/help_size.png'>")
+        self.btnHelp.pressed.connect(self._whatThis)
+        
+        scale_box = QHBoxLayout()
+        scale_box.addWidget(QLabel("Масштаб"))
+        scale_box.addWidget(self.boxScale)
+        scale_box.addWidget(self.btnHelp)
+        
+        self.box.addRow(scale_box)
         
         self.buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         self.buttonBox.accepted.connect(self._handle_request)
         self.buttonBox.rejected.connect(self.reject)
         self._preInit()
         self._postInit()
+    
+    def _whatThis(self):
+        text = self.btnHelp.whatsThis()
+        pos = self.btnHelp.mapToGlobal(QPoint(0, self.btnHelp.height()))
+        
+        QWhatsThis.showText(pos, text, self.btnHelp)
     
     def _handle_request(self):
         if self._handle_forbidden():

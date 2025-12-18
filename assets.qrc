@@ -26,5 +26,6 @@
     </qresource>
     <qresource prefix="textures">
         <file alias="fog.png">resource/fog.png</file>
+        <file alias="help_size.png">resource/help_size.png</file>
     </qresource>
 </RCC>

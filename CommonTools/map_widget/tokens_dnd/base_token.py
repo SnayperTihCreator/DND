@@ -180,13 +180,15 @@ class BaseToken(QGraphicsEllipseItem):
     
     def _get_text_color(self):
         """Определяет цвет текста на основе фона"""
-        if self._pixmap:
-            return Qt.GlobalColor.white
-        bg_color = self.brush().color()
-        brightness = (bg_color.red() * 0.299 +
-                      bg_color.green() * 0.587 +
-                      bg_color.blue() * 0.114)
-        return Qt.GlobalColor.black if brightness > 186 else Qt.GlobalColor.white
+        if self._pixmap and not self._pixmap.isNull():
+            img = self._pixmap.toImage()
+            avg_color = img.scaled(1, 1,
+                                   Qt.AspectRatioMode.IgnoreAspectRatio,
+                                   Qt.TransformationMode.SmoothTransformation).pixelColor(0, 0)
+            brightness = 255 - avg_color.lightness()
+        else:
+            brightness = 255 - self.brush().color().lightness()
+        return Qt.GlobalColor.black if brightness > 128 else Qt.GlobalColor.white
     
     def mouseMoveEvent(self, event):
         """Обновление сцены при перемещении"""
