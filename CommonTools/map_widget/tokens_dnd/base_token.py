@@ -1,11 +1,10 @@
 from typing import Optional
 
-from PySide6.QtCore import Qt, QVariantAnimation, QEasingCurve, QPointF, QEvent, QRect
+from PySide6.QtCore import Qt, QVariantAnimation, QEasingCurve, QPointF, QEvent, QRect, QRectF
 from PySide6.QtGui import QPen, QPainter, QColor, QPixmap, QPainterPath
 from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsItem, QMenu, QInputDialog
 
 from CommonTools.core import TokenConfig
-from CommonTools.map_widget.core.tooltip_token import ToolTipToken
 
 
 class MovedEvent(QEvent):
@@ -18,12 +17,16 @@ class MovedEvent(QEvent):
 
 class BaseToken(QGraphicsEllipseItem):
     ttype = "service"
+    _default_border = None
     
     def __init__(self, config: TokenConfig):
         super().__init__(0, 0, config.size, config.size)
         self.cfg = config
         
         self._pixmap: Optional[QPixmap] = None
+        if BaseToken._default_border is None:
+            BaseToken._default_border = QPixmap(":/textures/border_token.png")
+        self.border_pixmap = BaseToken._default_border
         
         self.old_pos = self.pos()
         self.animation = QVariantAnimation()
@@ -157,6 +160,13 @@ class BaseToken(QGraphicsEllipseItem):
             painter.drawEllipse(self.rect())
         else:
             super().paint(painter, option, widget)
+        
+        BORDER_SCALE = 1.25
+        w = self.rect().width() * BORDER_SCALE
+        h = self.rect().height() * BORDER_SCALE
+        x = self.rect().center().x() - (w / 2)
+        y = self.rect().center().y() - (h / 2)
+        painter.drawPixmap(QRectF(x, y, w, h).toRect(), self.border_pixmap)
         self._draw_text(painter)
     
     def _draw_text(self, painter: QPainter):
