@@ -1,7 +1,7 @@
 from abc import ABCMeta, ABC, abstractmethod
 
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout
-from PySide6.QtCore import QObject
+from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QApplication
+from PySide6.QtCore import QObject, Signal
 from loguru import logger
 
 logger = logger.bind(pack="BaseController")
@@ -10,6 +10,7 @@ from CommonTools.map_widget.tokens_dnd import BaseToken, PlayerToken
 from CommonTools.messages import *
 from CommonTools.core import Socket, ClientData, BufferManager, ViewFog
 from CommonTools.ui.tabs_map_controller import TabMapsWidget
+from CommonTools.utils import getImageMIME
 
 
 class MetaQABC(ABCMeta, type(QObject)):
@@ -17,6 +18,8 @@ class MetaQABC(ABCMeta, type(QObject)):
 
 
 class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
+    request_image = Signal(str, str)
+    
     def __init__(self, socket: Socket, client: ClientData):
         super().__init__()
         self.socket = socket
@@ -33,6 +36,8 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
         self.main_box.addWidget(self.tabMaps)
         
         self.buffer = BufferManager()
+        self.tabMaps.token_image_registered.connect(self.register_image)
+        self.tabMaps.request_image.connect(self.request_image)
         
         self.visible_tokens = {
             "players": True,
@@ -72,6 +77,18 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
     def update_player_list(self, players: dict[str, ClientData]):
         self.players = players.copy()
         self.update_players()
+        
+    def register_image(self, name: str, path: str):
+        self.buffer.addImage(name, path)
+        
+        for mName, mdata in self.tabMaps.maps.items():
+            for item in mdata.mWidget.items():
+                QApplication.processEvents()
+                if isinstance(item, BaseToken) and (getImageMIME(item.mime()) == name):
+                    item.setPixmap(path)
+                    
+    def getImage(self, name: str):
+        return self.buffer.getImage(name)
     
     def update_players(self):
         if (map_main := self.tabMaps.getMap("main")) and map_main.token_spawn:
@@ -85,13 +102,17 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
             for player_id in new_ids - current_ids:
                 cd = self.players[player_id]
                 token = self.players_map[player_id] = map_main.create_player(cd.name, cd.cls, player_id)
-                if file := self.buffer.getImage(player_id):
-                    token.setPixmap(file)
+                img_name = getImageMIME(token.mime())
+                
+                if img := self.buffer.getImage(img_name):
+                    token.setPixmap(img)
+                else:
+                    self.request_image.emit(img_name, token.mime())
     
     # noinspection PyTypeChecker
     def handle_message(self, msg: BaseMessage):
         if not self.active:
-            return
+            return None
         match msg.type:
             case MapActionType.ADD_TOKEN:
                 return self._handle_add_token(msg)
@@ -136,14 +157,6 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
     def _handle_custom_message(self, msg: BaseMessage):
         pass
     
-    def setPixmapPlayerUid(self, uid, file_name):
-        self.buffer.addImage(uid, file_name)
-        self.setPixmapPlayerUid_nw(uid, file_name)
-    
-    def setPixmapPlayerUid_nw(self, uid, file_name):
-        if uid in self.players_map:
-            self.players_map[uid].setPixmap(file_name)
-    
     def add_token(self, name, mime, pos, scale):
         if self.buffer.should_buffer(name):
             self.buffer.addToken(name, mime, pos, scale)
@@ -164,10 +177,16 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
     
     def add_token_nw(self, name, mime, pos, scale=1):
         token = self.tabMaps.create_token(name, mime, pos, scale)
-        if token is not None:
-            self._apply_visible_token(token)
-            if isinstance(token, PlayerToken) and (img := self.buffer.getImage(token.cfg.uid)):
-                token.setPixmap(img)
+        if token is None:
+            return None
+        
+        self._apply_visible_token(token)
+        imageName = getImageMIME(token.mime())
+        
+        if img := self.buffer.getImage(imageName):
+            token.setPixmap(img)
+        else:
+            self.request_image.emit(imageName, token.mime())
         return token
     
     def remove_token_nw(self, name, mime):

@@ -5,8 +5,9 @@ from functools import cache
 from attrs import define
 
 from PySide6.QtWidgets import QDialog, QFormLayout, QDialogButtonBox, QTextBrowser, QLineEdit, QComboBox, QMessageBox, \
-    QCheckBox, QWidget, QTextEdit, QSpinBox, QPushButton, QWhatsThis, QHBoxLayout, QLabel
+    QCheckBox, QWidget, QTextEdit, QSpinBox, QPushButton, QWhatsThis, QHBoxLayout, QLabel, QFileDialog
 from PySide6.QtCore import Qt, QSize, QPoint
+from PySide6.QtGui import QImage
 
 from .name_utils import FORBIDDEN_CHARS
 
@@ -23,6 +24,7 @@ class DataDialog:
     unique: Optional[bool]
     hp: int
     scale: float
+    image_path: Optional[str] = None
     
     @cache
     def cttype(self, ttype: str):
@@ -124,6 +126,9 @@ class BaseDialog(QDialog, ABC, metaclass=QMetaABC):
     
     def setDescription(self, text):
         self.description_text.setPlainText(text)
+        
+    def showError(self, text):
+        QMessageBox.critical(self, "Ошибка", text)
     
     @abstractmethod
     def getResult(self) -> DataDialog:
@@ -140,6 +145,10 @@ class DialogCreateToken(BaseDialog):
         self.description_input = QTextEdit()
         self.box.addRow(self.description_input)
         
+        self.btnSelectAvatar = QPushButton("Выбрать аватар")
+        self.btnSelectAvatar.pressed.connect(self._handle_select_avatar)
+        self.box.addRow("Аватар", self.btnSelectAvatar)
+        
         self.spinBoxHp = QSpinBox(
             value=11,
             maximum=10 ** 6,
@@ -155,6 +164,28 @@ class DialogCreateToken(BaseDialog):
             singleStep=1,
         )
         self.box.addRow("КД", self.spinBoxKd)
+        
+        self.path_avatar = None
+        
+    def _handle_select_avatar(self):
+        path, _ = QFileDialog.getOpenFileName(self, "Аватарка токена", ".", "Image Files (*.png *.jpg *.jpeg)")
+        if path:
+            
+            img = QImage(path)
+            if img.isNull():
+                self.showError("Не найдено изображение")
+                return
+            
+            if img.sizeInBytes() >= 50 * 1024 ** 2:
+                self.showError("Слишком большой вес изображения")
+                return
+            
+            if (img.width() > 2048) or (img.height() > 2048):
+                self.showError("Слишком большой размер изображения")
+                return
+            
+            self.path_avatar = path
+            self.btnSelectAvatar.setText("Выбрато")
     
     def getResult(self) -> DataDialog:
         return DataDialog(
@@ -163,7 +194,8 @@ class DialogCreateToken(BaseDialog):
             self.spinBoxKd.value(),
             self.checkBox.isChecked(),
             self.spinBoxHp.value(),
-            self.boxScale.itemData(self.boxScale.currentIndex(), Qt.ItemDataRole.UserRole)
+            self.boxScale.itemData(self.boxScale.currentIndex(), Qt.ItemDataRole.UserRole),
+            self.path_avatar
         )
     
     @classmethod

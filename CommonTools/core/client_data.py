@@ -23,3 +23,7 @@ class ClientData:
     
     def send_str(self, msg: dict):
         self.socket.sendTextMessage(json5.dumps(msg, ensure_ascii=False))
+    
+    @property
+    def mime(self):
+        return f"player:{self.name}:{self.cls}:{self.uid}"

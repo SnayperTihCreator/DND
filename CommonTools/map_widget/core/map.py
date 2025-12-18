@@ -12,6 +12,7 @@ from .fog_manager import VectorFogManager
 from .graphicsScene import GraphicsScene
 from CommonTools.map_widget.tokens_dnd import *
 from CommonTools.core import ClientData
+from CommonTools.utils import getImageMIME
 
 
 class MapWidget(QGraphicsView):
@@ -21,6 +22,7 @@ class MapWidget(QGraphicsView):
     
     token_moved_map = Signal(object, str)
     fog_changed = Signal(bool, list)
+    request_image = Signal(str, str)
     
     def __init__(self, name, client: ClientData):
         super().__init__()
@@ -269,7 +271,8 @@ class MapWidget(QGraphicsView):
             event.proposedAction()
             return
         data = event.mimeData().text()
-        self.create_token(data, pos)
+        token = self.create_token(data, pos)
+        self.request_image.emit(getImageMIME(token.mime()), token.mime())
         event.acceptProposedAction()
     
     @property

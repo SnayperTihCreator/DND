@@ -11,12 +11,12 @@ from CommonTools.map_widget import MapWidget
 
 logger = logger.bind(pack="ServerWindow")
 
-from CommonTools.components import ColorButton, GuidePanel, Register, MessageRouter
+from CommonTools.components import ColorButton, GuidePanel, MessageRouter
 from ServerTools.core.server_socket import WebSocketServer
 from CommonTools.messages import *
 from CommonTools.core import Image, ClientData
 from ServerTools.components import TokensPanel, DialogCreateMap, PlayerPanel
-from CommonTools.utils import validate_and_resize_image
+from CommonTools.utils import validate_and_resize_image, getImageMIME
 
 from .masterController import MasterController
 
@@ -30,7 +30,6 @@ class MasterGameTable(QMainWindow):
         self.setWindowTitle("Виртуальный стол: Мастер")
         self.setWindowIcon(QIcon(":/icons/main.png"))
         
-        self.images = Register()
         self.players: dict[str, ClientData] = {}
         self.server = WebSocketServer()
         self.server.client_connected.connect(self._handle_connect)
@@ -176,7 +175,8 @@ class MasterGameTable(QMainWindow):
             QMessageBox.critical(self, "Ошибка", "Не удалось загрузить изображение (слишком большое или битое)["
                                                  "4000*4000 макс пикселей].")
             return
-        self.images.create(name, path2)
+        
+        self.controller.register_image(name, path2)
         self.controller.tabMaps.load_map(name, path2)
         self.server.broadcast(MapLoadBackground(name=name))
         self._handle_current_map(name)
@@ -267,9 +267,8 @@ class MasterGameTable(QMainWindow):
     def _handle_image(self, image: Image):
         cache_image = self.cache_folder / f"{image.name}{image.suffix}"
         cache_image.write_bytes(image.image_data)
-        self.images.create(image.name, cache_image.as_posix())
-        if image.name.startswith("token_"):
-            self.controller.setPixmapPlayerUid(image.name.replace("token_", ""), cache_image.as_posix())
+        
+        self.controller.register_image(image.name, cache_image.as_posix())
         logger.debug("Получено изображение {iname}{isuffix} через {istrategy}", iname=image.name,
                      isuffix=image.suffix, istrategy=image.strategy)
     
@@ -286,8 +285,9 @@ class MasterGameTable(QMainWindow):
                 ))
         self.players[uid_answer] = self.server.clients[uid_answer]
         self.controller.update_player_list(self.players)
-        if msg.iname and (file := self.images.get(msg.iname)):
-            self.controller.setPixmapPlayerUid(uid_answer, file)
+        if msg.iname and (img := self.controller.getImage(msg.iname)):
+            imageName = getImageMIME(f"player:{msg.name}:{msg.cls}:{uid_answer}")
+            self.controller.register_image(imageName, img)
         self.player_panel.addPlayer(uid_answer, msg.name, msg.cls)
     
     @router.handler(MapActionType.MAPS_ALL_DATA)
@@ -305,7 +305,7 @@ class MasterGameTable(QMainWindow):
     
     @router.handler(ImageActionType.NAME_REQUEST)
     def _handle_name_map(self, uid, msg: ImageNameRequest):
-        if file_path := self.images.get(msg.name):
+        if file_path := self.controller.getImage(msg.name):
             self.server.answer(uid, DoneCallback(uid_callback=msg.uid))
             self.server.answer_image(uid, file_path, msg.name)
         else:

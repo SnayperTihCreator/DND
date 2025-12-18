@@ -1,18 +1,20 @@
 import re
 from typing import Optional
 
-from PySide6.QtCore import QPointF, QObject
+from PySide6.QtCore import QPointF, QObject, Signal
 from PySide6.QtGui import QColor
 
 from ..tokens_dnd import *
 from ..utils import GridHelper
 from CommonTools.utils.dialog_create_token import DataDialog, DialogCreateToken
-from CommonTools.utils import MIME_RUNTIME_FORMAT, MIME_INPUT_FORMAT
+from CommonTools.utils import MIME_RUNTIME_FORMAT, MIME_INPUT_FORMAT, getImageMIME
 from CommonTools.core import PlayerTokenConfig, SpawnPlayerTokenConfig, ModNpcTokenConfig
 from .graphicsScene import GraphicsScene
 
 
 class TokenManager(QObject):
+    image_registered = Signal(str, str)
+    
     def __init__(self, scene: GraphicsScene):
         super().__init__()
         self.scene = scene
@@ -70,6 +72,11 @@ class TokenManager(QObject):
                     return None, None
                 number = self._get_next_number(result.cttype("mob"), result.unique)
                 mime_rf = result.cttypeAndNumber("mob", number)
+                
+                if result.image_path is not None:
+                    name = getImageMIME(mime_rf)
+                    self.image_registered.emit(name, result.image_path)
+                    
                 return mime_rf, result
             case ["npc", "request"]:
                 result = DialogCreateToken.request("NPC")
@@ -77,6 +84,11 @@ class TokenManager(QObject):
                     return None, None
                 number = self._get_next_number(result.cttype("npc"), result.unique)
                 mime_rf = result.cttypeAndNumber("npc", number)
+                
+                if result.image_path is not None:
+                    name = getImageMIME(mime_rf)
+                    self.image_registered.emit(name, result.image_path)
+                
                 return mime_rf, result
             case ["spawn", "player"]:
                 return "spawn:player:None", None

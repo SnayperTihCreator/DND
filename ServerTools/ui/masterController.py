@@ -26,6 +26,15 @@ class MasterController(BaseController):
         self.tabMaps.token_moved_map.connect(self._ohandle_move_map)
         
         self.tabMaps.fog_changed.connect(self._ohandle_fog_change)
+        self.tabMaps.request_image.connect(self.applyAvatar)
+    
+    def applyAvatar(self, avatar, mime):
+        if not (img := self.buffer.getImage(avatar)): return
+        
+        for mName, mdata in self.tabMaps.maps.items():
+            if not (token := mdata.mWidget.token_manager.tokens.get(mime)): continue
+            
+            token.setPixmap(img)
     
     def _handle_custom_message(self, msg: BaseMessage):
         return
@@ -45,7 +54,7 @@ class MasterController(BaseController):
         
         if token.ttype == "spawn":
             self.update_players()
-        
+    
     def sync_client_data(self, uid: str):
         offset, size = self.tabMaps.getOffsetSize()
         self.socket.answer(uid, MapGridData(offset=offset.toTuple(), size=size))

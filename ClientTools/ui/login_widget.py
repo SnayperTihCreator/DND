@@ -4,7 +4,7 @@ from PySide6.QtGui import QIcon, QImage
 from loguru import logger
 
 from CommonTools.core import ClientData, Socket, classes
-from CommonTools.utils import FORBIDDEN_CHARS
+from CommonTools.utils import FORBIDDEN_CHARS, getImageMIME
 
 from CommonTools.messages import *
 
@@ -77,7 +77,7 @@ class Loging(QMainWindow):
         self.client_data.cls = self.comboClass.currentText()
         
         if self.avatar_path:
-            iname = f"token_{self.client_data.uid}"
+            iname = getImageMIME(self.client_data.mime)
             self.socket.send_image(self.avatar_path, iname)
         else:
             iname = None

@@ -20,6 +20,9 @@ class TabMapsWidget(QTabWidget):
     currentMapChanged = Signal(str)
     fog_changed = Signal(str, bool, list)
     
+    token_image_registered = Signal(str, str)
+    request_image = Signal(str, str)
+    
     def __init__(self, client):
         super().__init__()
         self.client: ClientData = client
@@ -50,6 +53,9 @@ class TabMapsWidget(QTabWidget):
             mWidget.token_moved.connect(partial(self.token_moved.emit, name))
             mWidget.token_moved_map.connect(partial(self.token_moved_map.emit, name))
             mWidget.fog_changed.connect(partial(self.fog_changed.emit, name))
+            
+            mWidget.token_manager.image_registered.connect(self.token_image_registered.emit)
+            mWidget.request_image.connect(self.request_image.emit)
             
             for fname, args in self.calls_saved.items():
                 impl = getattr(mWidget, fname, None)

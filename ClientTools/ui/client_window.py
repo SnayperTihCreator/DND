@@ -11,12 +11,13 @@ from loguru import logger
 
 from ClientTools.core.client_socket import WebSocketClient
 from CommonTools.core import Image, classes
-from CommonTools.components import GuidePanel, ColorButton, AsyncRequestManager, ImageContext, Register, MessageRouter
+from CommonTools.components import GuidePanel, ColorButton, AsyncRequestManager, ImageContext, MessageRouter
 from CommonTools.map_widget.tokens_dnd import MovedEvent
 from CommonTools.messages import (
     BaseMessage, ClientActionType, MapActionType, MapPlayerMoved,
     GetAllMaps, MapLoadBackground, ImageNameRequest, ClientStartPlayer, ClientAddPlayer
 )
+from CommonTools.utils import getImageMIME
 from .connector_widget import Connector
 from .login_widget import Loging
 from .playerController import PlayerController
@@ -38,7 +39,6 @@ class PlayerGameTable(QMainWindow):
         
         # Managers
         self.async_manager = AsyncRequestManager()
-        self.register = Register()
         
         # Socket setup
         self.socket = WebSocketClient()
@@ -57,6 +57,7 @@ class PlayerGameTable(QMainWindow):
         # Pages
         self.controller = PlayerController(self.socket)
         self.stacker.addWidget(self.controller)
+        self.controller.request_image.connect(self._on_request_image)
         
         self.connector = Connector(self.socket)
         self.connector.error_occurred.connect(self.showErrorMessage)
@@ -169,16 +170,14 @@ class PlayerGameTable(QMainWindow):
     def _handle_message(self, msg: BaseMessage):
         if self.async_manager.handle_message(msg):
             return
-        
         if self.controller.handle_message(msg):
             return
-        
         if router.dispatch(self, self.client_data, msg):
             return
         logger.info("Не обработанное сообщение: {mtype} - {msg}", mtype=msg.type, msg=msg)
     
     @router.handler(ClientActionType.START_PLAYER)
-    def _handle_start_player(self, uid, msg: ClientStartPlayer):
+    def _handle_start_player(self, _uid, msg: ClientStartPlayer):
         self.client_data.is_playing = True
         self.controller.active = True
         self.activate_controller()
@@ -186,10 +185,13 @@ class PlayerGameTable(QMainWindow):
         self.socket.send_msg(GetAllMaps())
         
         if msg.iname:
-            ctx = ImageContext(None, self._callback_add_player, msg.iname)
+            ctx = ImageContext(None, self._callback_my_avatar, msg.iname)
             self.async_manager.register(ctx)
             self.socket.send_msg(ImageNameRequest(name=msg.iname, uid=ctx.uid))
         logger.info("Запуск сессии")
+    
+    def _callback_my_avatar(self, ctx: ImageContext, file_name: str):
+        self.controller.register_image(ctx.name, file_name)
     
     @router.handler(MapActionType.LOAD_BACKGROUND)
     def _handle_load_bg(self, _uid, msg: MapLoadBackground):
@@ -206,13 +208,20 @@ class PlayerGameTable(QMainWindow):
     
     @router.handler(ClientActionType.ADD_PLAYER)
     def _handle_add_player(self, _uid, msg: ClientAddPlayer):
-        ctx = ImageContext(None, self._callback_add_player, f"token_{msg.uid}")
+        ctx = ImageContext(None, self._callback_add_player, msg.iname)
         self.async_manager.register(ctx)
         self.socket.send_msg(ImageNameRequest(name=ctx.name, uid=ctx.uid))
     
     def _callback_add_player(self, ctx: ImageContext, file_path):
-        uid = ctx.name.replace("token_", "")
-        self.controller.setPixmapPlayerUid(uid, file_path)
+        self.controller.register_image(ctx.name, file_path)
+    
+    def _on_request_image(self, name, _mime: str):
+        ctx = ImageContext(None, self._callback_image_downloaded, name)
+        self.async_manager.register(ctx)
+        self.socket.send_msg(ImageNameRequest(name=name, uid=ctx.uid))
+    
+    def _callback_image_downloaded(self, ctx: ImageContext, file_path):
+        self.controller.register_image(ctx.name, file_path)
     
     def _handle_change_color(self, color):
         self.controller.tabMaps.call_all_method("setColorGrid", color)

@@ -1,8 +1,6 @@
 from enum import Enum, auto
 from typing import Optional
 
-from PySide6.QtCore import QPointF
-
 
 class ViewFog(Enum):
     FULL = auto()
@@ -72,14 +70,14 @@ class BufferManager:
     def popFog(self, map_name: str):
         return self._fog.pop(map_name, [])
     
-    def addImage(self, uid: str, path: str):
-        self._images[uid] = path
+    def addImage(self, name: str, path: str):
+        self._images[name] = path
     
-    def getImage(self, uid: str) -> Optional[str]:
-        return self._images.get(uid)
+    def getImage(self, name: str) -> Optional[str]:
+        return self._images.get(name)
     
-    def popImage(self, uid: str) -> Optional[str]:
-        return self._images.pop(uid, None)
+    def popImage(self, name: str) -> Optional[str]:
+        return self._images.pop(name, None)
     
     def getAllImages(self):
         return self._images.copy()

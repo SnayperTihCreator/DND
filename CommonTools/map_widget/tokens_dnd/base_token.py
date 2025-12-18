@@ -185,9 +185,9 @@ class BaseToken(QGraphicsEllipseItem):
             avg_color = img.scaled(1, 1,
                                    Qt.AspectRatioMode.IgnoreAspectRatio,
                                    Qt.TransformationMode.SmoothTransformation).pixelColor(0, 0)
-            brightness = 255 - avg_color.lightness()
+            brightness = avg_color.lightness()
         else:
-            brightness = 255 - self.brush().color().lightness()
+            brightness = self.brush().color().lightness()
         return Qt.GlobalColor.black if brightness > 128 else Qt.GlobalColor.white
     
     def mouseMoveEvent(self, event):
