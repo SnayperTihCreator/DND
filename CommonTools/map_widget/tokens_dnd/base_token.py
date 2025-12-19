@@ -68,6 +68,8 @@ class BaseToken(QGraphicsEllipseItem):
             Qt.TransformationMode.SmoothTransformation
         )
         
+        self.setPen(QPen(self.cfg.color, 1.5))
+        
         self.update()
     
     @property
@@ -155,18 +157,18 @@ class BaseToken(QGraphicsEllipseItem):
             painter.setClipPath(path)
             painter.drawPixmap(self.rect().toRect(), self._pixmap)
             painter.restore()
-            
-            painter.setPen(self.pen())
-            painter.drawEllipse(self.rect())
         else:
             super().paint(painter, option, widget)
         
-        BORDER_SCALE = 1.25
-        w = self.rect().width() * BORDER_SCALE
-        h = self.rect().height() * BORDER_SCALE
+        BORDER_SCALE = 1.5
+        w = self.rect().width() * BORDER_SCALE + 1
+        h = self.rect().height() * BORDER_SCALE + 1
         x = self.rect().center().x() - (w / 2)
         y = self.rect().center().y() - (h / 2)
         painter.drawPixmap(QRectF(x, y, w, h).toRect(), self.border_pixmap)
+        if self._pixmap:
+            painter.setPen(self.pen())
+            painter.drawEllipse(self.rect())
         self._draw_text(painter)
     
     def _draw_text(self, painter: QPainter):
