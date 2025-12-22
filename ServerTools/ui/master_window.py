@@ -15,7 +15,7 @@ from CommonTools.components import ColorButton, GuidePanel, MessageRouter
 from ServerTools.core.server_socket import WebSocketServer
 from CommonTools.messages import *
 from CommonTools.core import Image, ClientData
-from ServerTools.components import TokensPanel, DialogCreateMap, PlayerPanel
+from ServerTools.components import TokensPanel, DialogCreateMap, PlayerPanel, DialogCreateNote
 from CommonTools.utils import validate_and_resize_image, getImageMIME
 
 from .masterController import MasterController
@@ -128,6 +128,10 @@ class MasterGameTable(QMainWindow):
         self.player_panel_action = self.menu_panels.addAction("Показать панель игроков")
         self.player_panel_action.triggered.connect(self.player_panel.show)
         
+        self.menu_notes = self.menuBar().addMenu("Заметки")
+        self.note_create_action = self.menu_notes.addAction("Создать заметку")
+        self.note_create_action.triggered.connect(self._on_action_create_note)
+        
         self._deactivate_control()
     
     def applyErrorEffect(self):
@@ -144,6 +148,9 @@ class MasterGameTable(QMainWindow):
         self.statusBar().showMessage(msg, 2000)
         logger.error(msg)
         QTimer.singleShot(2000, self.resetEffect)
+        
+    def _on_action_create_note(self):
+        DialogCreateNote.request(self, self.player_panel.getAllPlayers())
     
     def _on_action_add_map(self):
         if self.controller.tabMaps.isEmpty():

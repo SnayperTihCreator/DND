@@ -272,7 +272,8 @@ class MapWidget(QGraphicsView):
             return
         data = event.mimeData().text()
         token = self.create_token(data, pos)
-        self.request_image.emit(getImageMIME(token.mime()), token.mime())
+        if token:
+            self.request_image.emit(getImageMIME(token.mime()), token.mime())
         event.acceptProposedAction()
     
     @property

@@ -1,6 +1,6 @@
 <RCC>
     <qresource prefix="icons">
-        <file alias="main.png">resource/icon.png</file>
+        <file alias="main.png">resource/common/icon.png</file>
     </qresource>
     <qresource prefix="icons/cls">
         <file alias="bard.png">resource/classes/bard.png</file>
@@ -25,8 +25,25 @@
         <file alias="tooltip.css">resource/css/tooltip.css</file>
     </qresource>
     <qresource prefix="textures">
-        <file alias="fog.png">resource/fog.png</file>
-        <file alias="help_size.png">resource/help_size.png</file>
-        <file alias="border_token.png">resource/border_token.png</file>
+        <file alias="fog.png">resource/common/fog.png</file>
+        <file alias="help_size.png">resource/common/help_size.png</file>
+        <file alias="border_token.png">resource/common/border_token.png</file>
+    </qresource>
+    <qresource prefix="letters">
+        <file alias="1.png">resource/letters/1.png</file>
+        <file alias="2.png">resource/letters/2.png</file>
+        <file alias="3.png">resource/letters/3.png</file>
+        <file alias="4.png">resource/letters/4.png</file>
+        <file alias="5.png">resource/letters/5.png</file>
+        <file alias="6.png">resource/letters/6.png</file>
+        <file alias="7.png">resource/letters/7.png</file>
+        <file alias="8.png">resource/letters/8.png</file>
+        <file alias="9.png">resource/letters/9.png</file>
+        <file alias="10.png">resource/letters/10.png</file>
+        <file alias="11.png">resource/letters/11.png</file>
+        <file alias="12.png">resource/letters/12.png</file>
+        <file alias="13.png">resource/letters/13.png</file>
+        <file alias="14.png">resource/letters/14.png</file>
+        <file alias="15.png">resource/letters/15.png</file>
     </qresource>
 </RCC>
