@@ -1,6 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 import pathlib
 import zipfile
+import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -10,6 +11,7 @@ from PyInstaller.log import logger
 
 DISTPATH: str
 
+icon_path = os.path.join('resource', 'icon.ico')
 
 def buildZipFile(dist: pathlib.Path, dir_name: str):
     folderApp = dist / dir_name
@@ -55,7 +57,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['resource/icon.png'],
+    icon=[icon_path] if os.path.exists(icon_path) else None,
 )
 coll = COLLECT(
     exe,
