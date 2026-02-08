@@ -60,9 +60,7 @@ class ModNpcTokenConfig(KdTokenConfig):
     @property
     def tooltip(self):
         # <img src='icon_hp' width='64' height='icon_kd'>
-        return (f"KD: {self.kd}\n\n"
-                f"HP: {self.hp}\n\n"
-                f"Описание:\n\n{self.description}")
+        return f"KD: {self.kd}<br>HP: {self.hp}<br>Описание:{self.description}"
 
 
 @define

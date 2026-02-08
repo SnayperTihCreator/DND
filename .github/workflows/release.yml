@@ -1,0 +1,70 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win
+          - os: ubuntu-latest
+            platform: linux
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python 3.11
+        run: uv python install 3.11
+
+      - name: Install System Dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libegl1 libopengl0 libxcb-cursor0 libdbus-1-3 \
+            libxkbcommon-x11-0 libfontconfig1 libxrender1 libgl1 libglx0
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      # Запускаем твою команду сборки
+      - name: Build Application
+        run: uv run task build
+
+      # Переименовываем готовый архив под стандарт релиза
+      # Твой .spec создает "dist/Dnd Table.zip"
+      - name: Prepare Artifacts
+        shell: bash
+        run: |
+          VERSION="${{ github.ref_name }}"
+          # Если запуск ручной (не тег), ставим версию manual
+          if [[ $VERSION == main || $VERSION == master || $VERSION == workflow_dispatch ]]; then
+            VERSION="manual"
+          fi
+          
+          # Переименовываем ZIP, созданный спеком
+          # Убираем пробелы из имени для удобства скачивания
+          mv "dist/Dnd Table.zip" "dist/Dnd-Table-$VERSION-${{ matrix.platform }}.zip"
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/Dnd-Table-*.zip
+          overwrite: true
+          generate_release_notes: true

@@ -252,6 +252,11 @@ class PlayerSelectionWidget(QWidget):
     def getAllPlayers(self):
         return list(self.modelList)
     
+    def getSelectedPlayers(self):
+        for player in self.modelList:
+            if not player.active: continue
+            yield player.uid
+    
     def clear(self):
         self.modelList.clear()
         self._update_master_checkbox_ui()

@@ -3,3 +3,4 @@ from .colorButton import ColorButton
 from .async_core import AsyncRequestManager, BaseContext
 from .async_request import ResourceContext, ImageContext
 from .message_router import MessageRouter
+from .advanced_text_edit import AdvancedTextEdit

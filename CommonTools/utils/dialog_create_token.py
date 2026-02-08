@@ -9,6 +9,7 @@ from PySide6.QtWidgets import QDialog, QFormLayout, QDialogButtonBox, QTextBrows
 from PySide6.QtCore import Qt, QSize, QPoint
 from PySide6.QtGui import QImage
 
+from CommonTools.components import AdvancedTextEdit
 from .name_utils import FORBIDDEN_CHARS
 
 
@@ -142,7 +143,7 @@ class BaseDialog(QDialog, ABC, metaclass=QMetaABC):
 
 class DialogCreateToken(BaseDialog):
     def _preInit(self):
-        self.description_input = QTextEdit()
+        self.description_input = AdvancedTextEdit()
         self.box.addRow(self.description_input)
         
         self.btnSelectAvatar = QPushButton("Выбрать аватар")
@@ -190,7 +191,7 @@ class DialogCreateToken(BaseDialog):
     def getResult(self) -> DataDialog:
         return DataDialog(
             self.lineEditName.text(),
-            self.description_input.toPlainText(),
+            self.description_input.toHtml(),
             self.spinBoxKd.value(),
             self.checkBox.isChecked(),
             self.spinBoxHp.value(),

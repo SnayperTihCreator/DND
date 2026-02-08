@@ -25,7 +25,7 @@ class ToolTipToken(QGraphicsItem):
         self.setToolText(text)
     
     def setToolText(self, text):
-        self.doc.setMarkdown(text)
+        self.doc.setHtml(text)
         self.doc.setTextWidth(self.max_width)
         ideal_width = self.doc.idealWidth()
         self.content_width = min(self.max_width, ideal_width)

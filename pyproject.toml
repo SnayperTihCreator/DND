@@ -11,7 +11,15 @@ dependencies = [
     "loguru>=0.7.3",
     "pillow>=12.0.0",
     "pydantic>=2.12.4",
-    "pyinstaller>=6.16.0",
-    "pyside6>=6.10.0",
+    "pyside6==6.10.1",
     "websockets>=15.0.1",
 ]
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.18.0",
+    "taskipy>=1.14.1",
+]
+
+[tool.taskipy.tasks]
+build = "pyinstaller main.spec --noconfirm"

@@ -28,7 +28,6 @@ class ColorButton(QPushButton):
         painter.setPen(Qt.GlobalColor.black if self.color.lightness() > 128 else Qt.GlobalColor.white)
         painter.drawText(self.rect().toRectF(), "Выбрать цвет", Qt.AlignmentFlag.AlignCenter)
         painter.end()
-        
     
     def setColor(self, color):
         self.color = color

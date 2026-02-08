@@ -3,7 +3,7 @@ from typing import Optional
 
 from PySide6.QtCore import Qt, QPoint, QPointF, QTimer
 from PySide6.QtWidgets import QMainWindow, QToolBar, QSpinBox, QLabel, QCheckBox, QApplication, QFileDialog, \
-    QGraphicsColorizeEffect, QMessageBox
+    QGraphicsColorizeEffect, QMessageBox, QGraphicsEffect
 from PySide6.QtGui import QIcon, QColor
 from loguru import logger
 
@@ -141,16 +141,16 @@ class MasterGameTable(QMainWindow):
         self.statusBar().setGraphicsEffect(colorize)
     
     def resetEffect(self):
-        self.statusBar().setGraphicsEffect(None)
+        self.statusBar().setGraphicsEffect(QGraphicsEffect())
     
     def showErrorMessage(self, msg: str):
         self.applyErrorEffect()
         self.statusBar().showMessage(msg, 2000)
         logger.error(msg)
         QTimer.singleShot(2000, self.resetEffect)
-        
+    
     def _on_action_create_note(self):
-        DialogCreateNote.request(self, self.player_panel.getAllPlayers())
+        print(DialogCreateNote.request(self, self.player_panel.getAllPlayers()))
     
     def _on_action_add_map(self):
         if self.controller.tabMaps.isEmpty():
@@ -185,7 +185,7 @@ class MasterGameTable(QMainWindow):
         
         self.controller.register_image(name, path2)
         self.controller.tabMaps.load_map(name, path2)
-        self.server.broadcast(MapLoadBackground(name=name))
+        self.server.broadcast(MapLoadBackground(name=name, uid=""))
         self._handle_current_map(name)
     
     def _on_action_active_map(self):
