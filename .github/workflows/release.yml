@@ -18,7 +18,7 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            platform: win
+            platform: windows
           - os: ubuntu-latest
             platform: linux
 
@@ -53,13 +53,9 @@ jobs:
         shell: bash
         run: |
           VERSION="${{ github.ref_name }}"
-          # Если запуск ручной (не тег), ставим версию manual
           if [[ $VERSION == main || $VERSION == master || $VERSION == workflow_dispatch ]]; then
             VERSION="manual"
           fi
-          
-          # Переименовываем ZIP, созданный спеком
-          # Убираем пробелы из имени для удобства скачивания
           mv "dist/Dnd Table.zip" "dist/Dnd-Table-$VERSION-${{ matrix.platform }}.zip"
 
       - name: Upload to Release

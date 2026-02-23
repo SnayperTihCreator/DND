@@ -1,4 +1,5 @@
 import os
+import platform
 import sys
 import requests
 import subprocess
@@ -58,14 +59,33 @@ class UpdateManager(QObject):
         self.progress_dialog = None
         self.thread = None
     
+    def find_correct_asset(self, assets):
+        """Выбирает нужный URL из списка ассетов в зависимости от ОС"""
+        current_os = platform.system().lower()  # 'windows' или 'linux'
+        
+        for asset in assets:
+            asset_name = asset["name"].lower()
+            if current_os in asset_name and asset_name.endswith(".zip"):
+                return asset["browser_download_url"]
+        
+        return None
+    
     def check_for_updates(self, silent=True):
         try:
             response = requests.get(f"https://api.github.com/repos/{REPO}/releases/latest", timeout=5)
+            response.raise_for_status()
             data = response.json()
             latest_version = data["tag_name"]
             
             if version.parse(latest_version) > version.parse(__version__):
-                self.show_update_dialog(latest_version, data["assets"][0]["browser_download_url"])
+                download_url = self.find_correct_asset(data.get("assets", []))
+                
+                if download_url:
+                    self.show_update_dialog(latest_version, download_url)
+                else:
+                    if not silent:
+                        QMessageBox.warning(self.parent, "Ошибка",
+                                            "Обновление найдено, но подходящий файл для вашей ОС не найден.")
             elif not silent:
                 QMessageBox.information(self.parent, "Обновление", "У вас последняя версия!")
         except Exception as e:
