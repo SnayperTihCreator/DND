@@ -1,11 +1,13 @@
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QDialog, QFormLayout, QComboBox, QDialogButtonBox, QLineEdit, QMessageBox, QPushButton
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QDialog, QFormLayout, QDialogButtonBox, QLineEdit, QMessageBox, QPushButton
+
+from .updater_manager import UpdateManager
 
 
 class RunDialog(QDialog):
     def __init__(self):
         super().__init__()
+        self.updater = UpdateManager(self)
         self.box = QFormLayout(self)
         self.setWindowIcon(QIcon(":/icons/main.png"))
         self.setWindowTitle("Виртуальный стол")
@@ -36,6 +38,10 @@ class RunDialog(QDialog):
             centerButtons=True
         )
         self.box.addRow(self.btn_dialog2)
+        
+        self.btn_update = QPushButton("Проверить обновления")
+        self.btn_update.clicked.connect(lambda: self.updater.check_for_updates(False))
+        self.box.addRow(self.btn_update)
         
         self.btn_dialog1.accepted.connect(self._handle_accepted)
         self.btn_dialog2.rejected.connect(self.reject)

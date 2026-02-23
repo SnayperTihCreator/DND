@@ -9,9 +9,11 @@ dependencies = [
     "d20>=1.1.2",
     "json5>=0.12.1",
     "loguru>=0.7.3",
+    "packaging>=26.0",
     "pillow>=12.0.0",
     "pydantic>=2.12.4",
     "pyside6==6.10.1",
+    "requests>=2.32.5",
     "websockets>=15.0.1",
 ]
 
@@ -22,4 +24,4 @@ dev = [
 ]
 
 [tool.taskipy.tasks]
-build = "pyinstaller main.spec --noconfirm"
+build = "pyinstaller dnd-table.spec --noconfirm"

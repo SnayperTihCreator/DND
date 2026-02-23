@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 from loguru import logger
 
 from ClientTools.core.client_socket import WebSocketClient
+from CommonTools.updater_manager import UpdateManager
 from CommonTools.core import Image, classes
 from CommonTools.components import GuidePanel, ColorButton, AsyncRequestManager, ImageContext, MessageRouter
 from CommonTools.map_widget.tokens_dnd import MovedEvent
@@ -36,6 +37,8 @@ class PlayerGameTable(QMainWindow):
         
         self.cache_folder = Path("./.cache")
         self.cache_folder.mkdir(exist_ok=True, parents=True)
+        
+        self.updater = UpdateManager(self)
         
         # Managers
         self.async_manager = AsyncRequestManager()
@@ -95,6 +98,10 @@ class PlayerGameTable(QMainWindow):
         self.player_cls_panel_action = self.menu_docker.addAction("Открыть лист класса")
         self.player_cls_panel_action.triggered.connect(self._on_action_show_player_cls)
         
+        self.menu_updater = self.menuBar().addMenu("Обновления")
+        self.check_update_action = self.menu_updater.addAction("Проверить наличие обновлений")
+        self.check_update_action.triggered.connect(self._on_action_check_update)
+        
         # Toolbar
         self.bottomToolBar = QToolBar()
         self.addToolBar(Qt.ToolBarArea.BottomToolBarArea, self.bottomToolBar)
@@ -110,6 +117,9 @@ class PlayerGameTable(QMainWindow):
         self.bottomToolBar.addWidget(self.checkBoxVisibleGrid)
         
         self.deactivate_controller()
+    
+    def _on_action_check_update(self):
+        self.updater.check_for_updates(False)
     
     def _on_action_show_player_cls(self):
         if self.client_data.cls:

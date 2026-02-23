@@ -12,6 +12,7 @@ from CommonTools.map_widget import MapWidget
 logger = logger.bind(pack="ServerWindow")
 
 from CommonTools.components import ColorButton, GuidePanel, MessageRouter
+from CommonTools.updater_manager import UpdateManager
 from ServerTools.core.server_socket import WebSocketServer
 from CommonTools.messages import *
 from CommonTools.core import Image, ClientData
@@ -41,6 +42,8 @@ class MasterGameTable(QMainWindow):
         
         self.cache_folder = Path("./.cache")
         self.cache_folder.mkdir(exist_ok=True, parents=True)
+        
+        self.updater = UpdateManager(self)
         
         self.controller = MasterController(self.server)
         self.controller.error.connect(self.showErrorMessage)
@@ -132,6 +135,10 @@ class MasterGameTable(QMainWindow):
         self.note_create_action = self.menu_notes.addAction("Создать заметку")
         self.note_create_action.triggered.connect(self._on_action_create_note)
         
+        self.menu_updater = self.menuBar().addMenu("Обновления")
+        self.check_update_action = self.menu_updater.addAction("Проверить наличие обновлений")
+        self.check_update_action.triggered.connect(self._on_action_check_update)
+        
         self._deactivate_control()
     
     def applyErrorEffect(self):
@@ -148,6 +155,9 @@ class MasterGameTable(QMainWindow):
         self.statusBar().showMessage(msg, 2000)
         logger.error(msg)
         QTimer.singleShot(2000, self.resetEffect)
+    
+    def _on_action_check_update(self):
+        self.updater.check_for_updates(False)
     
     def _on_action_create_note(self):
         print(DialogCreateNote.request(self, self.player_panel.getAllPlayers()))
