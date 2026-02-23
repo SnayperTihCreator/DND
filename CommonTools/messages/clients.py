@@ -8,6 +8,14 @@ class ClientActionType(BaseActionType):
     START_PLAYER = "client", "start", "player"
     ADD_PLAYER = "client", "add", "player"
     REMOVE_PLAYER = "client", "remove", "player"
+    
+    NOTE_MSG = "client", "note", "msg"
+
+
+class ClientNoteMsg(BaseMessage, type=ClientActionType.NOTE_MSG):
+    title: str
+    content: str
+    idx_bg: int
 
 
 class ClientConnect(BaseMessage, type=ClientActionType.CONNECT):
@@ -33,5 +41,7 @@ class ClientRemovePlayer(BaseMessage, type=ClientActionType.REMOVE_PLAYER):
 
 __all__ = ["ClientActionType",
            "ClientConnect",
-           "ClientStartPlayer", "ClientAddPlayer", "ClientRemovePlayer"
+           "ClientStartPlayer", "ClientAddPlayer", "ClientRemovePlayer",
+           
+           "ClientNoteMsg",
            ]

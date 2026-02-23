@@ -74,6 +74,9 @@ class AdvancedTextEdit(QWidget):
     def toHtml(self):
         return self.textEdit.toHtml()
     
+    def setHtml(self, html):
+        self.textEdit.setHtml(html)
+    
     def _on_change_color(self, color):
         fmt = QTextCharFormat()
         fmt.setForeground(color)

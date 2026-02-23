@@ -260,3 +260,6 @@ class PlayerSelectionWidget(QWidget):
     def clear(self):
         self.modelList.clear()
         self._update_master_checkbox_ui()
+
+
+__all__ = ["PlayerItem", "PlayerItemRole", "PlayerSelectionWidget", "PlayerPanelModel", "PlayerPanelDelegate"]

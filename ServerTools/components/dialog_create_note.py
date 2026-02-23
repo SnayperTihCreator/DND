@@ -1,27 +1,26 @@
+from typing import Optional
+
 from PySide6.QtWidgets import QDialog, QSplitter, QVBoxLayout, QDialogButtonBox, QSizePolicy
 from PySide6.QtCore import Qt
 
+from CommonTools.notes import Note
 from CommonTools.notes.editor import NoteEditor
 from .player_panel import PlayerItem
 from .player_panel import PlayerSelectionWidget
 
 
 class DialogCreateNote(QDialog):
-    def __init__(self, players: list[PlayerItem], parent=None):
+    def __init__(self, note: Optional[Note] = None, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Create Note")
         self.resize(800, 600)
-        
-        self.box = QVBoxLayout(self)
-        self.splitter = QSplitter(self)
-        self.box.addWidget(self.splitter)
+        note = note or Note()
         
         self.editor = NoteEditor()
-        self.players = PlayerSelectionWidget()
-        [self.players.addPlayer(player.uid, player.name, player.cls) for player in players]
+        self.editor.set_note(note)
         
-        self.splitter.addWidget(self.editor)
-        self.splitter.addWidget(self.players)
+        self.box = QVBoxLayout(self)
+        self.box.addWidget(self.editor)
         
         self.btns = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok|QDialogButtonBox.StandardButton.Cancel)
         self.btns.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
@@ -30,10 +29,10 @@ class DialogCreateNote(QDialog):
         self.box.addWidget(self.btns, alignment=Qt.AlignmentFlag.AlignHCenter)
         
     @classmethod
-    def request(cls, parent, players: list[PlayerItem]):
-        dialog = DialogCreateNote(players, parent)
+    def request(cls, parent, note: Optional[Note] = None):
+        dialog = DialogCreateNote(note, parent)
         if dialog.exec() == QDialog.DialogCode.Accepted:
-            return list(dialog.players.getSelectedPlayers())
-        return []
+            return dialog.editor.get_note()
+        return None
         
         

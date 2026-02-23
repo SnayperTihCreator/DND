@@ -8,7 +8,6 @@ from pydantic import BaseModel
 class SerializableMixin:
     """Миксин для автоматической сериализации/десериализации"""
     
-    # Регистр всех сериализуемых классов
     _type_registry: ClassVar[dict[str, Type]] = {}
     
     def __init_subclass__(cls, **kwargs):

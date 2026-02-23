@@ -8,6 +8,7 @@ from PySide6.QtGui import QIcon, QColor
 from loguru import logger
 
 from CommonTools.map_widget import MapWidget
+from CommonTools.notes import Note
 
 logger = logger.bind(pack="ServerWindow")
 
@@ -16,10 +17,11 @@ from CommonTools.updater_manager import UpdateManager
 from ServerTools.core.server_socket import WebSocketServer
 from CommonTools.messages import *
 from CommonTools.core import Image, ClientData
-from ServerTools.components import TokensPanel, DialogCreateMap, PlayerPanel, DialogCreateNote
+from ServerTools.components import TokensPanel, DialogCreateMap, PlayerPanel, DialogCreateNote, DialogPreviewSend
 from CommonTools.utils import validate_and_resize_image, getImageMIME
 
 from .masterController import MasterController
+from .note_book import NoteBookDock
 
 router = MessageRouter()
 
@@ -59,6 +61,11 @@ class MasterGameTable(QMainWindow):
         self.player_panel = PlayerPanel()
         self.player_panel.active_change.connect(self._handle_change_freeze)
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.player_panel)
+        
+        self.note_book = NoteBookDock(self)
+        self.note_book.requestEdit.connect(self._on_note_edit)
+        self.note_book.requestSend.connect(self._on_note_send)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.note_book)
         
         self.topToolBar = QToolBar()
         self.addToolBar(Qt.ToolBarArea.TopToolBarArea, self.topToolBar)
@@ -131,6 +138,9 @@ class MasterGameTable(QMainWindow):
         self.player_panel_action = self.menu_panels.addAction("Показать панель игроков")
         self.player_panel_action.triggered.connect(self.player_panel.show)
         
+        self.note_book_action = self.menu_panels.addAction("Показать панель записок")
+        self.note_book_action.triggered.connect(self.note_book.show)
+        
         self.menu_notes = self.menuBar().addMenu("Заметки")
         self.note_create_action = self.menu_notes.addAction("Создать заметку")
         self.note_create_action.triggered.connect(self._on_action_create_note)
@@ -140,6 +150,21 @@ class MasterGameTable(QMainWindow):
         self.check_update_action.triggered.connect(self._on_action_check_update)
         
         self._deactivate_control()
+    
+    def _on_note_send(self, note: Note):
+        status, players = DialogPreviewSend.request(self, note, self.player_panel.getAllPlayers())
+        if not status: return
+        
+        msg = ClientNoteMsg(title=note.title, content=note.content, idx_bg=note.bg_index)
+        for uid in players:
+            self.server.answer(uid, msg)
+    
+    def _on_note_edit(self, note: Note):
+        note2 = DialogCreateNote.request(self, note)
+        
+        if note2 is not None:
+            note.copy_data(note2)
+            self.note_book.save_to_path(".cache/notes_library.json5")
     
     def applyErrorEffect(self):
         colorize = QGraphicsColorizeEffect(self)

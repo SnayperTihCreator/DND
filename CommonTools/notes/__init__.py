@@ -1,3 +1,3 @@
 from .base import Note
-from .view import NoteView
+from .preview import NotePreviewWidget
 from .editor import NoteEditor

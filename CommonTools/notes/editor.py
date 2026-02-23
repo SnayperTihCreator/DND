@@ -30,6 +30,11 @@ class NoteEditor(QWidget):
     
     def get_note(self):
         return Note(self.editor.toHtml(), self.title_input.text(), self.bg_spin.value())
+    
+    def set_note(self, note: Note):
+        self.title_input.setText(note.title)
+        self.editor.setHtml(note.content)
+        self.bg_spin.setValue(note.bg_index)
 
 
 if __name__ == '__main__':

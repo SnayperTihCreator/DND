@@ -10,18 +10,20 @@ from PySide6.QtWidgets import (
 from loguru import logger
 
 from ClientTools.core.client_socket import WebSocketClient
+from CommonTools.notes import Note
 from CommonTools.updater_manager import UpdateManager
 from CommonTools.core import Image, classes
 from CommonTools.components import GuidePanel, ColorButton, AsyncRequestManager, ImageContext, MessageRouter
 from CommonTools.map_widget.tokens_dnd import MovedEvent
 from CommonTools.messages import (
     BaseMessage, ClientActionType, MapActionType, MapPlayerMoved,
-    GetAllMaps, MapLoadBackground, ImageNameRequest, ClientStartPlayer, ClientAddPlayer
+    GetAllMaps, MapLoadBackground, ImageNameRequest, ClientStartPlayer, ClientAddPlayer, ClientNoteMsg
 )
 from CommonTools.utils import getImageMIME
 from .connector_widget import Connector
 from .login_widget import Loging
 from .playerController import PlayerController
+from .note_book import NoteBookDock
 
 logger = logger.bind(pack="ClientWindow")
 
@@ -89,6 +91,10 @@ class PlayerGameTable(QMainWindow):
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.player_cls_panel)
         self.player_cls_panel.hide()
         
+        self.note_archive = NoteBookDock(self)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.note_archive)
+        self.note_archive.hide()
+        
         # Menu
         self.menu_docker = self.menuBar().addMenu("Панели")
         
@@ -97,6 +103,9 @@ class PlayerGameTable(QMainWindow):
         
         self.player_cls_panel_action = self.menu_docker.addAction("Открыть лист класса")
         self.player_cls_panel_action.triggered.connect(self._on_action_show_player_cls)
+        
+        self.note_archive_action = self.menu_docker.addAction("Показать архив заметок")
+        self.note_archive_action.triggered.connect(self.note_archive.show)
         
         self.menu_updater = self.menuBar().addMenu("Обновления")
         self.check_update_action = self.menu_updater.addAction("Проверить наличие обновлений")
@@ -161,6 +170,7 @@ class PlayerGameTable(QMainWindow):
     
     def _handle_disconnect(self):
         self.showErrorMessage("Сервер сдох")
+        self.note_archive.save_backup()
         self.deactivate_controller()
         self.stacker.setCurrentWidget(self.connector)
         self.controller.tabMaps.clearMaps()
@@ -185,6 +195,11 @@ class PlayerGameTable(QMainWindow):
         if router.dispatch(self, self.client_data, msg):
             return
         logger.info("Не обработанное сообщение: {mtype} - {msg}", mtype=msg.type, msg=msg)
+    
+    @router.handler(ClientActionType.NOTE_MSG)
+    def _handle_note_message(self, _uid, msg: ClientNoteMsg):
+        note = Note(msg.content, msg.title, msg.idx_bg)
+        self.note_archive.add_note(note)
     
     @router.handler(ClientActionType.START_PLAYER)
     def _handle_start_player(self, _uid, msg: ClientStartPlayer):
