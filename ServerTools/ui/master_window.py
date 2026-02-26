@@ -1,49 +1,50 @@
+import asyncio
 from pathlib import Path
 from typing import Optional
 
 from PySide6.QtCore import Qt, QPoint, QPointF, QTimer
-from PySide6.QtWidgets import QMainWindow, QToolBar, QSpinBox, QLabel, QCheckBox, QApplication, QFileDialog, \
-    QGraphicsColorizeEffect, QMessageBox, QGraphicsEffect
+from PySide6.QtWidgets import QMainWindow, QToolBar, QSpinBox, QLabel, QCheckBox, QFileDialog, \
+    QGraphicsColorizeEffect, QMessageBox, QGraphicsEffect, QComboBox
 from PySide6.QtGui import QIcon, QColor
 from loguru import logger
+from psygnal import set_async_backend
 
-from CommonTools.map_widget import MapWidget
+from CommonTools.map_layout import MapWidget
 from CommonTools.notes import Note
 
 logger = logger.bind(pack="ServerWindow")
 
-from CommonTools.components import ColorButton, GuidePanel, MessageRouter
+from CommonTools.components import ColorButton, GuidePanel, RouterDescriptor
 from CommonTools.updater_manager import UpdateManager
-from ServerTools.core.server_socket import WebSocketServer
+from ServerTools.core.server_socket import AsyncServerBridge
 from CommonTools.messages import *
-from CommonTools.core import Image, ClientData
+from CommonTools.core import ClientData
 from ServerTools.components import TokensPanel, DialogCreateMap, PlayerPanel, DialogCreateNote, DialogPreviewSend
 from CommonTools.utils import validate_and_resize_image, getImageMIME
 
-from .masterController import MasterController
+from .master_controller import MasterController
 from .note_book import NoteBookDock
-
-router = MessageRouter()
 
 
 class MasterGameTable(QMainWindow):
+    router = RouterDescriptor()
+    
     def __init__(self, login):
         super().__init__()
         self.setMinimumSize(1000, 700)
         self.setWindowTitle("Виртуальный стол: Мастер")
         self.setWindowIcon(QIcon(":/icons/main.png"))
         
+        self.cache_folder = Path("./.cache/server")
+        self.cache_folder.mkdir(exist_ok=True, parents=True)
+        
         self.players: dict[str, ClientData] = {}
-        self.server = WebSocketServer()
+        self.server = AsyncServerBridge(self.cache_folder)
+        
         self.server.client_connected.connect(self._handle_connect)
         self.server.client_disconnected.connect(self._handle_disconnect)
-        self.server.message_received_uid.connect(self._handle_message_raw)
-        self.server.image_received.connect(self._handle_image)
-        
-        self.server.start_server()
-        
-        self.cache_folder = Path("./.cache")
-        self.cache_folder.mkdir(exist_ok=True, parents=True)
+        self.server.server_started.connect(self._on_server_ready)
+        self.server.server_error.connect(self.showErrorMessage)
         
         self.updater = UpdateManager(self)
         
@@ -79,6 +80,9 @@ class MasterGameTable(QMainWindow):
         self.save_map_action = self.topToolBar.addAction("Сохранить карту")
         self.active_map_action = self.topToolBar.addAction("Активировать карту")
         self.active_map_action.triggered.connect(self._on_action_active_map)
+        self.btn_access_action = self.topToolBar.addAction("🔴 Стол закрыт")
+        self.btn_access_action.setCheckable(True)
+        self.btn_access_action.triggered.connect(self._toggle_access)
         
         self.bottomToolBar = QToolBar()
         self.addToolBar(Qt.ToolBarArea.BottomToolBarArea, self.bottomToolBar)
@@ -141,15 +145,22 @@ class MasterGameTable(QMainWindow):
         self.note_book_action = self.menu_panels.addAction("Показать панель записок")
         self.note_book_action.triggered.connect(self.note_book.show)
         
-        self.menu_notes = self.menuBar().addMenu("Заметки")
-        self.note_create_action = self.menu_notes.addAction("Создать заметку")
-        self.note_create_action.triggered.connect(self._on_action_create_note)
-        
         self.menu_updater = self.menuBar().addMenu("Обновления")
         self.check_update_action = self.menu_updater.addAction("Проверить наличие обновлений")
         self.check_update_action.triggered.connect(self._on_action_check_update)
         
         self._deactivate_control()
+    
+    def start_services(self):
+        asyncio.create_task(self._start())
+    
+    async def _start(self):
+        backend = set_async_backend("asyncio")
+        
+        await backend.running.wait()
+        
+        self.server.message_received_uid.connect(self._handle_message_raw)
+        self.server.start_server()
     
     def _on_note_send(self, note: Note):
         status, players = DialogPreviewSend.request(self, note, self.player_panel.getAllPlayers())
@@ -158,6 +169,24 @@ class MasterGameTable(QMainWindow):
         msg = ClientNoteMsg(title=note.title, content=note.content, idx_bg=note.bg_index)
         for uid in players:
             self.server.answer(uid, msg)
+    
+    def _toggle_access(self, checked: bool):
+        """Слот для кнопки открытия/закрытия стола"""
+        self.server.set_access(checked)
+        self.btn_access_action.setText("🟢 Стол открыт" if checked else "🔴 Стол закрыт")
+    
+    def _on_server_ready(self, ips: list, ws_port: int, http_port: int):
+        """Когда сервер готов, показываем IP"""
+        self.ip_selector = QComboBox()
+        self.ip_selector.addItems(ips)
+        self.ip_selector.setToolTip("IP для подключения игроков")
+        
+        self.topToolBar.addSeparator()
+        self.topToolBar.addWidget(QLabel(" IP для игроков: "))
+        self.topToolBar.addWidget(self.ip_selector)
+        
+        self.setWindowTitle(f"Мастер Стол | Порт: {ws_port}")
+        self.statusBar().showMessage(f"Сервер запущен. Порт для игроков: {ws_port}", 5000)
     
     def _on_note_edit(self, note: Note):
         note2 = DialogCreateNote.request(self, note)
@@ -184,9 +213,6 @@ class MasterGameTable(QMainWindow):
     def _on_action_check_update(self):
         self.updater.check_for_updates(False)
     
-    def _on_action_create_note(self):
-        print(DialogCreateNote.request(self, self.player_panel.getAllPlayers()))
-    
     def _on_action_add_map(self):
         if self.controller.tabMaps.isEmpty():
             name, visible = "main", True
@@ -206,21 +232,21 @@ class MasterGameTable(QMainWindow):
     def _on_action_load_bg(self):
         if not (name := self.controller.tabMaps.getActiveNameMap()):
             return
-        path, _ = QFileDialog.getOpenFileName(self, "Выберете фон", ".", "Image(*.png *.jpg);;Animation(*.gif)")
-        
-        if not path:
-            return
+        path, _ = QFileDialog.getOpenFileName(self, "Выберете фон", ".", "Image(*.png *.jpg *.gif)")
+        if not path: return
         
         path2 = validate_and_resize_image(path, self.cache_folder, max_size=4096)
-        
-        if path2 is None:
-            QMessageBox.critical(self, "Ошибка", "Не удалось загрузить изображение (слишком большое или битое)["
-                                                 "4000*4000 макс пикселей].")
+        if not path2:
+            QMessageBox.critical(self, "Ошибка", "Не удалось обработать изображение.")
             return
+        
+        filename = Path(path2).name
+        file_url = self.server.get_file_url(filename)
         
         self.controller.register_image(name, path2)
         self.controller.tabMaps.load_map(name, path2)
-        self.server.broadcast(MapLoadBackground(name=name, uid=""))
+        
+        self.server.broadcast(MapLoadBackground(name=name, uid="", url=file_url))
         self._handle_current_map(name)
     
     def _on_action_active_map(self):
@@ -293,26 +319,18 @@ class MasterGameTable(QMainWindow):
         self.server.broadcast(ClientRemovePlayer(uid=uid), uid)
         logger.success("Клиент отключен с uid: {uid}", uid=uid)
     
-    def _handle_message_raw(self, uid, msg_raw: str):
+    async def _handle_message_raw(self, uid, msg_raw: str):
         msg = BaseMessage.from_str(msg_raw)
-        self._handle_message(uid, msg)
+        await self._handle_message(uid, msg)
     
-    def _handle_message(self, uid, msg: BaseMessage):
+    async def _handle_message(self, uid, msg: BaseMessage):
         if self.controller.handle_message(msg):
             return
         
-        if router.dispatch(self, uid, msg):
+        if await self.router(uid, msg):
             return
         
         logger.info("Не обработанное сообщение: {mtype} - {msg}", mtype=msg.type, msg=msg)
-    
-    def _handle_image(self, image: Image):
-        cache_image = self.cache_folder / f"{image.name}{image.suffix}"
-        cache_image.write_bytes(image.image_data)
-        
-        self.controller.register_image(image.name, cache_image.as_posix())
-        logger.debug("Получено изображение {iname}{isuffix} через {istrategy}", iname=image.name,
-                     isuffix=image.suffix, istrategy=image.strategy)
     
     @router.handler(ClientActionType.START_PLAYER)
     def _action_add_player(self, uid_answer: str, msg: ClientStartPlayer):
@@ -320,7 +338,6 @@ class MasterGameTable(QMainWindow):
         self.server.clients[uid_answer].iname = msg.iname
         self.server.broadcast(ClientAddPlayer(uid=uid_answer, name=msg.name, cls=msg.cls, iname=msg.iname), uid_answer)
         for uid, client in self.server.clients.items():
-            QApplication.processEvents()
             if client.is_playing and uid_answer != uid:
                 self.server.answer(uid_answer, ClientAddPlayer(
                     uid=uid, name=client.name, cls=client.cls, iname=client.iname
@@ -348,8 +365,17 @@ class MasterGameTable(QMainWindow):
     @router.handler(ImageActionType.NAME_REQUEST)
     def _handle_name_map(self, uid, msg: ImageNameRequest):
         if file_path := self.controller.getImage(msg.name):
-            self.server.answer(uid, DoneCallback(uid_callback=msg.uid))
-            self.server.answer_image(uid, file_path, msg.name)
+            # Получаем URL и шлем ответ
+            filename = Path(file_path).name
+            url = self.server.get_file_url(filename)
+            
+            # Тебе нужно сообщение, которое вернет URL. Например:
+            # ImageUrlResponse(name=msg.name, url=url)
+            # self.server.answer(uid, ImageUrlResponse(name=msg.name, url=url))
+            
+            # Если такой ответ есть, можно раскомментировать. Пока заглушка:
+            logger.info(f"Отправил бы URL {url} для {msg.name} клиенту {uid}")
+            pass
         else:
             self.server.answer(uid, IgnoreCallback(uid_callback=msg.uid))
     

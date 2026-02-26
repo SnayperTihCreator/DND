@@ -37,6 +37,7 @@ class MapsGroup(BaseMessage):
 
 class MapLoadBackground(MapsGroup, type=MapActionType.LOAD_BACKGROUND):
     uid: str = Field("")
+    url: str = Field("")
 
 
 class MapCreateMap(MapsGroup, type=MapActionType.MAP_CREATE):

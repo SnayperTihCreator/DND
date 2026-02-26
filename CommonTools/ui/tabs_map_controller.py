@@ -5,10 +5,10 @@ from copy import copy
 from PySide6.QtWidgets import QTabWidget
 from PySide6.QtCore import Signal, QPointF
 
-from CommonTools.map_widget import MapWidget
+from CommonTools.map_layout import MapWidget
 from CommonTools.core.client_data import ClientData
-from CommonTools.core.mapData import MapData
-from CommonTools.map_widget.tokens_dnd import BaseToken
+from CommonTools.core.map_data import MapData
+from CommonTools.map_layout.tokens_dnd import BaseToken
 
 
 class TabMapsWidget(QTabWidget):

@@ -1,4 +1,4 @@
-from typing import ClassVar, Type, Any, Self
+from typing import ClassVar, Type, Any, Self, Optional
 from enum import Enum
 
 import json5
@@ -87,3 +87,18 @@ class BaseMessage(BaseModel, SerializableMixin):
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         cls.type = kwargs.get("type", NotActionType.NOT_TYPE)
+
+
+class BaseSystemMessage(BaseMessage):
+    pass
+
+
+def get_type_msg(dct: dict[str, Any]) -> Optional[BaseActionType]:
+    if not (cls_name := dct.get("_type")):
+        return None
+    
+    target_cls = SerializableMixin._type_registry.get(cls_name)
+    
+    if target_cls and hasattr(target_cls, "type"):
+        return target_cls.type
+    return None

@@ -1,13 +1,13 @@
 from PySide6.QtCore import QPoint
 
-from CommonTools.core import Socket
 from CommonTools.messages import *
-from CommonTools.ui.baseController import BaseController
+from CommonTools.ui.base_controller import BaseController
+from ClientTools.core import AsyncClientBridge
 
 
 class PlayerController(BaseController):
-    def __init__(self, socket: Socket):
-        super().__init__(socket, socket.client)
+    def __init__(self, socket: AsyncClientBridge):
+        super().__init__(socket, socket.me)
         self.tabMaps.set_token_movement(["players", "mobs", "npcs", "spawn_point"], False)
         self.tabMaps.call_all_method("setMasterView", False)
         self.tabMaps.call_all_method("setOffsetSize", QPoint(0, 0), 50)

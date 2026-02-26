@@ -9,8 +9,8 @@ from .token_manager import TokenManager
 from .drawing_manager import DrawingManager
 from .view_controller import ViewController
 from .fog_manager import VectorFogManager
-from .graphicsScene import GraphicsScene
-from CommonTools.map_widget.tokens_dnd import *
+from .graphics_scene import GraphicsScene
+from CommonTools.map_layout.tokens_dnd import *
 from CommonTools.core import ClientData
 from CommonTools.utils import getImageMIME
 

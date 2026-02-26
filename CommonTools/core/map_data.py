@@ -3,7 +3,7 @@ from typing import Optional
 
 from attrs import define, field
 
-from CommonTools.map_widget import MapWidget
+from CommonTools.map_layout import MapWidget
 
 
 @define

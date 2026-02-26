@@ -1,23 +1,44 @@
-from PySide6.QtCore import QCoreApplication
+import weakref
+import asyncio
+import inspect
 
 
-class MessageRouter:
+class RouterDescriptor:
     def __init__(self):
         self._handlers = {}
+        self.bound_dispatchers = weakref.WeakKeyDictionary()
+        print("RouterDescriptor с WeakKeyDictionary создан")
     
     def handler(self, msg_type):
-        """Декоратор для регистрации обработчика."""
-        
         def decorator(func):
             self._handlers.setdefault(msg_type, []).append(func)
             return func
         
         return decorator
     
-    def dispatch(self, obj, uid, msg):
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        
+        if instance in self.bound_dispatchers:
+            return self.bound_dispatchers[instance]
+        
+        async def bound_dispatch(uid, msg):
+            await self.dispatch(instance, uid, msg)
+        
+        self.bound_dispatchers[instance] = bound_dispatch
+        return bound_dispatch
+    
+    async def dispatch(self, instance, uid, msg):
         if not (handlers := self._handlers.get(msg.type)):
             return False
-        for handler in handlers:
-            handler(obj, uid, msg)  # obj — это self экземпляра
-            QCoreApplication.processEvents()
+        
+        for handler_func in handlers:
+            if inspect.iscoroutinefunction(handler_func):
+                await handler_func(instance, uid, msg)
+            else:
+                handler_func(instance, uid, msg)
+            
+            await asyncio.sleep(0)
+        
         return True

@@ -1,15 +1,14 @@
-import re
 from typing import Optional
 
 from PySide6.QtCore import QPointF, QObject, Signal
 from PySide6.QtGui import QColor
 
+from CommonTools.core import PlayerTokenConfig, SpawnPlayerTokenConfig, ModNpcTokenConfig
+from CommonTools.utils import MIME_RUNTIME_FORMAT, MIME_INPUT_FORMAT, getImageMIME
+from CommonTools.utils.dialog_create_token import DataDialog, DialogCreateToken
+from .graphics_scene import GraphicsScene
 from ..tokens_dnd import *
 from ..utils import GridHelper
-from CommonTools.utils.dialog_create_token import DataDialog, DialogCreateToken
-from CommonTools.utils import MIME_RUNTIME_FORMAT, MIME_INPUT_FORMAT, getImageMIME
-from CommonTools.core import PlayerTokenConfig, SpawnPlayerTokenConfig, ModNpcTokenConfig
-from .graphicsScene import GraphicsScene
 
 
 class TokenManager(QObject):

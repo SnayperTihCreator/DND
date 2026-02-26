@@ -1,12 +1,10 @@
 from typing import Optional
 
-from PySide6.QtWidgets import QDialog, QSplitter, QVBoxLayout, QDialogButtonBox, QSizePolicy
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QDialogButtonBox, QSizePolicy
 
 from CommonTools.notes import Note
 from CommonTools.notes.editor import NoteEditor
-from .player_panel import PlayerItem
-from .player_panel import PlayerSelectionWidget
 
 
 class DialogCreateNote(QDialog):

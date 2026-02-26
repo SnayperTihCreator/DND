@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QToolBar, QFontComboBox, QTextEdit, QSpinBox, QLineEdit
-from PySide6.QtGui import QFont, QTextCharFormat, QAction, QKeySequence, QColor
+from PySide6.QtGui import QFont, QTextCharFormat, QAction, QKeySequence
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QToolBar, QFontComboBox, QTextEdit, QSpinBox
 
 from CommonTools.components import ColorButton
 

@@ -1,38 +1,38 @@
-from functools import partial
+import asyncio
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QColor, QIcon
 from PySide6.QtWidgets import (
     QMainWindow, QStackedWidget, QToolBar, QCheckBox,
-    QGraphicsColorizeEffect
+    QGraphicsColorizeEffect, QMessageBox
 )
 from loguru import logger
+from psygnal import set_async_backend
 
-from ClientTools.core.client_socket import WebSocketClient
+from ClientTools.core.client_socket import AsyncClientBridge
 from CommonTools.notes import Note
 from CommonTools.updater_manager import UpdateManager
-from CommonTools.core import Image, classes
-from CommonTools.components import GuidePanel, ColorButton, AsyncRequestManager, ImageContext, MessageRouter
-from CommonTools.map_widget.tokens_dnd import MovedEvent
-from CommonTools.messages import (
-    BaseMessage, ClientActionType, MapActionType, MapPlayerMoved,
-    GetAllMaps, MapLoadBackground, ImageNameRequest, ClientStartPlayer, ClientAddPlayer, ClientNoteMsg
-)
-from CommonTools.utils import getImageMIME
-from .connector_widget import Connector
+from CommonTools.core import classes
+from CommonTools.components import GuidePanel, ColorButton, RouterDescriptor
+from CommonTools.map_layout.tokens_dnd import MovedEvent
+from CommonTools.messages import *
+from CommonTools.utils import restart_app
 from .login_widget import Loging
-from .playerController import PlayerController
+from .player_controller import PlayerController
 from .note_book import NoteBookDock
 
 logger = logger.bind(pack="ClientWindow")
 
-router = MessageRouter()
-
 
 class PlayerGameTable(QMainWindow):
-    def __init__(self, login):
+    router = RouterDescriptor()
+    
+    def __init__(self, login, server_ip=None, server_port=None):
         super().__init__()
+        self.server_ip = server_ip
+        self.server_port = server_port
+        
         self.setMinimumSize(1000, 700)
         self.setWindowIcon(QIcon(":/icons/main.png"))
         self.setWindowTitle("Виртуальный стол: Игрок")
@@ -42,18 +42,14 @@ class PlayerGameTable(QMainWindow):
         
         self.updater = UpdateManager(self)
         
-        # Managers
-        self.async_manager = AsyncRequestManager()
-        
-        # Socket setup
-        self.socket = WebSocketClient()
-        self.client_data = self.socket.client
+        self.socket = AsyncClientBridge()
+        self.client_data = self.socket.me
         
         self.socket.error_occurred.connect(self.showErrorMessage)
         self.socket.connected.connect(self._handle_connect)
         self.socket.disconnected.connect(self._handle_disconnect)
-        self.socket.message_received.connect(self._handle_message_raw)
-        self.socket.image_received.connect(self._handle_image)
+        self.socket.downloader.file_downloaded.connect(self._on_file_downloaded)
+        self.socket.downloader.download_progress.connect(self._on_download_progress)
         
         # UI Setup
         self.stacker = QStackedWidget()
@@ -62,17 +58,10 @@ class PlayerGameTable(QMainWindow):
         # Pages
         self.controller = PlayerController(self.socket)
         self.stacker.addWidget(self.controller)
-        self.controller.request_image.connect(self._on_request_image)
-        
-        self.connector = Connector(self.socket)
-        self.connector.error_occurred.connect(self.showErrorMessage)
-        self.stacker.addWidget(self.connector)
         
         self.loging = Loging(self.socket, self.client_data)
         self.loging.error_occurred.connect(self.showErrorMessage)
         self.stacker.addWidget(self.loging)
-        
-        self.stacker.setCurrentWidget(self.connector)
         
         # Docks
         self.player_panel = GuidePanel(
@@ -126,6 +115,42 @@ class PlayerGameTable(QMainWindow):
         self.bottomToolBar.addWidget(self.checkBoxVisibleGrid)
         
         self.deactivate_controller()
+        
+    def start_services(self):
+        asyncio.create_task(self._start())
+        
+    async def _start(self):
+        backend = set_async_backend("asyncio")
+        await backend.running.wait()
+        
+        self.socket.message_received.connect(self._handle_message_raw)
+        
+        if self.server_ip and self.server_port:
+            self.socket.connect_server(self.server_ip, self.server_port)
+        else:
+            self.showErrorMessage("Не удалось определить адрес сервера.")
+    
+    def _on_file_downloaded(self, file_id: str, local_path: Path):
+        """
+        Вот где теперь происходит вся магия.
+        file_id - это уникальное имя файла, которое мы сгенерировали в сокете.
+        Но для фона карты нам нужно имя самой карты.
+        """
+        logger.info(f"Файл '{file_id}' скачан в {local_path}. Применяем.")
+        
+        map_name = Path(file_id).stem
+        
+        self.controller.register_image(file_id, local_path.as_posix())
+        
+        if self.controller.tabMaps.getMap(map_name):
+            self.controller.tabMaps.load_map(map_name, local_path.as_posix())
+            self.controller.clear_buffer(map_name)
+    
+    def _on_download_progress(self, file_id: str, percent: int):
+        """Обновляет прогресс-бар в статус-баре"""
+        self.statusBar().showMessage(f"Загрузка {file_id}: {percent}%")
+        if percent == 100:
+            QTimer.singleShot(1000, self.statusBar().clearMessage)
     
     def _on_action_check_update(self):
         self.updater.check_for_updates(False)
@@ -160,7 +185,7 @@ class PlayerGameTable(QMainWindow):
     
     def customEvent(self, event: MovedEvent):
         if event.type() == MovedEvent.MovedEventType:
-            self.client_data.send_msg(MapPlayerMoved(pos=event.pos_target.toTuple()))
+            self.socket.send_msg(MapPlayerMoved(pos=event.pos_target.toTuple()))
             event.accept()
         super().customEvent(event)
     
@@ -172,27 +197,19 @@ class PlayerGameTable(QMainWindow):
         self.showErrorMessage("Сервер сдох")
         self.note_archive.save_backup()
         self.deactivate_controller()
-        self.stacker.setCurrentWidget(self.connector)
-        self.controller.tabMaps.clearMaps()
+        QMessageBox.critical(self, "Соединение потеряно",
+                             "Связь с сервером прервана.\n"
+                             "Приложение будет перезапущено.")
+        restart_app()
     
-    def _handle_message_raw(self, msg_raw: str):
+    async def _handle_message_raw(self, msg_raw: str):
         msg = BaseMessage.from_str(msg_raw)
-        self._handle_message(msg)
+        await self._handle_message(msg)
     
-    def _handle_image(self, image: Image):
-        cache_image = self.cache_folder / f"{image.name}{image.suffix}"
-        cache_image.write_bytes(image.image_data)
-        
-        logger.debug("Получено изображение {iname}{isuffix} через {istrategy}",
-                     iname=image.name, isuffix=image.suffix, istrategy=image.strategy)
-        self.async_manager.handle_resource("images", image.name, cache_image.as_posix())
-    
-    def _handle_message(self, msg: BaseMessage):
-        if self.async_manager.handle_message(msg):
-            return
+    async def _handle_message(self, msg: BaseMessage):
         if self.controller.handle_message(msg):
             return
-        if router.dispatch(self, self.client_data, msg):
+        if await self.router(self.client_data, msg):
             return
         logger.info("Не обработанное сообщение: {mtype} - {msg}", mtype=msg.type, msg=msg)
     
@@ -210,43 +227,22 @@ class PlayerGameTable(QMainWindow):
         self.socket.send_msg(GetAllMaps())
         
         if msg.iname:
-            ctx = ImageContext(None, self._callback_my_avatar, msg.iname)
-            self.async_manager.register(ctx)
-            self.socket.send_msg(ImageNameRequest(name=msg.iname, uid=ctx.uid))
+            self.socket.send_msg(ImageNameRequest(name=msg.iname, uid=""))
         logger.info("Запуск сессии")
     
-    def _callback_my_avatar(self, ctx: ImageContext, file_name: str):
-        self.controller.register_image(ctx.name, file_name)
-    
     @router.handler(MapActionType.LOAD_BACKGROUND)
-    def _handle_load_bg(self, _uid, msg: MapLoadBackground):
+    def _handle_load_background(self, _uid, msg: MapLoadBackground):
         if not self.controller.active: return
-        ctx = ImageContext(None, self._callback_load_bg, msg.name)
-        self.async_manager.register(ctx)
-        self.socket.send_msg(ImageNameRequest(name=ctx.name, uid=ctx.uid))
-    
-    def _callback_load_bg(self, ctx: ImageContext, file_path):
-        logger.info("Загрузка фона")
-        self.statusBar().showMessage("Загрузка фона", 2000)
-        self.controller.tabMaps.load_map(ctx.name, file_path)
-        self.controller.clear_buffer(ctx.name)
+        logger.info(f"Получена команда на загрузку фона для карты '{msg.name}'")
     
     @router.handler(ClientActionType.ADD_PLAYER)
     def _handle_add_player(self, _uid, msg: ClientAddPlayer):
-        ctx = ImageContext(None, self._callback_add_player, msg.iname)
-        self.async_manager.register(ctx)
-        self.socket.send_msg(ImageNameRequest(name=ctx.name, uid=ctx.uid))
-    
-    def _callback_add_player(self, ctx: ImageContext, file_path):
-        self.controller.register_image(ctx.name, file_path)
-    
-    def _on_request_image(self, name, _mime: str):
-        ctx = ImageContext(None, self._callback_image_downloaded, name)
-        self.async_manager.register(ctx)
-        self.socket.send_msg(ImageNameRequest(name=name, uid=ctx.uid))
-    
-    def _callback_image_downloaded(self, ctx: ImageContext, file_path):
-        self.controller.register_image(ctx.name, file_path)
+        """
+        Вызывается, когда нужно добавить токен другого игрока.
+        Логика такая же: если был URL, сокет его скачал и подменил.
+        """
+        self.controller.add_token(msg.map_name, msg.mime, msg.pos)  # Предполагая, что сообщение содержит эти поля
+        logger.info(f"Добавлен игрок {msg.name} на карту {msg.map_name}")
     
     def _handle_change_color(self, color):
         self.controller.tabMaps.call_all_method("setColorGrid", color)

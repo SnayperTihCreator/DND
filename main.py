@@ -1,22 +1,19 @@
 import os
 import sys
 import warnings
+import asyncio
+
+from CommonTools.ui import LauncherWindow
 
 warnings.filterwarnings("ignore", category=UserWarning, module='pkg_resources')
 
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QSurfaceFormat
-from packaging import version
-
-from CommonTools.dialogRun import RunDialog
-from ServerTools.ui.master_window import MasterGameTable
-from ClientTools.ui.client_window import PlayerGameTable
+from qasync import QEventLoop
 from PrintManager import PrintManager
 
 # noinspection PyUnresolvedReferences
 import assets_rc
-# noinspection PyUnresolvedReferences
-import log
 
 sys.argv += ['--ignore-certificate-errors', '--ignore-ssl-errors']
 os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu-shader-disk-cache"
@@ -35,14 +32,14 @@ if __name__ == "__main__":
         QApplication.setApplicationVersion("1.0.0")
         QApplication.setOrganizationName("SnayperTihCreator")
         QApplication.setApplicationDisplayName("Dnd Virtual Table")
+        
         app = QApplication(sys.argv)
         
-        window = None
-        match RunDialog.getWhatRunner(app.quit):
-            case ["master", login]:
-                window = MasterGameTable(login)
-            case ["player", login]:
-                window = PlayerGameTable(login)
-        if window is not None:
-            window.show()
-            sys.exit(app.exec())
+        loop = QEventLoop(app)
+        asyncio.set_event_loop(loop)
+        
+        launcher = LauncherWindow()
+        launcher.show()
+        
+        with loop:
+            loop.run_forever()

@@ -1,13 +1,12 @@
 from abc import abstractmethod, ABCMeta, ABC
-from typing import Optional
 from functools import cache
+from typing import Optional
 
-from attrs import define
-
-from PySide6.QtWidgets import QDialog, QFormLayout, QDialogButtonBox, QTextBrowser, QLineEdit, QComboBox, QMessageBox, \
-    QCheckBox, QWidget, QTextEdit, QSpinBox, QPushButton, QWhatsThis, QHBoxLayout, QLabel, QFileDialog
 from PySide6.QtCore import Qt, QSize, QPoint
 from PySide6.QtGui import QImage
+from PySide6.QtWidgets import QDialog, QFormLayout, QDialogButtonBox, QTextBrowser, QLineEdit, QComboBox, QMessageBox, \
+    QCheckBox, QWidget, QSpinBox, QPushButton, QWhatsThis, QHBoxLayout, QLabel, QFileDialog
+from attrs import define
 
 from CommonTools.components import AdvancedTextEdit
 from .name_utils import FORBIDDEN_CHARS

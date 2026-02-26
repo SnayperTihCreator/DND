@@ -1,16 +1,17 @@
 from abc import ABCMeta, ABC, abstractmethod
 
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QApplication
 from PySide6.QtCore import QObject, Signal
+from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout
 from loguru import logger
 
 logger = logger.bind(pack="BaseController")
 
-from CommonTools.map_widget.tokens_dnd import BaseToken, PlayerToken
+from CommonTools.map_layout.tokens_dnd import BaseToken
 from CommonTools.messages import *
-from CommonTools.core import Socket, ClientData, BufferManager, ViewFog
+from CommonTools.core import ClientData, BufferManager, ViewFog
 from CommonTools.ui.tabs_map_controller import TabMapsWidget
 from CommonTools.utils import getImageMIME
+from CommonTools.union import AsyncBridge
 
 
 class MetaQABC(ABCMeta, type(QObject)):
@@ -20,7 +21,7 @@ class MetaQABC(ABCMeta, type(QObject)):
 class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
     request_image = Signal(str, str)
     
-    def __init__(self, socket: Socket, client: ClientData):
+    def __init__(self, socket: AsyncBridge, client: ClientData):
         super().__init__()
         self.socket = socket
         self.active = True
@@ -77,13 +78,12 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
     def update_player_list(self, players: dict[str, ClientData]):
         self.players = players.copy()
         self.update_players()
-        
+    
     def register_image(self, name: str, path: str):
         self.buffer.addImage(name, path)
         
         for mName, mdata in self.tabMaps.maps.items():
             for item in mdata.mWidget.items():
-                QApplication.processEvents()
                 if isinstance(item, BaseToken) and (getImageMIME(item.mime()) == name):
                     item.setPixmap(path)
                     
@@ -157,7 +157,7 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
     def _handle_custom_message(self, msg: BaseMessage):
         pass
     
-    def add_token(self, name, mime, pos, scale):
+    def add_token(self, name, mime, pos, scale=1):
         if self.buffer.should_buffer(name):
             self.buffer.addToken(name, mime, pos, scale)
         else:

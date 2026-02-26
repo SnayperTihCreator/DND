@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QDockWidget
 
-from .player_panel import PlayerSelectionWidget, PlayerItem
+from .player_panel import PlayerSelectionWidget
 
 
 class PlayerPanel(QDockWidget):
