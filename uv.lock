@@ -273,6 +273,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "aiohttp" },
     { name = "attrs" },
+    { name = "certifi" },
     { name = "d20" },
     { name = "json5" },
     { name = "loguru" },
@@ -296,6 +297,7 @@ dev = [
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.13.3" },
     { name = "attrs", specifier = ">=25.4.0" },
+    { name = "certifi", specifier = ">=2026.1.4" },
     { name = "d20", specifier = ">=1.1.2" },
     { name = "json5", specifier = ">=0.12.1" },
     { name = "loguru", specifier = ">=0.7.3" },

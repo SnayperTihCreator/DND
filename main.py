@@ -3,14 +3,18 @@ import sys
 import warnings
 import asyncio
 
-from CommonTools.ui import LauncherWindow
-
-warnings.filterwarnings("ignore", category=UserWarning, module='pkg_resources')
-
+import certifi
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QSurfaceFormat
 from qasync import QEventLoop
+
+warnings.filterwarnings("ignore", category=UserWarning, module='pkg_resources')
+
+from CommonTools.ui import LauncherWindow
 from PrintManager import PrintManager
+
+os.environ['REQUESTS_CA_BUNDLE'] = certifi.where()
+os.environ['SSL_CERT_FILE'] = certifi.where()
 
 # noinspection PyUnresolvedReferences
 import assets_rc

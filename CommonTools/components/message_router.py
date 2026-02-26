@@ -7,7 +7,6 @@ class RouterDescriptor:
     def __init__(self):
         self._handlers = {}
         self.bound_dispatchers = weakref.WeakKeyDictionary()
-        print("RouterDescriptor с WeakKeyDictionary создан")
     
     def handler(self, msg_type):
         def decorator(func):
