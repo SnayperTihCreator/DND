@@ -1,7 +1,7 @@
 [project]
-name = "dnd"
-version = "0.1.0"
-description = "Add your description here"
+name = "DND Table"
+version = "1.1.0b1"
+description = ""
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -28,4 +28,4 @@ dev = [
 ]
 
 [tool.taskipy.tasks]
-build = "pyinstaller dnd-table.spec --noconfirm"
+build = "pyinstaller scripts/dnd-table.spec --noconfirm"

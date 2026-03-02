@@ -136,3 +136,7 @@ class LauncherWindow(QMainWindow):
         loop = asyncio.get_event_loop()
         loop.call_soon(self.player_window.start_services)
         self.close()
+    
+    def closeEvent(self, event):
+        self.updater.stop_download_thread()
+        super().closeEvent(event)

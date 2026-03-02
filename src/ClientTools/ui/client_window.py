@@ -249,3 +249,7 @@ class PlayerGameTable(QMainWindow):
     
     def _handle_change_vgrid(self, visible):
         self.controller.tabMaps.call_all_method("setVisibleGrid", visible)
+    
+    def closeEvent(self, event):
+        self.updater.stop_download_thread()
+        super().closeEvent(event)

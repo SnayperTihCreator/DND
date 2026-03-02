@@ -249,6 +249,10 @@ class MasterGameTable(QMainWindow):
         self.server.broadcast(MapLoadBackground(name=name, uid="", url=file_url))
         self._handle_current_map(name)
     
+    def closeEvent(self, event):
+        self.updater.stop_download_thread()
+        super().closeEvent(event)
+    
     def _on_action_active_map(self):
         if name := self.controller.tabMaps.getActiveNameMap():
             self.controller.activeMap(name)

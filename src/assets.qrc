@@ -20,6 +20,9 @@
     <qresource prefix="icons/token">
         <file alias="hp.png">resource/icons/hp.png</file>
         <file alias="kd.png">resource/icons/kd.png</file>
+        <file alias="spawn.svg">resource/icons/spawn.svg</file>
+        <file alias="mob.svg">resource/icons/mob.svg</file>
+        <file alias="npc.svg">resource/icons/npc.svg</file>
     </qresource>
     <qresource prefix="css">
         <file alias="tooltip.css">resource/css/tooltip.css</file>

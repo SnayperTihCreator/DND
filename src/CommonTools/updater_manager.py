@@ -1,10 +1,12 @@
 import os
 import platform
 import sys
+import time
+
 import requests
 import subprocess
 from packaging import version
-from PySide6.QtCore import QObject, QThread, Signal, Qt
+from PySide6.QtCore import QObject, QThread, Signal, Qt, QTimer
 from PySide6.QtWidgets import QMessageBox, QProgressDialog
 
 from .version import __version__
@@ -119,10 +121,15 @@ class UpdateManager(QObject):
         
         self.thread.start()
     
+    def stop_download_thread(self):
+        if self.thread and self.thread.isRunning():
+            self.thread.cancel()
+            self.thread.wait()
+    
     def on_download_finished(self, zip_path):
         if self.progress_dialog:
             self.progress_dialog.close()
-        self.run_updater(zip_path)
+        QTimer.singleShot(100, lambda: self.run_updater(zip_path))
     
     def on_download_error(self, error_msg):
         if self.progress_dialog:
@@ -130,17 +137,38 @@ class UpdateManager(QObject):
         QMessageBox.critical(self.parent, "Ошибка загрузки", f"Не удалось скачать обновление:\n{error_msg}")
     
     def run_updater(self, zip_path):
-        if getattr(sys, 'frozen', False):
-            app_dir = os.path.dirname(sys.executable)
-            main_exe = os.path.basename(sys.executable)
-            updater_exe = os.path.join(app_dir, "updater.exe")
-            
-            if not os.path.exists(updater_exe):
-                QMessageBox.critical(self.parent, "Ошибка", "Файл updater.exe не найден!")
-                return
-            
-            subprocess.Popen([updater_exe, zip_path, app_dir, main_exe])
-            sys.exit()
-        else:
+        if not getattr(sys, 'frozen', False):
             QMessageBox.information(self.parent, "Update",
-                                    f"Режим разработки. Файл скачан в: {zip_path}\nВ сборке здесь бы запустился updater.exe")
+                                    f"Режим разработки. Файл скачан в: {zip_path}\n"
+                                    f"В сборке здесь бы запустился апдейтер.")
+            return
+        
+        app_dir = os.path.dirname(sys.executable)
+        main_executable_name = os.path.basename(sys.executable)
+        
+        if sys.platform == "win32":
+            updater_name = "updater.exe"
+        else:
+            updater_name = "updater"
+        
+        updater_path = os.path.join(app_dir, updater_name)
+        
+        if not os.path.exists(updater_path):
+            QMessageBox.critical(self.parent, "Ошибка", f"Файл '{updater_name}' не найден!")
+            return
+        
+        if sys.platform != "win32":
+            try:
+                os.chmod(updater_path, 0o755)
+            except Exception as e:
+                QMessageBox.critical(self.parent, "Ошибка прав",
+                                     f"Не удалось выдать права на запуск для '{updater_name}':\n{e}")
+                return
+        
+        try:
+            subprocess.Popen([updater_path, zip_path, app_dir, main_executable_name])
+            time.sleep(2)
+            sys.exit()
+        except Exception as e:
+            QMessageBox.critical(self.parent, "Ошибка запуска",
+                                 f"Не удалось запустить апдейтер:\n{e}")

@@ -1,5 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 import pathlib
+import sys
 import zipfile
 import os
 from typing import TYPE_CHECKING
@@ -10,9 +11,12 @@ if TYPE_CHECKING:
 
 from PyInstaller.log import logger
 
+SPEC_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SPEC_DIR)
+SRC_PATH = os.path.join(PROJECT_ROOT, 'src')
 DISTPATH: str
 
-icon_path = os.path.join('resource', 'icon.ico')
+icon_path = os.path.join(PROJECT_ROOT, 'resource', 'icon.ico')
 
 
 def buildZipFile(dist: pathlib.Path, dir_name: str):
@@ -29,8 +33,8 @@ def buildZipFile(dist: pathlib.Path, dir_name: str):
 
 
 a = Analysis(
-    ['main.py'],
-    pathex=[],
+    [os.path.join(SRC_PATH, 'main.py')],
+    pathex=[SRC_PATH, PROJECT_ROOT],
     binaries=[],
     datas=[],
     hiddenimports=[],
@@ -63,8 +67,8 @@ exe = EXE(
 )
 
 updater_a = Analysis(
-    ["updater.py"],
-    pathex=[],
+    [os.path.join(SRC_PATH, 'updater.py')],
+    pathex=[SRC_PATH, PROJECT_ROOT],
     binaries=[],
     datas=[],
     hiddenimports=[],
@@ -77,6 +81,10 @@ updater_a = Analysis(
 )
 
 updater_pyz = PYZ(updater_a.pure)
+
+exe_options = {}
+if sys.platform == 'win32':
+    exe_options |= dict(uac_admin=True)
 
 updater_exe = EXE(
     updater_pyz,
@@ -94,6 +102,7 @@ updater_exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    **exe_options
 )
 
 coll = COLLECT(
