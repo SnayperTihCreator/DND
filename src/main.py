@@ -18,6 +18,8 @@ os.environ['SSL_CERT_FILE'] = certifi.where()
 
 # noinspection PyUnresolvedReferences
 import assets_rc
+# noinspection PyUnusedImports
+import log
 
 sys.argv += ['--ignore-certificate-errors', '--ignore-ssl-errors']
 os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu-shader-disk-cache"
