@@ -37,7 +37,7 @@
 *   **GUI:** PySide6 (Qt for Python)
 *   **Асинхронность:** `asyncio` + `qasync`
 *   **Сеть:** `websockets` для обмена сообщениями, `aiohttp` (внутри `AsyncServerBridge`) для раздачи файлов.
-*   **Логирование:** `loguru`
+*   **Логирование:** стандартный модуль `logging` с ротацией файлов
 
 ---
 

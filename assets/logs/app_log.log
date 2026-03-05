@@ -1,0 +1,48 @@
+2026-03-05 14:11:22: [root/INFO] Logging system initialized.
+2026-03-05 14:11:22: [PrintManager/INFO] PrintManager enabled.
+2026-03-05 14:11:33: [websockets.server/INFO] server listening on 0.0.0.0:8765
+2026-03-05 14:11:42: [Qt.js/WARNING] The resource https://5e14.ttg.club/img/bg_telegram_bot.webp was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+2026-03-05 14:11:42: [Qt.js/WARNING] The resource https://5e14.ttg.club/img/bg_discord_bot.webp was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+2026-03-05 14:11:42: [Qt.js/WARNING] The resource https://5e14.ttg.club/img/bg_main_page_button_nav_3.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+2026-03-05 14:11:42: [Qt.js/WARNING] The resource https://5e14.ttg.club/img/bg_main_page_button_nav_mobile_3.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+2026-03-05 14:11:42: [Qt.js/WARNING] The resource https://5e14.ttg.club/img/dark/bg-main.webp was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+2026-03-05 14:11:45: [Qt.js/WARNING] The resource https://5e14.ttg.club/img/bg_telegram_bot.webp was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+2026-03-05 14:11:45: [Qt.js/WARNING] The resource https://5e14.ttg.club/img/bg_discord_bot.webp was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+2026-03-05 14:11:45: [Qt.js/WARNING] The resource https://5e14.ttg.club/img/bg_main_page_button_nav_3.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+2026-03-05 14:11:45: [Qt.js/WARNING] The resource https://5e14.ttg.club/img/bg_main_page_button_nav_mobile_3.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+2026-03-05 14:11:45: [Qt.js/WARNING] The resource https://5e14.ttg.club/img/dark/bg-main.webp was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+2026-03-05 14:11:55: [Qt.js/WARNING] The resource https://5e14.ttg.club/img/bg_telegram_bot.webp was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+2026-03-05 14:11:55: [Qt.js/WARNING] The resource https://5e14.ttg.club/img/bg_discord_bot.webp was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+2026-03-05 14:11:55: [Qt.js/WARNING] The resource https://5e14.ttg.club/img/bg_main_page_button_nav_3.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+2026-03-05 14:11:55: [Qt.js/WARNING] The resource https://5e14.ttg.club/img/bg_main_page_button_nav_mobile_3.png was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+2026-03-05 14:11:55: [Qt.js/WARNING] The resource https://5e14.ttg.club/img/dark/bg-main.webp was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+2026-03-05 14:12:34: [root/INFO] Logging system initialized.
+2026-03-05 14:12:34: [PrintManager/INFO] PrintManager enabled.
+2026-03-05 14:12:37: [ClientTools.ui.client_window/INFO] Initializing PlayerGameTable window...
+2026-03-05 14:12:37: [ClientTools.core.client_socket/INFO] AsyncClientBridge initialized. Cache folder: .cache/client
+2026-03-05 14:12:37: [ClientTools.ui.player_controller/INFO] Initializing PlayerController...
+2026-03-05 14:12:37: [ClientTools.ui.player_controller/INFO] PlayerController initialization complete.
+2026-03-05 14:12:37: [ClientTools.ui.login_widget/INFO] Login widget initialized.
+2026-03-05 14:12:37: [ClientTools.ui.note_book/INFO] NoteBookDock initialized.
+2026-03-05 14:12:38: [ClientTools.ui.note_book/INFO] No notes backup file found at .cache/notes_backup.json. Starting with a new notebook.
+2026-03-05 14:12:38: [ClientTools.ui.client_window/INFO] Starting asynchronous services...
+2026-03-05 14:12:38: [ClientTools.ui.client_window/INFO] Attempting to connect to server 127.0.0.1:8765
+2026-03-05 14:12:38: [ClientTools.core.client_socket/INFO] Connecting to ws://127.0.0.1:8765...
+2026-03-05 14:12:38: [websockets.server/INFO] connection open
+2026-03-05 14:12:38: [ClientTools.core.client_socket/INFO] WebSocket connection established to ws://127.0.0.1:8765
+2026-03-05 14:12:38: [ClientTools.ui.client_window/INFO] Successfully connected to server. Switching to login screen.
+2026-03-05 14:12:38: [ClientTools.core.client_socket/INFO] Listening for incoming messages...
+2026-03-05 14:12:38: [ClientTools.core.client_socket/INFO] Received server configuration: HTTP port 8080
+2026-03-05 14:12:38: [ClientTools.core.client_socket/INFO] Connected. My UID is: ecb0da7353ff428dbd28df44f6057af7
+2026-03-05 14:12:56: [ClientTools.ui.login_widget/INFO] 'Start' button pressed.
+2026-03-05 14:12:56: [ClientTools.ui.login_widget/INFO] Session start requested for: OlegDudkins (Чародей)
+2026-03-05 14:12:56: [ClientTools.ui.client_window/INFO] Received command to start player session.
+2026-03-05 14:12:56: [ClientTools.ui.client_window/WARNING] Unprocessed message: type=client:start:player, content=name='OlegDudkins' cls='Чародей' iname=None
+2026-03-05 14:12:56: [ClientTools.ui.player_controller/INFO] Handling MAP_GRID_DATA: Setting grid offset to (0, 0) and size to 50.
+2026-03-05 14:13:08: [ClientTools.ui.client_window/INFO] Player window is closing.
+2026-03-05 14:13:08: [PrintManager/INFO] PrintManager disabled.
+2026-03-05 14:13:08: [Qt.default/WARNING] Release of profile requested but WebEnginePage still not deleted. Expect troubles !
+2026-03-05 14:13:19: [PrintManager/INFO] PrintManager disabled.
+2026-03-05 14:13:19: [Qt.default/WARNING] Release of profile requested but WebEnginePage still not deleted. Expect troubles !
+2026-03-05 14:34:21: [root/INFO] Logging system initialized.
+2026-03-05 14:34:21: [PrintManager/INFO] PrintManager enabled.

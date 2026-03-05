@@ -1,10 +1,11 @@
 from abc import ABCMeta, ABC, abstractmethod
+import logging
 
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout
-from loguru import logger
 
-logger = logger.bind(pack="BaseController")
+
+logger = logging.getLogger("BaseController")
 
 from CommonTools.map_layout.tokens_dnd import BaseToken
 from CommonTools.messages import *
@@ -48,7 +49,7 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
         }
     
     def clear_buffer(self, name_active):
-        logger.success("Activate map: {name}", name=name_active)
+        logger.info(f"Activate map: {name_active}")
         self.buffer.mark_active(name_active)
         
         for mime, pos, scale in self.buffer.popTokens(name_active):

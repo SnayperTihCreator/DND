@@ -2,15 +2,18 @@ import asyncio
 import socket
 import uuid
 from pathlib import Path
+import logging
 
 import websockets
 from aiohttp import web
-from loguru import logger
 from psygnal import Signal
 
 from CommonTools.core import ClientData, SocketAdapter
 from CommonTools.core import MasterBeacon
 from CommonTools.messages import *
+
+
+logger = logging.getLogger(__name__)
 
 
 class AsyncServerBridge:
@@ -96,7 +99,7 @@ class AsyncServerBridge:
             else:
                 raise RuntimeError("No free HTTP ports")
             
-            logger.success(f"Сервер работает: WS {self.ws_port}, HTTP {self.http_port}")
+            logger.info(f"Сервер работает: WS {self.ws_port}, HTTP {self.http_port}")
             self.server_started.emit(self.available_ips, self.ws_port, self.http_port)
         except Exception as e:
             logger.error(f"Ошибка сервера: {e}")

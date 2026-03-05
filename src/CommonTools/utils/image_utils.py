@@ -1,8 +1,12 @@
 import shutil
 from pathlib import Path
-from PIL import Image
-from loguru import logger
 from typing import Optional
+import logging
+
+from PIL import Image
+
+
+logger = logging.getLogger(__name__)
 
 
 def validate_and_resize_image(source_path: str, cache_folder: Path, max_size: int = 4096) -> Optional[str]:

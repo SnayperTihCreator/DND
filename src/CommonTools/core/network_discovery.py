@@ -1,8 +1,13 @@
 import asyncio
 import json
 import socket
-from loguru import logger
+import logging
+
 from psygnal import Signal
+
+
+logger = logging.getLogger(__name__)
+
 
 DISCOVERY_PORT = 55000  # Используем тот, который свободен
 MAGIC_REQUEST = "WHO_IS_THE_MASTER?"

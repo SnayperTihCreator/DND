@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from pathlib import Path
 from typing import Optional
 
@@ -6,13 +7,12 @@ from PySide6.QtCore import Qt, QPoint, QPointF, QTimer
 from PySide6.QtWidgets import QMainWindow, QToolBar, QSpinBox, QLabel, QCheckBox, QFileDialog, \
     QGraphicsColorizeEffect, QMessageBox, QGraphicsEffect, QComboBox
 from PySide6.QtGui import QIcon, QColor
-from loguru import logger
 from psygnal import set_async_backend
 
 from CommonTools.map_layout import MapWidget
 from CommonTools.notes import Note
 
-logger = logger.bind(pack="ServerWindow")
+logger = logging.getLogger("ServerWindow")
 
 from CommonTools.components import ColorButton, GuidePanel, RouterDescriptor
 from CommonTools.updater_manager import UpdateManager
@@ -304,11 +304,11 @@ class MasterGameTable(QMainWindow):
         self.server.broadcast(MapGridData(offset=offset.toTuple(), size=size))
     
     def _handle_change_freeze(self, uid, state):
-        logger.info("Изменения состояния заморозки у {uid}:{state}", uid=uid, state=state)
+        logger.info(f"Изменения состояния заморозки у {uid}:{state}")
         self.server.answer(uid, MapFreezePlayer(freeze=state))
     
     def _handle_connect(self, uid):
-        logger.success("Клиент подключен с uid: {uid}", uid=uid)
+        logger.info(f"Клиент подключен с uid: {uid}")
     
     def _handle_change_color(self, color):
         self.controller.tabMaps.call_all_method("setColorGrid", color)
@@ -321,7 +321,7 @@ class MasterGameTable(QMainWindow):
         self.controller.update_player_list(self.players)
         self.player_panel.removePlayer(uid)
         self.server.broadcast(ClientRemovePlayer(uid=uid), uid)
-        logger.success("Клиент отключен с uid: {uid}", uid=uid)
+        logger.info(f"Клиент отключен с uid: {uid}")
     
     async def _handle_message_raw(self, uid, msg_raw: str):
         msg = BaseMessage.from_str(msg_raw)

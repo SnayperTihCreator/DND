@@ -10,7 +10,6 @@ dependencies = [
     "certifi>=2026.1.4",
     "d20>=1.1.2",
     "json5>=0.12.1",
-    "loguru>=0.7.3",
     "packaging>=26.0",
     "pillow>=12.0.0",
     "psygnal>=0.15.1",
