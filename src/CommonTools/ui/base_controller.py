@@ -49,7 +49,7 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
         }
     
     def clear_buffer(self, name_active):
-        logger.info(f"Activate map: {name_active}")
+        logger.info(f"[SUCCESS] Activate map: {name_active}")
         self.buffer.mark_active(name_active)
         
         for mime, pos, scale in self.buffer.popTokens(name_active):

@@ -99,7 +99,7 @@ class AsyncServerBridge:
             else:
                 raise RuntimeError("No free HTTP ports")
             
-            logger.info(f"Сервер работает: WS {self.ws_port}, HTTP {self.http_port}")
+            logger.info(f"[SUCCESS] Сервер работает: WS {self.ws_port}, HTTP {self.http_port}")
             self.server_started.emit(self.available_ips, self.ws_port, self.http_port)
         except Exception as e:
             logger.error(f"Ошибка сервера: {e}")

@@ -46,3 +46,6 @@
 2026-03-05 14:13:19: [Qt.default/WARNING] Release of profile requested but WebEnginePage still not deleted. Expect troubles !
 2026-03-05 14:34:21: [root/INFO] Logging system initialized.
 2026-03-05 14:34:21: [PrintManager/INFO] PrintManager enabled.
+2026-03-05 14:41:48: [PrintManager/INFO] PrintManager disabled.
+2026-03-05 14:42:07: [root/INFO] Logging system initialized.
+2026-03-05 14:42:07: [PrintManager/INFO] PrintManager enabled.

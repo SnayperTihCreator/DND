@@ -308,7 +308,7 @@ class MasterGameTable(QMainWindow):
         self.server.answer(uid, MapFreezePlayer(freeze=state))
     
     def _handle_connect(self, uid):
-        logger.info(f"Клиент подключен с uid: {uid}")
+        logger.info(f"[SUCCESS] Клиент подключен с uid: {uid}")
     
     def _handle_change_color(self, color):
         self.controller.tabMaps.call_all_method("setColorGrid", color)
@@ -321,7 +321,7 @@ class MasterGameTable(QMainWindow):
         self.controller.update_player_list(self.players)
         self.player_panel.removePlayer(uid)
         self.server.broadcast(ClientRemovePlayer(uid=uid), uid)
-        logger.info(f"Клиент отключен с uid: {uid}")
+        logger.info(f"[SUCCESS] Клиент отключен с uid: {uid}")
     
     async def _handle_message_raw(self, uid, msg_raw: str):
         msg = BaseMessage.from_str(msg_raw)
