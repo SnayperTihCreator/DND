@@ -4,15 +4,16 @@ import logging
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout
 
-
 logger = logging.getLogger("BaseController")
 
 from CommonTools.map_layout.tokens_dnd import BaseToken
 from CommonTools.messages import *
 from CommonTools.core import ClientData, BufferManager, ViewFog
-from CommonTools.ui.tabs_map_controller import TabMapsWidget
 from CommonTools.utils import getImageMIME
 from CommonTools.union import AsyncBridge
+from CommonTools.components import RouterDescriptor
+
+from .tabs_map_controller import TabMapsWidget
 
 
 class MetaQABC(ABCMeta, type(QObject)):
@@ -20,6 +21,7 @@ class MetaQABC(ABCMeta, type(QObject)):
 
 
 class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
+    router = RouterDescriptor()
     request_image = Signal(str, str)
     
     def __init__(self, socket: AsyncBridge, client: ClientData):
@@ -87,7 +89,7 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
             for item in mdata.mWidget.items():
                 if isinstance(item, BaseToken) and (getImageMIME(item.mime()) == name):
                     item.setPixmap(path)
-                    
+    
     def getImage(self, name: str):
         return self.buffer.getImage(name)
     
@@ -110,44 +112,40 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
                 else:
                     self.request_image.emit(img_name, token.mime())
     
-    # noinspection PyTypeChecker
-    def handle_message(self, msg: BaseMessage):
+    async def handle_message(self, msg: BaseMessage):
         if not self.active:
             return None
-        match msg.type:
-            case MapActionType.ADD_TOKEN:
-                return self._handle_add_token(msg)
-            case MapActionType.REMOVE_TOKEN:
-                return self._handle_remove_token(msg)
-            case MapActionType.MOVE_TOKEN:
-                return self._handle_move_token(msg)
-            case MapActionType.FOG_CHANGED:
-                return self._handle_fog_change(msg)
-            case MapActionType.FOG_FULL:
-                return self._handle_fog_full(msg)
-            case _:
-                return self._handle_custom_message(msg)
+        
+        cd = self.socket.get_me()
+        if await self.router(cd.uid, msg):
+            return True
+        return await self._handle_custom_message(msg)
     
-    def _handle_add_token(self, msg: MapAddToken):
+    @router.handler(MapActionType.ADD_TOKEN)
+    def _handle_add_token(self, _, msg: MapAddToken):
         self.add_token(msg.name, msg.mime, msg.pos, msg.scale)
         return True
     
-    def _handle_remove_token(self, msg: MapRemoveToken):
+    @router.handler(MapActionType.REMOVE_TOKEN)
+    def _handle_remove_token(self, _, msg: MapRemoveToken):
         self.remove_token(msg.name, msg.mime)
         return True
     
-    def _handle_move_token(self, msg: MapMoveToken):
+    @router.handler(MapActionType.MOVE_TOKEN)
+    def _handle_move_token(self, _, msg: MapMoveToken):
         self.move_token(msg.name, msg.mime, msg.pos)
         return True
     
-    def _handle_fog_change(self, msg: MapFogChanged):
+    @router.handler(MapActionType.FOG_CHANGED)
+    def _handle_fog_change(self, _, msg: MapFogChanged):
         if self.buffer.should_buffer(msg.name):
             self.buffer.addFog(msg.name, ViewFog.DIFF, msg.reveal, msg.data)
         else:
             self.apply_fog_nw(msg.name, [(ViewFog.DIFF, msg.reveal, msg.data)])
         return True
     
-    def _handle_fog_full(self, msg: MapFogFull):
+    @router.handler(MapActionType.FOG_FULL)
+    def _handle_fog_full(self, _, msg: MapFogFull):
         if self.buffer.should_buffer(msg.name):
             self.buffer.addFog(msg.name, ViewFog.FULL, True, msg.data)
         else:
@@ -155,7 +153,7 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
         return True
     
     @abstractmethod
-    def _handle_custom_message(self, msg: BaseMessage):
+    async def _handle_custom_message(self, msg: BaseMessage):
         pass
     
     def add_token(self, name, mime, pos, scale=1):

@@ -1,10 +1,22 @@
 import asyncio
-from typing import Any
+from typing import Any, Protocol
 from abc import ABC, abstractmethod
 
 from websockets import ServerConnection
 
 from attrs import define, field
+
+from CommonTools.messages import BaseMessage
+
+
+class SocketProtocol(Protocol):
+    def send(self, msg: BaseMessage): ...
+    
+    def answer(self, uid: str, msg: BaseMessage): ...
+    
+    def broadcast(self, msg: BaseMessage): ...
+    
+    def get_me(self): ...
 
 
 @define
@@ -12,14 +24,17 @@ class AbstractAdapterSocket(ABC):
     _ws: Any = field(repr=False)
     
     @abstractmethod
-    def sendText(self, text: str): ...
-    
-    @abstractmethod
     def close(self): ...
 
 
 @define
-class SocketAdapter(AbstractAdapterSocket):
+class TextAdapterSocket(AbstractAdapterSocket):
+    @abstractmethod
+    def sendText(self, text: str): ...
+
+
+@define
+class SocketAdapter(TextAdapterSocket):
     _ws: ServerConnection = field(repr=False)
     
     def sendText(self, text: str):
@@ -43,4 +58,7 @@ class SocketAdapter(AbstractAdapterSocket):
             pass
 
 
-__all__ = ['AbstractAdapterSocket', "SocketAdapter"]
+__all__ = [
+    "AbstractAdapterSocket", "TextAdapterSocket",
+    "SocketAdapter",
+]

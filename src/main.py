@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 import warnings
@@ -24,8 +25,12 @@ import log
 sys.argv += ['--ignore-certificate-errors', '--ignore-ssl-errors']
 os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu-shader-disk-cache"
 
+logging.getLogger("websockets").setLevel(logging.WARNING)
+logging.getLogger("qasync").setLevel(logging.INFO)
+
 if __name__ == "__main__":
     with PrintManager() as pm:
+        pm.disable()
         pm.show_caller_info(True)
         
         format = QSurfaceFormat()

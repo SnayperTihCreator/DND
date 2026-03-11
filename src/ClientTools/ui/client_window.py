@@ -15,8 +15,8 @@ from ClientTools.core import AsyncClientBridge
 from CommonTools.notes import Note
 from CommonTools.updater_manager import UpdateManager
 from CommonTools.core import classes
-from CommonTools.components import GuidePanel, ColorButton, RouterDescriptor
-from CommonTools.map_layout.tokens_dnd import MovedEvent
+from CommonTools.components import RouterDescriptor, GuidePanel, ColorButton
+from CommonTools.map_layout import MovedEvent
 from CommonTools.messages import *
 from CommonTools.utils import restart_app
 
@@ -52,8 +52,8 @@ class PlayerGameTable(QMainWindow):
         self.socket.error_occurred.connect(self.showErrorMessage)
         self.socket.connected.connect(self._handle_connect)
         self.socket.disconnected.connect(self._handle_disconnect)
-        self.socket.downloader.file_downloaded.connect(self._on_file_downloaded)
-        self.socket.downloader.download_progress.connect(self._on_download_progress)
+        self.socket.transfer.file_downloaded.connect(self._on_file_downloaded)
+        self.socket.transfer.download_progress.connect(self._on_download_progress)
         
         self.stacker = QStackedWidget()
         self.setCentralWidget(self.stacker)
@@ -112,7 +112,7 @@ class PlayerGameTable(QMainWindow):
         backend = set_async_backend("asyncio")
         await backend.running.wait()
         
-        self.socket.message_received.connect(self._handle_message_raw)
+        self.socket.message_handled.connect(self._handle_message)
         
         if self.server_ip and self.server_port:
             logger.info("Attempting to connect to server %s:%s", self.server_ip, self.server_port)
@@ -157,7 +157,7 @@ class PlayerGameTable(QMainWindow):
         self.statusBar().setGraphicsEffect(colorize)
     
     def resetEffect(self):
-        self.statusBar().setGraphicsEffect(QGraphicsEffect())
+        self.statusBar().setGraphicsEffect(None)
     
     def showErrorMessage(self, msg: str):
         self.applyErrorEffect()
@@ -187,15 +187,10 @@ class PlayerGameTable(QMainWindow):
                              "The application will now restart.")
         restart_app()
     
-    async def _handle_message_raw(self, msg_raw: str):
-        logger.debug("Received raw message: %s", msg_raw)
-        msg = BaseMessage.from_str(msg_raw)
-        await self._handle_message(msg)
-    
     async def _handle_message(self, msg: BaseMessage):
-        if self.controller.handle_message(msg):
+        if await self.controller.handle_message(msg):
             return
-        if await self.router(self.client_data, msg):
+        if await self.router(self.client_data.uid, msg):
             return
         logger.warning("Unprocessed message: type=%s, content=%s", msg.type, msg)
     
@@ -217,10 +212,10 @@ class PlayerGameTable(QMainWindow):
         if msg.iname:
             self.socket.send_msg(ImageNameRequest(name=msg.iname, uid=""))
     
-    @router.handler(MapActionType.LOAD_BACKGROUND)
-    def _handle_load_background(self, _uid, msg: MapLoadBackground):
-        if not self.controller.active: return
-        logger.info("Received command to load background for map '%s'", msg.name)
+    # @router.handler(MapActionType.LOAD_BACKGROUND)
+    # def _handle_load_background(self, _uid, msg: MapLoadBackground):
+    #     if not self.controller.active: return
+    #     logger.info("Received command to load background for map '%s'", msg.name)
     
     @router.handler(ClientActionType.ADD_PLAYER)
     def _handle_add_player(self, _uid, msg: ClientAddPlayer):

@@ -19,6 +19,7 @@ from CommonTools.updater_manager import UpdateManager
 from ServerTools.core.server_socket import AsyncServerBridge
 from CommonTools.messages import *
 from CommonTools.core import ClientData
+from CommonTools.mime import AssetsMime
 from ServerTools.components import TokensPanel, DialogCreateMap, PlayerPanel, DialogCreateNote, DialogPreviewSend
 from CommonTools.utils import validate_and_resize_image, getImageMIME
 
@@ -158,8 +159,7 @@ class MasterGameTable(QMainWindow):
         backend = set_async_backend("asyncio")
         
         await backend.running.wait()
-        
-        self.server.message_received_uid.connect(self._handle_message_raw)
+        self.server.message_handled.connect(self._handle_message)
         self.server.start_server()
     
     def _on_note_send(self, note: Note):
@@ -235,22 +235,32 @@ class MasterGameTable(QMainWindow):
         path, _ = QFileDialog.getOpenFileName(self, "Выберете фон", ".", "Image(*.png *.jpg *.gif)")
         if not path: return
         
-        path2 = validate_and_resize_image(path, self.cache_folder, max_size=4096)
-        if not path2:
-            QMessageBox.critical(self, "Ошибка", "Не удалось обработать изображение.")
-            return
+        # TODO Добавить норм фильтр
+        # path2 = validate_and_resize_image(path, self.cache_folder, max_size=4096)
+        # if not path2:
+        #     QMessageBox.critical(self, "Ошибка", "Не удалось обработать изображение.")
+        #     return
         
-        filename = Path(path2).name
-        file_url = self.server.get_file_url(filename)
-        
-        self.controller.register_image(name, path2)
-        self.controller.tabMaps.load_map(name, path2)
-        
-        self.server.broadcast(MapLoadBackground(name=name, uid="", url=file_url))
+        mime = AssetsMime(category="map-fon", filename=name)
+        filename = self.server.loadTo(path)
+        self.controller.register_image(name, path)
+        self.controller.tabMaps.load_map(name, path)
+        self.server.broadcast(SystemResourceAvailable(filename=filename))
+        self.server.broadcast(MapLoadBackground(mime=mime, filename=filename))
         self._handle_current_map(name)
+        
+        # path = Path(path2).name
+        # file_url = self.server.get_file_url(path)
+        #
+        # self.controller.register_image(name, path2)
+        # self.controller.tabMaps.load_map(name, path2)
+        #
+        # self.server.broadcast(MapLoadBackground(name=name, uid="", url=file_url))
+        # self._handle_current_map(name)
     
     def closeEvent(self, event):
         self.updater.stop_download_thread()
+        self.server.stop_server()
         super().closeEvent(event)
     
     def _on_action_active_map(self):
@@ -323,18 +333,14 @@ class MasterGameTable(QMainWindow):
         self.server.broadcast(ClientRemovePlayer(uid=uid), uid)
         logger.info(f"[SUCCESS] Клиент отключен с uid: {uid}")
     
-    async def _handle_message_raw(self, uid, msg_raw: str):
-        msg = BaseMessage.from_str(msg_raw)
-        await self._handle_message(uid, msg)
-    
     async def _handle_message(self, uid, msg: BaseMessage):
-        if self.controller.handle_message(msg):
+        if await self.controller.handle_message(msg):
             return
         
         if await self.router(uid, msg):
             return
         
-        logger.info("Не обработанное сообщение: {mtype} - {msg}", mtype=msg.type, msg=msg)
+        logger.info("Не обработанное сообщение: %s - %s", msg.type, msg)
     
     @router.handler(ClientActionType.START_PLAYER)
     def _action_add_player(self, uid_answer: str, msg: ClientStartPlayer):
@@ -361,10 +367,6 @@ class MasterGameTable(QMainWindow):
     def _handle_player_moved(self, uid, msg: MapPlayerMoved):
         token = self.controller.players_map[uid]
         token.move_to(QPointF(msg.pos[0], msg.pos[1]))
-    
-    def closeEvent(self, event):
-        self.server.stop_server()
-        return super().closeEvent(event)
     
     @router.handler(ImageActionType.NAME_REQUEST)
     def _handle_name_map(self, uid, msg: ImageNameRequest):

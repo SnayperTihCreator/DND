@@ -86,6 +86,10 @@ class PrintManager:
             line = frame.f_lineno
             file = frame.f_code.co_filename
             function = frame.f_code.co_name
+            file_name = os.path.basename(file)
+            
+            if file_name in ["traceback.py", "logging.py", "events.py"]:
+                return ""
             
             return self._caller_format.format(
                 file=os.path.basename(file),

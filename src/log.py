@@ -51,7 +51,7 @@ def setup_logging():
     error_handler.setFormatter(formatter)
     
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(logging.DEBUG)
     console_handler.setFormatter(formatter)
     
     logging.basicConfig(handlers=[app_handler, error_handler, console_handler])
@@ -83,6 +83,7 @@ def qt_message_handler(mode: QtMsgType, context: QMessageLogContext, message):
 def exception_handler(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
     
     root_logger = logging.getLogger()
     root_logger.critical("Uncaught exception (Global Crash):", exc_info=(exc_type, exc_value, exc_traceback))

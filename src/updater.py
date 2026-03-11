@@ -7,6 +7,7 @@ import subprocess
 
 # noinspection PyUnusedImports
 import log
+
 logger = logging.getLogger(__name__)
 
 

@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt, QMimeData, Signal, QSize
-from PySide6.QtGui import QDrag, QIcon, QMouseEvent, QPixmap
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QDockWidget, QToolButton, QGridLayout
+from PySide6.QtGui import QDrag, QIcon, QMouseEvent
+from PySide6.QtWidgets import QWidget, QDockWidget, QToolButton, QGridLayout
 
 
 class DraggableButton(QToolButton):

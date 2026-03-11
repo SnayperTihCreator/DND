@@ -13,3 +13,4 @@ wheels/
 # Temp file
 /.cache/
 /run-test/
+/assets/

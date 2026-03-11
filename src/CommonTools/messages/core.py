@@ -2,7 +2,8 @@ from typing import ClassVar, Type, Any, Self, Optional
 from enum import Enum
 
 import json5
-from pydantic import BaseModel
+from pydantic import BaseModel, model_serializer, model_validator
+from pydantic_core.core_schema import SerializerFunctionWrapHandler
 
 
 class BaseActionType(Enum):
@@ -48,29 +49,53 @@ class BaseMessage(BaseModel):
         cls.type = kwargs.get("type", NotActionType.NOT_TYPE)
         cls._registry[cls.__qualname__] = cls
     
-    def to_dict(self) -> dict[str, Any]:
-        data = self.model_dump()
-        data['_type'] = self.__class__.__qualname__
+    @model_serializer(mode="wrap")
+    def _serializer_with_type(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        data = handler(self)
+        data["_type"] = self.__class__.__qualname__
         return data
     
+    @model_validator(mode="wrap")
+    @classmethod
+    def _smart_parser(cls, data: Any, handler: Any) -> Any:
+        if isinstance(data, BaseMessage):
+            return data
+        
+        if isinstance(data, str):
+            data = json5.loads(data)
+        
+        if isinstance(data, dict):
+            target_name = data.get("_type")
+            if target_name:
+                target = cls._registry.get(target_name)
+                
+                if not target:
+                    raise ValueError(f"Unknown message type: {target_name}")
+                
+                if cls is target:
+                    data2 = data.copy()
+                    data2.pop("_type", None)
+                    return handler(data2)
+                
+                data2 = data.copy()
+                data2.pop("_type", None)
+                return target.model_validate(data2)
+        
+        return handler(data)
+    
+    def to_dict(self) -> dict[str, Any]:
+        return self.model_dump(mode="json")
+    
     def to_str(self) -> str:
-        return json5.dumps(self.to_dict(), ensure_ascii=False)
+        return json5.dumps(self.model_dump(mode="json"), ensure_ascii=False)
     
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
-        type_name = data.get('_type')
-        target_cls: Optional[BaseMessage] = cls._registry.get(type_name)
-        if not target_cls:
-            print(type_name, cls._registry)
-            raise ValueError(f"Unknown type: {type_name}")
-        
-        del data['_type']
-        return target_cls.model_validate(data)
+        return cls.model_validate(data)
     
     @classmethod
     def from_str(cls, data: str) -> Self:
-        request = json5.loads(data)
-        return cls.from_dict(request)
+        return cls.model_validate(data)
     
     @classmethod
     def get_type_msg(cls, data: dict[str, Any]) -> Optional[BaseActionType]:

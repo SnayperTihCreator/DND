@@ -5,10 +5,10 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QListWidget, Q
                                QTabWidget, QListWidgetItem)
 
 from ClientTools.ui.client_window import PlayerGameTable
+from ServerTools.ui.master_window import MasterGameTable
+
 from CommonTools.core import ServerScanner
 from CommonTools.updater_manager import UpdateManager
-# --- Импортируй свои классы ---
-from ServerTools.ui.master_window import MasterGameTable
 
 
 class LauncherWindow(QMainWindow):

@@ -5,10 +5,8 @@ from copy import copy
 from PySide6.QtWidgets import QTabWidget
 from PySide6.QtCore import Signal, QPointF
 
-from CommonTools.map_layout import MapWidget
-from CommonTools.core.client_data import ClientData
-from CommonTools.core.map_data import MapData
-from CommonTools.map_layout.tokens_dnd import BaseToken
+from CommonTools.map_layout import MapWidget, BaseToken
+from CommonTools.core import ClientData, MapData
 
 
 class TabMapsWidget(QTabWidget):
@@ -38,7 +36,7 @@ class TabMapsWidget(QTabWidget):
         self.calls_saved: dict[str, tuple[Any, ...]] = {}
         self.visible_always = False
         self.currentChanged.connect(self._handle_map_changed)
-        
+    
     def clearMaps(self):
         for name, mData in self.maps.items():
             mData.mWidget.clear()
@@ -165,7 +163,7 @@ class TabMapsWidget(QTabWidget):
                     yield name, item
             if fname and (fname == name):
                 return
-
+    
     def _handle_map_changed(self, idx):
         if idx == -1: return
         widget = self.widget(idx)

@@ -1,7 +1,7 @@
 from PySide6.QtGui import QFont, QTextCharFormat, QAction, QKeySequence
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QToolBar, QFontComboBox, QTextEdit, QSpinBox
 
-from CommonTools.components import ColorButton
+from .color_button import ColorButton
 
 
 class AdvancedTextEdit(QWidget):

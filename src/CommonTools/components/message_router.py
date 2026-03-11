@@ -1,6 +1,9 @@
+import logging
 import weakref
 import asyncio
 import inspect
+
+logger = logging.getLogger(__name__)
 
 
 class RouterDescriptor:
@@ -23,7 +26,7 @@ class RouterDescriptor:
             return self.bound_dispatchers[instance]
         
         async def bound_dispatch(uid, msg):
-            await self.dispatch(instance, uid, msg)
+            return await self.dispatch(instance, uid, msg)
         
         self.bound_dispatchers[instance] = bound_dispatch
         return bound_dispatch
@@ -32,12 +35,12 @@ class RouterDescriptor:
         if not (handlers := self._handlers.get(msg.type)):
             return False
         
+        result = []
         for handler_func in handlers:
             if inspect.iscoroutinefunction(handler_func):
-                await handler_func(instance, uid, msg)
+                result.append(await handler_func(instance, uid, msg))
             else:
-                handler_func(instance, uid, msg)
-            
+                result.append(handler_func(instance, uid, msg))
             await asyncio.sleep(0)
         
-        return True
+        return any(result)

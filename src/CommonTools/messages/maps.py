@@ -2,6 +2,8 @@ from .core import BaseMessage, BaseActionType
 
 from pydantic import Field
 
+from CommonTools.mime import AssetsMime
+
 
 class MapActionType(BaseActionType):
     MAPS_ALL_DATA = "map", "maps", "data"
@@ -35,9 +37,9 @@ class MapsGroup(BaseMessage):
     name: str
 
 
-class MapLoadBackground(MapsGroup, type=MapActionType.LOAD_BACKGROUND):
-    uid: str = Field("")
-    url: str = Field("")
+class MapLoadBackground(BaseMessage, type=MapActionType.LOAD_BACKGROUND):
+    mime: AssetsMime
+    filename: str
 
 
 class MapCreateMap(MapsGroup, type=MapActionType.MAP_CREATE):
@@ -55,7 +57,8 @@ class MapActiveMap(MapsGroup, type=MapActionType.MAP_ACTIVE):
 class MapFogChanged(MapsGroup, type=MapActionType.FOG_CHANGED):
     reveal: bool
     data: list
-    
+
+
 class MapFogFull(MapsGroup, type=MapActionType.FOG_FULL):
     data: list
 

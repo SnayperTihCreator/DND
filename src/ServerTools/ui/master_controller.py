@@ -1,12 +1,10 @@
-from pathlib import Path
-
 from PySide6.QtCore import QPoint, Signal, QPointF
 
 from CommonTools.core import ClientData
-from ServerTools.core.server_socket import AsyncServerBridge
+from CommonTools.map_layout import BaseToken
 from CommonTools.messages import *
 from CommonTools.ui.base_controller import BaseController
-from CommonTools.map_layout.tokens_dnd import BaseToken
+from ServerTools.core import AsyncServerBridge
 
 
 class MasterController(BaseController):
@@ -37,7 +35,7 @@ class MasterController(BaseController):
             
             token.setPixmap(img)
     
-    def _handle_custom_message(self, msg: BaseMessage):
+    async def _handle_custom_message(self, msg: BaseMessage):
         return
     
     def _ohandle_fog_change(self, name, revealing, data):
@@ -65,11 +63,10 @@ class MasterController(BaseController):
             
             self.socket.answer(uid, MapCreateMap(name=mdata.name, visible=mdata.visible))
             
-            if mdata.mWidget.file_map:
-                filename = Path(mdata.mWidget.file_map).name
-                url = self.socket.get_file_url(filename)
-                
-                self.socket.answer(uid, MapLoadBackground(name=map_name, url=url, uid=""))
+            if mdata.path:
+                filename = self.socket.loadTo(mdata.path)
+                self.socket.answer(uid, SystemResourceAvailable(filename=filename))
+                self.socket.answer(uid, MapLoadBackground(mime=mdata.mime, filename=filename))
             
             for item in mdata.mWidget.items():
                 if isinstance(item, BaseToken):
