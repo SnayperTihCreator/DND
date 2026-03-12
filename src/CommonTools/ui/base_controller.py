@@ -151,7 +151,7 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
             self.buffer.addFog(msg.name, ViewFog.FULL, True, msg.data)
         else:
             self.apply_fog_nw(msg.name, [(ViewFog.FULL, True, msg.data)])
-        return False
+        return True
     
     @abstractmethod
     async def _handle_custom_message(self, msg: BaseMessage):
