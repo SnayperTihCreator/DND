@@ -1,5 +1,6 @@
 from abc import ABCMeta, ABC, abstractmethod
 import logging
+from tkinter import FALSE
 
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout
@@ -150,7 +151,7 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
             self.buffer.addFog(msg.name, ViewFog.FULL, True, msg.data)
         else:
             self.apply_fog_nw(msg.name, [(ViewFog.FULL, True, msg.data)])
-        return True
+        return False
     
     @abstractmethod
     async def _handle_custom_message(self, msg: BaseMessage):
