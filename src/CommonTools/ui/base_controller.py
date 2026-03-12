@@ -87,6 +87,7 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
         
         for mName, mdata in self.tabMaps.maps.items():
             for item in mdata.mWidget.items():
+                
                 if isinstance(item, BaseToken) and (getImageMIME(item.mime()) == name):
                     item.setPixmap(path)
     
@@ -115,7 +116,6 @@ class BaseController(QMainWindow, ABC, metaclass=MetaQABC):
     async def handle_message(self, msg: BaseMessage):
         if not self.active:
             return None
-        
         cd = self.socket.get_me()
         if await self.router(cd.uid, msg):
             return True

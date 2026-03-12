@@ -47,7 +47,7 @@ class PlayerGameTable(QMainWindow):
         self.updater = UpdateManager(self)
         
         self.socket = AsyncClientBridge()
-        self.client_data = self.socket.me
+        self.cd = self.socket.me
         
         self.socket.error_occurred.connect(self.showErrorMessage)
         self.socket.connected.connect(self._handle_connect)
@@ -61,7 +61,7 @@ class PlayerGameTable(QMainWindow):
         self.controller = PlayerController(self.socket)
         self.stacker.addWidget(self.controller)
         
-        self.loging = Loging(self.socket, self.client_data)
+        self.loging = Loging(self.socket, self.cd)
         self.loging.error_occurred.connect(self.showErrorMessage)
         self.stacker.addWidget(self.loging)
         
@@ -138,8 +138,8 @@ class PlayerGameTable(QMainWindow):
         self.updater.check_for_updates(False)
     
     def _on_action_show_player_cls(self):
-        if self.client_data.cls:
-            url = f"https://5e14.ttg.club/classes/{classes.get(self.client_data.cls, '')}"
+        if self.cd.cls:
+            url = f"https://5e14.ttg.club/classes/{classes.get(self.cd.cls, '')}"
             self.player_cls_panel.handle_load_url(url)
             self.player_cls_panel.show()
         else:
@@ -168,7 +168,7 @@ class PlayerGameTable(QMainWindow):
     def customEvent(self, event: MovedEvent):
         if event.type() == MovedEvent.MovedEventType:
             logger.debug("Sending token movement to position: %s", event.pos_target.toTuple())
-            self.socket.send_msg(MapPlayerMoved(pos=event.pos_target.toTuple()))
+            self.socket.send(MapPlayerMoved(pos=event.pos_target.toTuple()))
             event.accept()
         super().customEvent(event)
     
@@ -190,7 +190,7 @@ class PlayerGameTable(QMainWindow):
     async def _handle_message(self, msg: BaseMessage):
         if await self.controller.handle_message(msg):
             return
-        if await self.router(self.client_data.uid, msg):
+        if await self.router(self.cd.uid, msg):
             return
         logger.warning("Unprocessed message: type=%s, content=%s", msg.type, msg)
     
@@ -201,26 +201,19 @@ class PlayerGameTable(QMainWindow):
         self.note_archive.add_note(note)
     
     @router.handler(ClientActionType.START_PLAYER)
-    def _handle_start_player(self, _uid, msg: ClientStartPlayer):
+    async def _handle_start_player(self, _uid, _msg):
         logger.info("Received command to start player session.")
-        self.client_data.is_playing = True
+        self.cd.is_playing = True
         self.controller.active = True
         self.activate_controller()
         self.stacker.setCurrentWidget(self.controller)
-        self.socket.send_msg(GetAllMaps())
+        self.socket.send(GetAllMaps())
         
-        if msg.iname:
-            self.socket.send_msg(ImageNameRequest(name=msg.iname, uid=""))
-    
-    # @router.handler(MapActionType.LOAD_BACKGROUND)
-    # def _handle_load_background(self, _uid, msg: MapLoadBackground):
-    #     if not self.controller.active: return
-    #     logger.info("Received command to load background for map '%s'", msg.name)
-    
-    @router.handler(ClientActionType.ADD_PLAYER)
-    def _handle_add_player(self, _uid, msg: ClientAddPlayer):
-        logger.info("Adding player token '%s' to map '%s'", msg.name, msg.map_name)
-        self.controller.add_token(msg.map_name, msg.mime, msg.pos)
+        if self.loging.avatar_path:
+            self.controller.register_image(self.cd.mime2.to_str().removeprefix("token:"), self.loging.avatar_path)
+            await self.socket.upload_file(self.loging.avatar_path)
+            await self.socket.asend(ClientLoadAvatar(mime=self.cd.mime2, filename=self.loging.avatar_path.name))
+        return True
     
     def _handle_change_color(self, color):
         logger.debug("User changed grid color to %s", color)

@@ -4,9 +4,9 @@ from pathlib import Path
 from typing import Optional
 
 from PySide6.QtCore import Qt, QPoint, QPointF, QTimer
-from PySide6.QtWidgets import QMainWindow, QToolBar, QSpinBox, QLabel, QCheckBox, QFileDialog, \
-    QGraphicsColorizeEffect, QMessageBox, QGraphicsEffect, QComboBox
 from PySide6.QtGui import QIcon, QColor
+from PySide6.QtWidgets import QMainWindow, QToolBar, QSpinBox, QLabel, QCheckBox, QFileDialog, \
+    QGraphicsColorizeEffect, QGraphicsEffect, QComboBox
 from psygnal import set_async_backend
 
 from CommonTools.map_layout import MapWidget
@@ -19,9 +19,9 @@ from CommonTools.updater_manager import UpdateManager
 from ServerTools.core.server_socket import AsyncServerBridge
 from CommonTools.messages import *
 from CommonTools.core import ClientData
-from CommonTools.mime import AssetsMime
-from ServerTools.components import TokensPanel, DialogCreateMap, PlayerPanel, DialogCreateNote, DialogPreviewSend
-from CommonTools.utils import validate_and_resize_image, getImageMIME
+from CommonTools.mime import AssetsMime, TokenMime
+from ServerTools.components import *
+from CommonTools.utils import getImageMIME
 
 from .master_controller import MasterController
 from .note_book import NoteBookDock

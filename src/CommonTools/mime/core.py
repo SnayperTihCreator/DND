@@ -58,8 +58,8 @@ class BaseMime(BaseModel):
         """Собирает MIME-строку, включая вложенную часть."""
         parts = [self._prefix]
         dumped = self.model_dump(exclude={'nested_mime'}, exclude_defaults=True, mode="json")
+        dumped.pop("_prefix", None)
         parts.extend(str(v) for v in dumped.values())
-        
         base_str = ":".join(parts)
         
         if self.nested_mime:

@@ -73,6 +73,11 @@ class PlayerController(BaseController):
         self.socket.manager.add_task(msg.filename, self._on_load_background, args=(msg.mime,))
         return True
     
+    @BaseController.router.handler(ClientActionType.ADD_PLAYER)
+    def _handle_add_player(self, _, msg: ClientAddPlayer):
+        self.add_token(msg.map_name, msg.mime, msg.pos)
+        logger.info("Adding player token '%s' to map '%s'", msg.name, msg.map_name)
+    
     def _on_load_background(self, filename: Path, mime: AssetsMime):
         self.tabMaps.load_map(mime.filename, filename)
         self.clear_buffer(mime.filename)

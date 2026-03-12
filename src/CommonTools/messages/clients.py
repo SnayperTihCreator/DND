@@ -1,5 +1,6 @@
 from typing import Optional
 from .core import BaseMessage, BaseActionType
+from ..mime import PlayerMime
 
 
 class ClientActionType(BaseActionType):
@@ -8,6 +9,7 @@ class ClientActionType(BaseActionType):
     START_PLAYER = "client", "start", "player"
     ADD_PLAYER = "client", "add", "player"
     REMOVE_PLAYER = "client", "remove", "player"
+    LOAD_AVATAR = "client", "load", "avatar"
     
     NOTE_MSG = "client", "note", "msg"
 
@@ -16,6 +18,11 @@ class ClientNoteMsg(BaseMessage, type=ClientActionType.NOTE_MSG):
     title: str
     content: str
     idx_bg: int
+
+
+class ClientLoadAvatar(BaseMessage, type=ClientActionType.LOAD_AVATAR):
+    mime: PlayerMime
+    filename: str
 
 
 class ClientConnect(BaseMessage, type=ClientActionType.CONNECT):
@@ -42,6 +49,7 @@ class ClientRemovePlayer(BaseMessage, type=ClientActionType.REMOVE_PLAYER):
 __all__ = ["ClientActionType",
            "ClientConnect",
            "ClientStartPlayer", "ClientAddPlayer", "ClientRemovePlayer",
+           "ClientLoadAvatar",
            
            "ClientNoteMsg",
            ]

@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from typing import Optional
 
 from PySide6.QtCore import Signal, QSize, Qt
 from PySide6.QtWidgets import (QWidget, QLineEdit, QPushButton, QMainWindow,
@@ -22,7 +23,7 @@ class Loging(QMainWindow):
         super().__init__()
         logger.info("Login widget initialized.")
         self.socket = socket
-        self.client_data = client_data
+        self.cd = client_data
         
         self.cw = QWidget()
         self.box = QFormLayout(self.cw)
@@ -50,7 +51,7 @@ class Loging(QMainWindow):
         
         self.setCentralWidget(self.cw)
         
-        self.avatar_path = None
+        self.avatar_path: Optional[Path] = None
     
     def _on_select_avatar(self):
         logger.debug("Avatar selection dialog opened.")
@@ -76,7 +77,7 @@ class Loging(QMainWindow):
             return
         
         logger.info("Avatar selected successfully: %s", path)
-        self.avatar_path = path
+        _, self.avatar_path = self.socket.loadTo(path)
         self.selectAvToken.setText(Path(path).name)
     
     @asyncSlot()
@@ -94,32 +95,9 @@ class Loging(QMainWindow):
             self.error_occurred.emit(f"Name must not contain: {FORBIDDEN_CHARS.pattern[1:-1]}")
             return
         
-        self.client_data.name = lineData
-        self.client_data.cls = self.comboClass.currentText()
+        self.cd.name = lineData
+        self.cd.cls = self.comboClass.currentText()
         
-        avatar_url = None
-        if self.avatar_path:
-            self.btn.setDisabled(True)
-            self.btn.setText("Uploading avatar...")
-            logger.info("Uploading avatar from path: %s", self.avatar_path)
-            
-            uploaded_url = await self.socket.upload_file(Path(self.avatar_path))
-            
-            self.btn.setDisabled(False)
-            self.btn.setText("Start")
-            
-            if not uploaded_url:
-                logger.error("Avatar upload failed for path: %s", self.avatar_path)
-                self.error_occurred.emit("Failed to upload avatar")
-                return
-            
-            logger.info("Avatar uploaded, URL received: %s", uploaded_url)
-            avatar_url = uploaded_url
+        self.socket.send(ClientStartPlayer(name=self.cd.name, cls=self.cd.cls))
         
-        self.socket.send_msg(ClientStartPlayer(
-            name=self.client_data.name,
-            cls=self.client_data.cls,
-            iname=avatar_url
-        ))
-        
-        logger.info("Session start requested for: %s (%s)", self.client_data.name, self.client_data.cls)
+        logger.info("Session start requested for: %s (%s)", self.cd.name, self.cd.cls)

@@ -1,10 +1,16 @@
+import logging
+from pathlib import Path
+
 from PySide6.QtCore import QPoint, Signal, QPointF
 
 from CommonTools.core import ClientData
 from CommonTools.map_layout import BaseToken
 from CommonTools.messages import *
+from CommonTools.mime import TokenMime
 from CommonTools.ui.base_controller import BaseController
 from ServerTools.core import AsyncServerBridge
+
+logger = logging.getLogger(__name__)
 
 
 class MasterController(BaseController):
@@ -28,6 +34,7 @@ class MasterController(BaseController):
         self.tabMaps.request_image.connect(self.applyAvatar)
     
     def applyAvatar(self, avatar, mime):
+        print(avatar, mime)
         if not (img := self.buffer.getImage(avatar)): return
         
         for mName, mdata in self.tabMaps.maps.items():
@@ -115,3 +122,12 @@ class MasterController(BaseController):
         if self.tabMaps.getMap(name):
             self.tabMaps.activeMap(name)
             self.socket.send(MapActiveMap(name=name))
+    
+    def _load_image(self, filename: Path, mime: TokenMime):
+        self.register_image(mime.to_str().removeprefix("token:"), filename)
+    
+    @BaseController.router.handler(ClientActionType.LOAD_AVATAR)
+    def _handle_load_avatar(self, _: str, msg: ClientLoadAvatar):
+        logger.info("Loading avatar: %s", msg.mime)
+        self.socket.manager.add_task(msg.filename, self._load_image, args=(msg.mime,))
+        return True

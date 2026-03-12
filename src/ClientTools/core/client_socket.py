@@ -1,11 +1,13 @@
 import asyncio
+import hashlib
 import logging
+import shutil
 from typing import Optional
 
-import json5
 from pathlib import Path
 import websockets
 from psygnal import Signal
+from websockets import ClientConnection
 
 from .transfer_manager import FileTransferManager
 from .resource_manager import ClientResourceManager
@@ -27,7 +29,7 @@ class AsyncClientBridge:
     message_handled = Signal(object)
     
     def __init__(self, cache_folder="./.cache/client"):
-        self.socket = None
+        self.socket: Optional[ClientConnection] = None
         self.transfer = FileTransferManager()
         self.transfer.transfer_failed.connect(self._on_transfer_failed)
         self.cache_folder = Path(cache_folder)
@@ -94,6 +96,17 @@ class AsyncClientBridge:
         except Exception:
             logger.exception("Error processing message: %s", message_str)
     
+    def loadTo(self, path: str):
+        sha256hash = hashlib.sha256()
+        with open(path, 'rb') as f:
+            for chunk in iter(lambda: f.read(4096), b''):
+                sha256hash.update(chunk)
+        filename = f"{sha256hash.hexdigest()[:16]}{Path(path).suffix}"
+        path2 = self.cache_folder / filename
+        if not path2.exists():
+            shutil.copy(path, path2)
+        return filename, path2
+    
     @router_system.handler(SystemActionType.INFO)
     async def _on_handle_info_server(self, _, msg: SystemServerInfo):
         self.me.uid = msg.uid
@@ -108,11 +121,13 @@ class AsyncClientBridge:
         logger.info("File URL detected in message. Scheduling download for %s", local_path)
         await self.transfer.download_file(url, local_path, self.me.uid)
     
-    def send_msg(self, msg_obj: BaseMessage):
+    def send(self, msg: BaseMessage):
+        asyncio.create_task(self.asend(msg))
+    
+    async def asend(self, msg: BaseMessage):
         if self.socket:
-            text = json5.dumps(msg_obj.to_dict(), ensure_ascii=False)
-            logger.debug("Sending message: %s", text)
-            asyncio.create_task(self.socket.send(text))
+            logger.debug("Sending message: %s", msg)
+            await self.socket.send(msg.to_str())
     
     async def upload_file(self, local_path: Path) -> Optional[str]:
         """

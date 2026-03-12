@@ -215,12 +215,12 @@ class AsyncServerBridge:
     def broadcast(self, msg: BaseMessage, uid_answer=None):
         for uid, client in self.clients.items():
             if uid == uid_answer: continue
-            client.send_msg(msg)
+            client.send(msg)
     
     def answer(self, uid: str, msg: BaseMessage):
         if uid in self.clients:
-            self.clients[uid].send_msg(msg)
+            self.clients[uid].send(msg)
     
     def send(self, msg: BaseMessage):
         for client in self.clients.values():
-            client.send_msg(msg)
+            client.send(msg)
