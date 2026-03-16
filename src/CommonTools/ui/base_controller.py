@@ -5,7 +5,7 @@ from tkinter import FALSE
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout
 
-logger = logging.getLogger("BaseController")
+logger = logging.getLogger(__name__)
 
 from CommonTools.map_layout.tokens_dnd import BaseToken
 from CommonTools.messages import *

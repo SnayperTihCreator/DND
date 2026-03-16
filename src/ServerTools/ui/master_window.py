@@ -12,7 +12,7 @@ from psygnal import set_async_backend
 from CommonTools.map_layout import MapWidget
 from CommonTools.notes import Note
 
-logger = logging.getLogger("ServerWindow")
+logger = logging.getLogger(__name__)
 
 from CommonTools.components import ColorButton, GuidePanel, RouterDescriptor
 from CommonTools.updater_manager import UpdateManager
