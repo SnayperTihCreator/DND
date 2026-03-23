@@ -1,8 +1,9 @@
 from .core import BaseMessage, BaseActionType
 
-from pydantic import Field
+from pydantic import Field, BaseModel
 
-from CommonTools.mime import AssetsMime
+from CommonTools.mime import AssetsMime, TokenMime
+from CommonTools.qt_pydantic import QtPointF, QtPath
 
 
 class MapActionType(BaseActionType):
@@ -23,6 +24,14 @@ class MapActionType(BaseActionType):
     ADD_TOKEN = "map", "add", "token"
     REMOVE_TOKEN = "map", "remove", "token"
     MOVE_TOKEN = "map", "move", "token"
+
+
+class TokenData(BaseModel):
+    mime: TokenMime
+    kd: int
+    scale: float
+    pos: QtPointF
+    image: QtPath
 
 
 class GetAllMaps(BaseMessage, type=MapActionType.MAPS_ALL_DATA):
@@ -93,11 +102,13 @@ class MapMovedMap(MapMessageToken, type=MapActionType.MAP_MOVE_MAP):
     name_target: str
 
 
-__all__ = ["MapActionType",
-           "MapFreezePlayer", "MapGridData",
-           "MapLoadBackground",
-           
-           "MapCreateMap", "MapDeleteMap", "MapActiveMap",
-           "MapMovedMap", "GetAllMaps", "MapFogChanged", "MapFogFull",
-           
-           "MapAddToken", "MapRemoveToken", "MapMoveToken", "MapPlayerMoved"]
+__all__ = [
+    "TokenData",
+    "MapActionType",
+    "MapFreezePlayer", "MapGridData",
+    "MapLoadBackground",
+    
+    "MapCreateMap", "MapDeleteMap", "MapActiveMap",
+    "MapMovedMap", "GetAllMaps", "MapFogChanged", "MapFogFull",
+    
+    "MapAddToken", "MapRemoveToken", "MapMoveToken", "MapPlayerMoved"]

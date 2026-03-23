@@ -1,11 +1,13 @@
 import re
 from typing import ClassVar, Type, Optional, Self, Any
 
-from pydantic import BaseModel, ValidationError, model_serializer, model_validator
+from pydantic import BaseModel, ValidationError, model_serializer, model_validator, ConfigDict
 from pydantic_core.core_schema import SerializerFunctionWrapHandler
 
 
 class BaseMime(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    
     _registry: ClassVar[dict[str, Type["BaseMime"]]] = {}
     _prefix: ClassVar[str]
     
