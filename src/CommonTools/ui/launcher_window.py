@@ -4,6 +4,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QListWidget, QPushButton, QLineEdit, QLabel,
                                QTabWidget, QListWidgetItem)
 
+import log
 from ClientTools.ui.client_window import PlayerGameTable
 from ServerTools.ui.master_window import MasterGameTable
 
@@ -114,6 +115,7 @@ class LauncherWindow(QMainWindow):
     
     def _launch_master(self):
         login = self.login_input.text()
+        log.setup_logging("master")
         self.master_window = MasterGameTable(login)
         self.master_window.show()
         loop = asyncio.get_event_loop()
@@ -131,6 +133,7 @@ class LauncherWindow(QMainWindow):
             self._launch_player(ip, int(port))
     
     def _launch_player(self, ip: str, port: int):
+        log.setup_logging("player")
         self.player_window = PlayerGameTable(login=self.login_input_client.text(), server_ip=ip, server_port=port)
         self.player_window.show()
         loop = asyncio.get_event_loop()

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 from PyInstaller.log import logger
 
-SPEC_DIR = os.path.dirname(os.path.abspath(__file__))
+SPEC_DIR = SPECPATH
 PROJECT_ROOT = os.path.dirname(SPEC_DIR)
 SRC_PATH = os.path.join(PROJECT_ROOT, 'src')
 DISTPATH: str

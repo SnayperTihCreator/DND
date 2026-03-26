@@ -30,6 +30,7 @@ logging.getLogger("qasync").setLevel(logging.INFO)
 
 if __name__ == "__main__":
     with PrintManager() as pm:
+        log.setup_logging()
         pm.disable()
         pm.show_caller_info(True)
         

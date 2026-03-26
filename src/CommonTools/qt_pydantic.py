@@ -1,9 +1,10 @@
 from pathlib import Path
 from typing import Annotated, Any, Tuple
 
-from PySide6.QtCore import QPoint, QPointF, QSize
+from PySide6.QtCore import QPoint, QPointF, QSize, QObject
 from PySide6.QtGui import QColor
-from pydantic import BeforeValidator, PlainSerializer
+from pydantic import BeforeValidator, PlainSerializer, GetCoreSchemaHandler
+from pydantic_core import core_schema
 
 
 # --- Вспомогательные функции ---
@@ -40,22 +41,35 @@ def _serialize_path(v: Path) -> str:
     return v.as_posix()
 
 
+class _QObjectAnnotation:
+    def __init__(self, qObject: QObject):
+        self.qObject = qObject
+    
+    def __get_pydantic_core_schema__(
+            self, _source_type: Any, _handler: GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        return core_schema.is_instance_schema(self.qObject)
+
+
 # --- Аннотированные типы для Pydantic ---
 
 QtPoint = Annotated[
     QPoint,
+    _QObjectAnnotation(QPoint),
     BeforeValidator(_to_point),
     PlainSerializer(lambda v: (v.x(), v.y()), return_type=Tuple[int, int])
 ]
 
 QtSize = Annotated[
     QSize,
+    _QObjectAnnotation(QSize),
     BeforeValidator(_to_size),
     PlainSerializer(lambda v: (v.width(), v.height()), return_type=Tuple[int, int])
 ]
 
 QtColor = Annotated[
     QColor,
+    _QObjectAnnotation(QColor),
     BeforeValidator(_to_color),
     PlainSerializer(lambda v: v.name(), return_type=str)  # Сериализуем в HEX-строку
 ]
@@ -63,6 +77,7 @@ QtColor = Annotated[
 # Аналоги для Float версий (F)
 QtPointF = Annotated[
     QPointF,
+    _QObjectAnnotation(QPointF),
     BeforeValidator(lambda v: QPointF(v[0], v[1]) if isinstance(v, (list, tuple)) else v),
     PlainSerializer(lambda v: (v.x(), v.y()), return_type=Tuple[float, float])
 ]

@@ -44,7 +44,7 @@ class FileTransferManager:
                     local_path.parent.mkdir(parents=True, exist_ok=True)
                     async with aiofiles.open(local_path, 'wb') as file:
                         while True:
-                            chunk = await response.content.read(2048)
+                            chunk = await response.content.read(64 * 1024)
                             if not chunk: break
                             await file.write(chunk)
                             downloaded += len(chunk)
@@ -69,20 +69,20 @@ class FileTransferManager:
         filename = local_path.name
         logger.info("Attempting to upload file %s to %s", local_path, upload_url)
         
-        data = aiohttp.FormData()
-        data.add_field('file', open(local_path, 'rb'), filename=filename)
-        
         headers = {"X-User-ID": uid}
         
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.post(upload_url, data=data, headers=headers) as response:
-                    response.raise_for_status()
-                    result = await response.json()
-                    remote_url = result.get('url')
-                    logger.info("File uploaded successfully: %s -> %s", filename, remote_url)
-                    self.file_uploaded.emit(filename, remote_url)
-                    return remote_url
+                async with aiofiles.open(local_path, 'rb') as file:
+                    data = aiohttp.FormData()
+                    data.add_field('file', file, filename=filename)
+                    async with session.post(upload_url, data=data, headers=headers) as response:
+                        response.raise_for_status()
+                        result = await response.json()
+                        remote_url = result.get('url')
+                        logger.info("File uploaded successfully: %s -> %s", filename, remote_url)
+                        self.file_uploaded.emit(filename, remote_url)
+                        return remote_url
         except Exception as e:
             error_msg = f"Upload failed for file {filename}: {e}"
             logger.exception(error_msg)

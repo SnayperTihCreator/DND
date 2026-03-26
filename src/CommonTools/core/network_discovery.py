@@ -5,9 +5,7 @@ import logging
 
 from psygnal import Signal
 
-
 logger = logging.getLogger(__name__)
-
 
 DISCOVERY_PORT = 55000  # Используем тот, который свободен
 MAGIC_REQUEST = "WHO_IS_THE_MASTER?"
@@ -110,27 +108,3 @@ class ServerScanner:
         finally:
             transport.close()
             self.scan_finished.emit()
-
-
-if __name__ == "__main__":
-    async def test_discovery():
-        print("--- ЗАПУСК ТЕСТА (надежная версия) ---")
-        
-        beacon = MasterBeacon()
-        await beacon.start(ip_list=["192.168.1.100"], ws_port=8765, http_port=8080, server_name="TEST_SERVER")
-        
-        scanner = ServerScanner()
-        
-        scanner.server_found.connect(lambda info: print(f"✅ НАЙДЕН СЕРВЕР: {info}"))
-        
-        print("🔍 Сканируем 3 секунды...")
-        await scanner.scan(timeout=3.0)
-        
-        beacon.stop()
-        print("--- ТЕСТ ЗАВЕРШЕН ---")
-    
-    
-    try:
-        asyncio.run(test_discovery())
-    except KeyboardInterrupt:
-        pass

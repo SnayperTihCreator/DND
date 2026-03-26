@@ -3,7 +3,7 @@ from typing import Optional
 from PySide6.QtCore import QPointF
 from PySide6.QtGui import QColor
 
-from CommonTools.mime import BaseMime, NPCMime, MobMime, PlayerMime, SpawnMime
+from CommonTools.mime import BaseMime, NPCMime, MobMime, PlayerMime, SpawnMime, TokenMime, InputMime
 from CommonTools.messages import TokenData
 
 from .scene import Scene
@@ -66,7 +66,7 @@ class TricksManager:
     def create_trick(self, data: TokenData):
         token: Optional[BaseTrick] = None
         
-        data.pos = self.align_to_grid(data.pos)
+        data.align(self.align_to_grid)
         match data.mime:
             case NPCMime():
                 token = TrickFactory.create_npc_trick(data)
@@ -75,12 +75,25 @@ class TricksManager:
             case PlayerMime(name=name, cls=cls, uid=uid):
                 token = TrickFactory.create_player_trick(data, name, cls, uid)
             case SpawnMime():
-                token = TrickFactory.create_spawn_player_trick(data)
+                token = self._create_spawn(data)
         
         if token:
             self._tricks[data.mime] = token
             token.update_from_grid()
         return token
+    
+    def create_trick_input(self, mime: InputMime):
+        token: Optional[BaseTrick] = None
+        match mime:
+            case InputMime(name="mob"):
+            
+    
+    def remove_trick(self, data: TokenMime):
+        if data.mime in self._tricks:
+            self.scene.removeItem(self._tricks[data.mime])
+            self._tricks.pop(data.mime, None)
+            return True
+        return None
     
     def align_to_grid(self, pos: QPointF):
         if self.scene is None:
@@ -92,3 +105,9 @@ class TricksManager:
         cell_center_y = (round(pos.y() / grid_factor) * grid_factor) + (grid_factor / 2)
         
         return QPointF(cell_center_x, cell_center_y)
+    
+    def _create_spawn(self, data: TokenData):
+        trick = self._tricks.pop(data.mime, None)
+        if trick is not None:
+            self.scene.removeItem(trick)
+        return TrickFactory.create_spawn_player_trick(data)

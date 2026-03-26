@@ -1,3 +1,7 @@
+from typing import Callable
+
+from PySide6.QtCore import QPointF
+
 from .core import BaseMessage, BaseActionType
 
 from pydantic import Field, BaseModel
@@ -32,6 +36,9 @@ class TokenData(BaseModel):
     scale: float
     pos: QtPointF
     image: QtPath
+    
+    def align(self, func: Callable[[QPointF], QPointF]):
+        self.pos = func(self.pos)
 
 
 class GetAllMaps(BaseMessage, type=MapActionType.MAPS_ALL_DATA):
