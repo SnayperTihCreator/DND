@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class ClientResourceManager(BaseResourceManager):
     def __init__(self, socket: 'AsyncClientBridge'):
-        super().__init__(socket.cache_folder)
+        super().__init__(socket.assets)
         self.socket = socket
         
         self.socket.transfer.file_downloaded.connect(lambda path, _: self.resolve_file(path))

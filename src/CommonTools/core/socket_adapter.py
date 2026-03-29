@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Protocol
+from typing import Any, Protocol, Optional
 from abc import ABC, abstractmethod
 
 from websockets import ServerConnection
@@ -19,6 +19,10 @@ class SocketProtocol(Protocol):
     def get_me(self): ...
 
 
+class ProxyServer(Protocol):
+    async def proxy_send(self, msg: BaseMessage, uid: str): ...
+
+
 @define
 class AbstractAdapterSocket(ABC):
     _ws: Any = field(repr=False)
@@ -28,26 +32,36 @@ class AbstractAdapterSocket(ABC):
 
 
 @define
-class TextAdapterSocket(AbstractAdapterSocket):
+class SenderAdapterSocket(AbstractAdapterSocket):
     @abstractmethod
-    def sendText(self, text: str): ...
+    def send(self, msg: BaseMessage): ...
 
 
 @define
-class SocketAdapter(TextAdapterSocket):
-    _ws: ServerConnection = field(repr=False)
+class ProxyAdapterSocket(SenderAdapterSocket):
+    uid: str
+    bridge: ProxyServer
     
-    def sendText(self, text: str):
+    def send(self, msg: BaseMessage):
         try:
             loop = asyncio.get_event_loop()
-            loop.create_task(self._ws.send(text))
+            loop.create_task(self.bridge.proxy_send(msg, self.uid))
         except RuntimeError:
             pass
     
-    async def _send(self, text):
+    def close(self):
+        pass
+
+
+@define
+class SocketAdapter(SenderAdapterSocket):
+    _ws: ServerConnection = field(repr=False)
+    
+    def send(self, msg: BaseMessage):
         try:
-            await self._ws.send(text)
-        except Exception:
+            loop = asyncio.get_event_loop()
+            loop.create_task(self._ws.send(msg.to_str()))
+        except RuntimeError:
             pass
     
     def close(self):
@@ -59,6 +73,7 @@ class SocketAdapter(TextAdapterSocket):
 
 
 __all__ = [
-    "AbstractAdapterSocket", "TextAdapterSocket",
+    "AbstractAdapterSocket", "SenderAdapterSocket",
+    "ProxyAdapterSocket",
     "SocketAdapter",
 ]

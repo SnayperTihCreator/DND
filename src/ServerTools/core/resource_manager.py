@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class ServerResourceManager(BaseResourceManager):
     def __init__(self, socket: "AsyncServerBridge"):
-        super().__init__(socket.assets_folder)
+        super().__init__(socket.assets)
         self.socket = socket
         
         self.socket.file_loaded.connect(self.resolve_file)

@@ -94,6 +94,9 @@ class LauncherWindow(QMainWindow):
         
         btn_create = QPushButton("Создать стол")
         btn_create.clicked.connect(self._launch_master)
+        
+        self.master_token_input = QLineEdit(placeholderText="Мастер токен")
+        layout.addWidget(self.master_token_input)
         layout.addWidget(btn_create)
         layout.addStretch()
     
@@ -114,9 +117,10 @@ class LauncherWindow(QMainWindow):
         self.server_list.addItem(item)
     
     def _launch_master(self):
-        login = self.login_input.text()
+        login = self.login_input.text().strip()
+        master_token = self.master_token_input.text().strip()
         log.setup_logging("master")
-        self.master_window = MasterGameTable(login)
+        self.master_window = MasterGameTable(login, master_token)
         self.master_window.show()
         loop = asyncio.get_event_loop()
         loop.call_soon(self.master_window.start_services)

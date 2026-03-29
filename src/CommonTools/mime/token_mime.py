@@ -1,6 +1,11 @@
 from typing import TypeAlias
 from .core import BaseMime
 
+class CacheMobMime(BaseMime, prefix="cache:mob"):
+    name: str
+    
+class CacheNPCMime(BaseMime, prefix="cache:npc"):
+    name: str
 
 class MobMime(BaseMime, prefix="token:mob"):
     name: str
@@ -28,4 +33,5 @@ __all__ = [
     "TokenMime",
     "SpawnMime",
     "PlayerMime", "MobMime", "NPCMime",
+    "CacheMobMime", "CacheNPCMime",
 ]

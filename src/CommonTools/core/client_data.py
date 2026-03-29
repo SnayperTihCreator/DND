@@ -1,11 +1,10 @@
 from typing import Optional
 
 from attrs import define, field
-import json5
 
 from CommonTools.messages import BaseMessage
 
-from .socket_adapter import TextAdapterSocket
+from .socket_adapter import SenderAdapterSocket
 from ..mime import PlayerMime
 
 
@@ -15,13 +14,14 @@ class ClientData:
     name: str = field(default="")
     cls: str = field(default="")
     
-    socket: Optional[TextAdapterSocket] = field(repr=False, default=None)
+    socket: Optional[SenderAdapterSocket] = field(repr=False, default=None)
     
     is_playing: bool = field(default=False, init=False)
     iname: Optional[str] = field(default=None, init=False)
     
     def send(self, msg: BaseMessage):
-        self.socket.sendText(msg.to_str())
+        if self.socket:
+            self.socket.send(msg)
     
     @property
     def mime(self):

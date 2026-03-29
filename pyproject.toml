@@ -18,6 +18,7 @@ dependencies = [
     "pyside6==6.10.1",
     "qasync>=0.28.0",
     "requests>=2.32.5",
+    "typer>=0.24.1",
     "websockets>=15.0.1",
 ]
 

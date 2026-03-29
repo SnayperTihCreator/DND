@@ -11,6 +11,7 @@ from psygnal import set_async_backend
 
 from CommonTools.map_layout import MapWidget
 from CommonTools.notes import Note
+from ..core.server_remote import AsyncServerRemote
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,7 @@ from .note_book import NoteBookDock
 class MasterGameTable(QMainWindow):
     router = RouterDescriptor()
     
-    def __init__(self, login):
+    def __init__(self, login, master_token=""):
         super().__init__()
         self.setMinimumSize(1000, 700)
         self.setWindowTitle("Виртуальный стол: Мастер")
@@ -40,12 +41,12 @@ class MasterGameTable(QMainWindow):
         self.cache_folder.mkdir(exist_ok=True, parents=True)
         
         self.players: dict[str, ClientData] = {}
-        self.server = AsyncServerBridge(self.cache_folder)
+        self.server = AsyncServerRemote(master_token, self.cache_folder) if master_token else AsyncServerBridge(self.cache_folder)
         
         self.server.client_connected.connect(self._handle_connect)
         self.server.client_disconnected.connect(self._handle_disconnect)
         self.server.server_started.connect(self._on_server_ready)
-        self.server.server_error.connect(self.showErrorMessage)
+        self.server.error_occurred.connect(self.showErrorMessage)
         
         self.updater = UpdateManager(self)
         
@@ -202,7 +203,7 @@ class MasterGameTable(QMainWindow):
         self.statusBar().setGraphicsEffect(colorize)
     
     def resetEffect(self):
-        self.statusBar().setGraphicsEffect(QGraphicsEffect())
+        self.statusBar().setGraphicsEffect(None)
     
     def showErrorMessage(self, msg: str):
         self.applyErrorEffect()
@@ -236,7 +237,7 @@ class MasterGameTable(QMainWindow):
         if not path: return
         
         # TODO Добавить норм фильтр
-        # path2 = validate_and_resize_image(path, self.cache_folder, max_size=4096)
+        # path2 = validate_and_resize_image(path, self.assets, max_size=4096)
         # if not path2:
         #     QMessageBox.critical(self, "Ошибка", "Не удалось обработать изображение.")
         #     return
@@ -334,11 +335,9 @@ class MasterGameTable(QMainWindow):
         logger.info(f"[SUCCESS] Клиент отключен с uid: {uid}")
     
     async def _handle_message(self, uid, msg: BaseMessage):
-        if await self.controller.handle_message(msg):
-            return
+        if await self.controller.handle_message(msg): return
         
-        if await self.router(uid, msg):
-            return
+        if await self.router(uid, msg): return
         
         logger.info("Не обработанное сообщение: %s - %s", msg.type, msg)
     
@@ -373,14 +372,14 @@ class MasterGameTable(QMainWindow):
         if file_path := self.controller.getImage(msg.name):
             # Получаем URL и шлем ответ
             filename = Path(file_path).name
-            url = self.server.get_file_url(filename)
+            # url = self.server.get_file_url(filename)
             
             # Тебе нужно сообщение, которое вернет URL. Например:
             # ImageUrlResponse(name=msg.name, url=url)
             # self.server.answer(uid, ImageUrlResponse(name=msg.name, url=url))
             
             # Если такой ответ есть, можно раскомментировать. Пока заглушка:
-            logger.info(f"Отправил бы URL {url} для {msg.name} клиенту {uid}")
+            logger.info(f"Отправил бы URL {{url}} для {msg.name} клиенту {uid}")
             pass
         else:
             self.server.answer(uid, IgnoreCallback(uid_callback=msg.uid))

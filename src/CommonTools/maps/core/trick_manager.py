@@ -1,11 +1,14 @@
+from pathlib import Path
 from typing import Optional
 
 from PySide6.QtCore import QPointF
 from PySide6.QtGui import QColor
 
-from CommonTools.mime import BaseMime, NPCMime, MobMime, PlayerMime, SpawnMime, TokenMime, InputMime
+from CommonTools.mime import BaseMime, NPCMime, MobMime, PlayerMime, SpawnMime, TokenMime, InputMime, CacheMobMime, \
+    CacheNPCMime
 from CommonTools.messages import TokenData
 
+from .dialog_create_trick import DialogCreateTrick, ResultDialog
 from .scene import Scene
 from ..tricks.base import BaseTrick
 from ..tricks.tricks import NPCTrick, MobTrick, PlayerTrick, SpawnPlayerTrick
@@ -61,7 +64,8 @@ class TrickFactory:
 class TricksManager:
     def __init__(self, scene: Scene):
         self.scene = scene
-        self._tricks = dict[BaseMime, BaseTrick] = {}
+        self._tricks: dict[BaseMime, BaseTrick] = {}
+        self._tricks_cache: dict[BaseMime, int] = {}
     
     def create_trick(self, data: TokenData):
         token: Optional[BaseTrick] = None
@@ -82,11 +86,39 @@ class TricksManager:
             token.update_from_grid()
         return token
     
-    def create_trick_input(self, mime: InputMime):
-        token: Optional[BaseTrick] = None
-        match mime:
+    def create_trick_input(self, imime: InputMime, pos: QPointF) -> tuple[BaseTrick, Path]:
+        mime, result = self._dialog_create_trick(imime)
+        data = TokenData(mime=mime, kd=result.kd, scale=result.scale, pos=pos, image=result.path)
+        return self.create_trick(data), data.image
+    
+    def _dialog_create_trick(self, imime: InputMime) -> tuple[TokenMime, ResultDialog]:
+        match imime:
             case InputMime(name="mob"):
-            
+                result = DialogCreateTrick.request("Моба")
+                if result is None:
+                    return None, None
+                cmime = CacheMobMime(name=result.name)
+                mime = MobMime(name=cmime.name, number=self._get_next_number(cmime, result.unique))
+                return mime, result
+            case InputMime(name="npc"):
+                result = DialogCreateTrick.request("NPC")
+                if result is None:
+                    return None, None
+                cmime = CacheNPCMime(name=result.name)
+                mime = NPCMime(name=cmime.name, number=self._get_next_number(cmime, result.unique))
+                return mime, result
+            case InputMime(name="spawn-player"):
+                return SpawnMime(), None
+            case _:
+                return imime, None
+    
+    def _get_next_number(self, mime: TokenMime, unique: bool = False):
+        if unique:
+            return "0"
+        
+        uid = self._tricks_cache.get(mime, 0) + 1
+        self._tricks_cache[mime] = uid
+        return str(uid)
     
     def remove_trick(self, data: TokenMime):
         if data.mime in self._tricks:
