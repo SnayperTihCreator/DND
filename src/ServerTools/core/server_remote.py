@@ -8,6 +8,8 @@ from CommonTools.core import ClientData, ProxyAdapterSocket
 from CommonTools.messages import BaseMessage, BaseSystemMessage, ProxyClientConnect, ProxyClientDisconnect, ProxyTunnel
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 
 # TODO Дописать удаленку
 
@@ -59,7 +61,7 @@ class AsyncServerRemote(AsyncClientBridge):
             
             if isinstance(msg, ProxyClientConnect):
                 adapter = ProxyAdapterSocket(None, msg.uid, self)
-                self.clients[msg.uid] = ClientData(msg.uid, adapter)
+                self.clients[msg.uid] = ClientData(msg.uid, socket=adapter)
                 self.client_connected.emit(msg.uid)
                 return
             
@@ -83,8 +85,10 @@ class AsyncServerRemote(AsyncClientBridge):
         except Exception:
             logger.exception("Error processing message: %s", message_str)
     
-    def proxy_send(self, msg: BaseMessage, uid: str):
-        logger.debug("Sending proxy message %s: %s", msg, uid)
+    async def proxy_send(self, msg: BaseMessage, uid: str):
+        logger.warning("Sending proxy message %s: %s", msg, uid)
+        proxy = ProxyTunnel(uid=uid, msg=msg)
+        await self.asend(proxy)
     
     def connect_server(self, ip, port: int):
         self.server_info.ip = ip

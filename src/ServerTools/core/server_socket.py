@@ -154,12 +154,13 @@ class AsyncServerBridge:
         
         try:
             async for message in websocket:
+                msg = BaseMessage.from_str(message)
                 if is_master:
-                    await self._process_message_master(uid, message)
+                    await self._process_message_master(uid, msg)
                 else:
-                    await self._process_message(uid, message)
-        except Exception:
-            pass
+                    await self._process_message(uid, msg)
+        except Exception as e:
+            logger.exception("Error", exc_info=True)
         finally:
             if uid in self.clients:
                 del self.clients[uid]
@@ -167,27 +168,23 @@ class AsyncServerBridge:
             if is_master:
                 self.set_access(False)
     
-    async def _process_message_master(self, uid: str, message_str: str):
-        try:
-            msg = BaseMessage.from_str(message_str)
-            logger.debug("Sender msg %s: %s", uid, msg)
-        except Exception:
-            pass
+    async def _process_message_master(self, _, msg: BaseMessage):
+        if msg.type == ProxyActionType.TUNNEL_DATA:
+            await self._prepare_message(msg.uid, msg.msg)
+            self.answer(msg.uid, msg.msg)
     
-    async def _process_message(self, uid, message_str):
+    async def _process_message(self, uid, msg: BaseMessage):
         """ Твоя старая логика, перенесенная сюда """
-        try:
-            msg = BaseMessage.from_str(message_str)
-            if msg.type == ClientActionType.START_PLAYER:
-                if uid in self.clients:
-                    self.clients[uid].name = msg.name
-                    self.clients[uid].cls = msg.cls
-                    self.clients[uid].is_playing = True
-            
-            self.message_handled.emit(uid, msg)
-            self.message_received.emit(message_str)
-        except Exception:
-            pass
+        await self._prepare_message(uid, msg)
+        self.message_handled.emit(uid, msg)
+        self.message_received.emit(msg.to_str())
+    
+    async def _prepare_message(self, uid: str, msg: BaseMessage):
+        if msg.type == ClientActionType.START_PLAYER:
+            if uid in self.clients:
+                self.clients[uid].name = msg.name
+                self.clients[uid].cls = msg.cls
+                self.clients[uid].is_playing = True
     
     async def _handle_download(self, request: web.Request):
         uid = request.query.get("uid") or request.headers.get("X-User-ID")
@@ -253,6 +250,8 @@ class AsyncServerBridge:
     def answer(self, uid: str, msg: BaseMessage):
         if uid in self.clients:
             self.clients[uid].send(msg)
+            return True
+        return False
     
     def send(self, msg: BaseMessage):
         for client in self.clients.values():

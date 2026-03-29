@@ -2,7 +2,7 @@ import asyncio
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QListWidget, QPushButton, QLineEdit, QLabel,
-                               QTabWidget, QListWidgetItem)
+                               QTabWidget, QListWidgetItem, QStackedWidget, QCheckBox)
 
 import log
 from ClientTools.ui.client_window import PlayerGameTable
@@ -92,13 +92,39 @@ class LauncherWindow(QMainWindow):
         layout.addWidget(QLabel("Ваш никнейм (Мастер):"))
         layout.addWidget(self.login_input)
         
+        self.boxProxy = QStackedWidget()
+        
+        w1 = QWidget()
+        box1 = QVBoxLayout(w1)
         btn_create = QPushButton("Создать стол")
         btn_create.clicked.connect(self._launch_master)
+        box1.addWidget(btn_create)
+        self.btnChangeRemote = QCheckBox("Удаленный сервер")
+        self.btnChangeRemote.setChecked(False)
+        self.btnChangeRemote.toggled.connect(self._handle_change_remote)
+        layout.addWidget(self.btnChangeRemote)
         
+        self.boxProxy.addWidget(w1)
+        
+        w2 = QWidget()
+        box2 = QVBoxLayout(w2)
+        self.master_ip_input = QLineEdit(placeholderText="127.0.0.1", text="127.0.0.1")
+        box2.addWidget(self.master_ip_input)
         self.master_token_input = QLineEdit(placeholderText="Мастер токен")
-        layout.addWidget(self.master_token_input)
-        layout.addWidget(btn_create)
+        box2.addWidget(self.master_token_input)
+        btn_connect = QPushButton("Подключится")
+        btn_connect.clicked.connect(self._launch_master)
+        box2.addWidget(btn_connect)
+        
+        self.boxProxy.addWidget(w2)
+        layout.addWidget(self.boxProxy)
         layout.addStretch()
+        
+    def _handle_change_remote(self):
+        if self.btnChangeRemote.isChecked():
+            self.boxProxy.setCurrentIndex(1)
+        else:
+            self.boxProxy.setCurrentIndex(0)
     
     def _start_scan(self):
         self.server_list.clear()
@@ -119,8 +145,9 @@ class LauncherWindow(QMainWindow):
     def _launch_master(self):
         login = self.login_input.text().strip()
         master_token = self.master_token_input.text().strip()
+        master_ip = self.master_ip_input.text().strip()
         log.setup_logging("master")
-        self.master_window = MasterGameTable(login, master_token)
+        self.master_window = MasterGameTable(login, f"{master_ip}|{master_token}")
         self.master_window.show()
         loop = asyncio.get_event_loop()
         loop.call_soon(self.master_window.start_services)

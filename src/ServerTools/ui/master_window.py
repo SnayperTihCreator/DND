@@ -6,7 +6,7 @@ from typing import Optional
 from PySide6.QtCore import Qt, QPoint, QPointF, QTimer
 from PySide6.QtGui import QIcon, QColor
 from PySide6.QtWidgets import QMainWindow, QToolBar, QSpinBox, QLabel, QCheckBox, QFileDialog, \
-    QGraphicsColorizeEffect, QGraphicsEffect, QComboBox
+    QGraphicsColorizeEffect, QComboBox
 from psygnal import set_async_backend
 
 from CommonTools.map_layout import MapWidget
@@ -14,13 +14,14 @@ from CommonTools.notes import Note
 from ..core.server_remote import AsyncServerRemote
 
 logger = logging.getLogger(__name__)
+logging.getLogger("Qt.js").setLevel(logging.ERROR)
 
 from CommonTools.components import ColorButton, GuidePanel, RouterDescriptor
 from CommonTools.updater_manager import UpdateManager
 from ServerTools.core.server_socket import AsyncServerBridge
 from CommonTools.messages import *
 from CommonTools.core import ClientData
-from CommonTools.mime import AssetsMime, TokenMime
+from CommonTools.mime import AssetsMime
 from ServerTools.components import *
 from CommonTools.utils import getImageMIME
 
@@ -41,7 +42,8 @@ class MasterGameTable(QMainWindow):
         self.cache_folder.mkdir(exist_ok=True, parents=True)
         
         self.players: dict[str, ClientData] = {}
-        self.server = AsyncServerRemote(master_token, self.cache_folder) if master_token else AsyncServerBridge(self.cache_folder)
+        self.server = AsyncServerRemote(master_token, self.cache_folder) if master_token else AsyncServerBridge(
+            self.cache_folder)
         
         self.server.client_connected.connect(self._handle_connect)
         self.server.client_disconnected.connect(self._handle_disconnect)
@@ -249,15 +251,6 @@ class MasterGameTable(QMainWindow):
         self.server.broadcast(SystemResourceAvailable(filename=filename))
         self.server.broadcast(MapLoadBackground(mime=mime, filename=filename))
         self._handle_current_map(name)
-        
-        # path = Path(path2).name
-        # file_url = self.server.get_file_url(path)
-        #
-        # self.controller.register_image(name, path2)
-        # self.controller.tabMaps.load_map(name, path2)
-        #
-        # self.server.broadcast(MapLoadBackground(name=name, uid="", url=file_url))
-        # self._handle_current_map(name)
     
     def closeEvent(self, event):
         self.updater.stop_download_thread()
@@ -318,8 +311,9 @@ class MasterGameTable(QMainWindow):
         logger.info(f"Изменения состояния заморозки у {uid}:{state}")
         self.server.answer(uid, MapFreezePlayer(freeze=state))
     
-    def _handle_connect(self, uid):
-        logger.info(f"[SUCCESS] Клиент подключен с uid: {uid}")
+    @staticmethod
+    def _handle_connect(uid):
+        logger.info(f"Клиент подключен с uid: {uid}")
     
     def _handle_change_color(self, color):
         self.controller.tabMaps.call_all_method("setColorGrid", color)
@@ -357,6 +351,7 @@ class MasterGameTable(QMainWindow):
             imageName = getImageMIME(f"player:{msg.name}:{msg.cls}:{uid_answer}")
             self.controller.register_image(imageName, img)
         self.player_panel.addPlayer(uid_answer, msg.name, msg.cls)
+        return True
     
     @router.handler(MapActionType.MAPS_ALL_DATA)
     def _action_get_all_data(self, uid, _: GetAllMaps):
