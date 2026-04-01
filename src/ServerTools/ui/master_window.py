@@ -42,8 +42,7 @@ class MasterGameTable(QMainWindow):
         self.cache_folder.mkdir(exist_ok=True, parents=True)
         
         self.players: dict[str, ClientData] = {}
-        self.server = AsyncServerRemote(master_token, self.cache_folder) if master_token else AsyncServerBridge(
-            self.cache_folder)
+        self.server = AsyncServerRemote(master_token, self.cache_folder) if master_token else AsyncServerBridge(self.cache_folder)
         
         self.server.client_connected.connect(self._handle_connect)
         self.server.client_disconnected.connect(self._handle_disconnect)
@@ -178,17 +177,8 @@ class MasterGameTable(QMainWindow):
         self.server.set_access(checked)
         self.btn_access_action.setText("🟢 Стол открыт" if checked else "🔴 Стол закрыт")
     
-    def _on_server_ready(self, ips: list, ws_port: int, http_port: int):
-        """Когда сервер готов, показываем IP"""
-        self.ip_selector = QComboBox()
-        self.ip_selector.addItems(ips)
-        self.ip_selector.setToolTip("IP для подключения игроков")
-        
-        self.topToolBar.addSeparator()
-        self.topToolBar.addWidget(QLabel(" IP для игроков: "))
-        self.topToolBar.addWidget(self.ip_selector)
-        
-        self.setWindowTitle(f"Мастер Стол | Порт: {ws_port}")
+    def _on_server_ready(self, ws_port: int, http_port: int):
+        self.setWindowTitle(f"Мастер Стол | Порт: {ws_port}/{http_port}")
         self.statusBar().showMessage(f"Сервер запущен. Порт для игроков: {ws_port}", 5000)
     
     def _on_note_edit(self, note: Note):

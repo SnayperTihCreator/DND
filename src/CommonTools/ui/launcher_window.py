@@ -113,7 +113,7 @@ class LauncherWindow(QMainWindow):
         self.master_token_input = QLineEdit(placeholderText="Мастер токен")
         box2.addWidget(self.master_token_input)
         btn_connect = QPushButton("Подключится")
-        btn_connect.clicked.connect(self._launch_master)
+        btn_connect.clicked.connect(self._launch_master_remote)
         box2.addWidget(btn_connect)
         
         self.boxProxy.addWidget(w2)
@@ -143,6 +143,15 @@ class LauncherWindow(QMainWindow):
         self.server_list.addItem(item)
     
     def _launch_master(self):
+        login = self.login_input.text().strip()
+        log.setup_logging("master")
+        self.master_window = MasterGameTable(login)
+        self.master_window.show()
+        loop = asyncio.get_event_loop()
+        loop.call_soon(self.master_window.start_services)
+        self.close()  # Закрываем лаунчер
+        
+    def _launch_master_remote(self):
         login = self.login_input.text().strip()
         master_token = self.master_token_input.text().strip()
         master_ip = self.master_ip_input.text().strip()

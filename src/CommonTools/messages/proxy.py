@@ -8,6 +8,7 @@ class ProxyActionType(BaseActionType):
     CLIENT_DISCONNECT = "proxy", "client", "disconnect"
     
     TUNNEL_DATA = "proxy", "tunnel", "data"
+    TABLE_SWITCH = "proxy", "table", "switch"
 
 
 class ProxyClientConnect(BaseMessage, type=ProxyActionType.CLIENT_CONNECT):
@@ -23,8 +24,12 @@ class ProxyTunnel(BaseMessage, type=ProxyActionType.TUNNEL_DATA):
     msg: Any | BaseMessage
 
 
+class ProxyOpenTable(BaseMessage, type=ProxyActionType.TABLE_SWITCH):
+    open: bool
+
+
 __all__ = [
     "ProxyActionType",
     "ProxyClientConnect", "ProxyClientDisconnect",
-    "ProxyTunnel",
+    "ProxyTunnel", "ProxyOpenTable",
 ]

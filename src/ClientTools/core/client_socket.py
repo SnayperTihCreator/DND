@@ -1,42 +1,22 @@
 import asyncio
-import hashlib
 import logging
-import shutil
+from pathlib import Path
 from typing import Optional
 
-from pathlib import Path
 import websockets
-from attrs import define
 from psygnal import Signal
 from websockets import ClientConnection
 
-from .transfer_manager import FileTransferManager
-from .resource_manager import ClientResourceManager
-from CommonTools.messages import *
-from CommonTools.core import ClientData
 from CommonTools.components import RouterDescriptor
+from CommonTools.core import ClientData, ResourceLoaderMixin, NetworkConfig
+from CommonTools.messages import *
+from .resource_manager import ClientResourceManager
+from .transfer_manager import FileTransferManager
 
 logger = logging.getLogger(__name__)
 
 
-@define
-class ServerInfo:
-    ip: Optional[str] = None
-    ws_port: Optional[int] = None
-    http_port: Optional[int] = None
-    
-    @property
-    def is_valid(self) -> bool:
-        return bool(self.http_port and self.ip)
-    
-    def url_http(self, extra=""):
-        return "http://{ip}:{port}{extra}".format(ip=self.ip, port=self.http_port, extra=extra)
-    
-    def url_ws(self, extra=""):
-        return "ws://{ip}:{port}{extra}".format(ip=self.ip, port=self.ws_port, extra=extra)
-
-
-class AsyncClientBridge:
+class AsyncClientBridge(ResourceLoaderMixin):
     router_system = RouterDescriptor()
     
     connected = Signal()
@@ -54,8 +34,7 @@ class AsyncClientBridge:
         self.assets.mkdir(parents=True, exist_ok=True)
         self.manager = ClientResourceManager(self)
         
-        self.server_info = ServerInfo()
-        self.server_info.ws_port = 8765
+        self.config = NetworkConfig(None, 8765, 8080)
         
         self.me = ClientData(uid="temp")
         logger.info("AsyncClientBridge initialized. Cache folder: %s", self.assets)
@@ -67,9 +46,8 @@ class AsyncClientBridge:
         self.error_occurred.emit(f"Transfer error for {filename}: {error}")
     
     def connect_server(self, ip, ws_port):
-        self.server_info.ip = ip
-        self.server_info.ws_port = ws_port
-        uri = self.server_info.url_ws()
+        self.config.ip, self.config.ws_port = ip, ws_port
+        uri = self.config.ws()
         asyncio.create_task(self._connect_async(uri))
     
     def disconnect_server(self):
@@ -115,27 +93,15 @@ class AsyncClientBridge:
         except Exception:
             logger.exception("Error processing message: %s", message_str)
     
-    def loadTo(self, path: str):
-        sha256hash = hashlib.sha256()
-        with open(path, 'rb') as f:
-            for chunk in iter(lambda: f.read(4096), b''):
-                sha256hash.update(chunk)
-        filename = f"{sha256hash.hexdigest()[:16]}{Path(path).suffix}"
-        path2 = self.assets / filename
-        if not path2.exists():
-            shutil.copy(path, path2)
-        return filename, path2
-    
     @router_system.handler(SystemActionType.INFO)
     async def _on_handle_info_server(self, _, msg: SystemServerInfo):
-        self.me.uid = msg.uid
-        self.server_info.http_port = msg.http_port
-        logger.info("Received server configuration: HTTP port %s", self.server_info.http_port)
+        self.me.uid, self.config.http_port = msg.uid, msg.http_port
+        logger.info("Received server configuration: HTTP port %s", self.config.http_port)
         logger.info("Connected. My UID is: %s", self.me.uid)
     
     @router_system.handler(SystemActionType.RESOURCE_AVAILABLE)
     async def _on_handle_resources_server(self, _, msg: SystemResourceAvailable):
-        url = self.server_info.url_http(f"/static/{msg.filename}")
+        url = self.config.http(f"/static/{msg.filename}")
         local_path = self.assets / Path(msg.filename)
         logger.info("File URL detected in message. Scheduling download for %s", local_path)
         await self.transfer.download_file(url, local_path, self.me.uid)
@@ -152,11 +118,11 @@ class AsyncClientBridge:
         """
         Prepares the upload URL and delegates the file upload to the FileTransferManager.
         """
-        if not self.server_info.is_valid:
+        if not self.config.is_valid:
             msg = "Cannot upload: server connection details are not available."
             logger.error(msg)
             self.error_occurred.emit(msg)
             return None
         
-        url = self.server_info.url_http("/upload")
+        url = self.config.http("/upload")
         return await self.transfer.upload_file(local_path, url, self.me.uid)

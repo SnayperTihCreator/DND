@@ -5,7 +5,8 @@ from psygnal import Signal
 
 from ClientTools.core import AsyncClientBridge
 from CommonTools.core import ClientData, ProxyAdapterSocket
-from CommonTools.messages import BaseMessage, BaseSystemMessage, ProxyClientConnect, ProxyClientDisconnect, ProxyTunnel
+from CommonTools.messages import BaseMessage, BaseSystemMessage, ProxyClientConnect, ProxyClientDisconnect, ProxyTunnel, \
+    ProxyOpenTable
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -26,13 +27,19 @@ class AsyncServerRemote(AsyncClientBridge):
     
     def __init__(self, token, assets="./.cache"):
         super().__init__(assets)
-        self.server_info.ip, self.master_token = token.split("|")
+        self.config.ip, self.master_token = token.split("|")
         self.clients = {}
         self.me = ClientData("SERVER")
+        
+    def _send(self, msg: BaseMessage):
+        asyncio.create_task(self._asend(msg))
+    
+    async def _asend(self, msg: BaseMessage):
+        if self.socket:
+            await self.socket.send(msg.to_str())
     
     def set_access(self, allow: bool):
-        # TODO Я хз возможно нужно сразу ставить на открытие
-        pass
+        self._send(ProxyOpenTable(open=allow))
     
     def loadTo(self, path: str):
         # TODO Реалтзовать загрузку
@@ -88,16 +95,15 @@ class AsyncServerRemote(AsyncClientBridge):
     async def proxy_send(self, msg: BaseMessage, uid: str):
         logger.warning("Sending proxy message %s: %s", msg, uid)
         proxy = ProxyTunnel(uid=uid, msg=msg)
-        await self.asend(proxy)
+        await self._asend(proxy)
     
     def connect_server(self, ip, port: int):
-        self.server_info.ip = ip
-        self.server_info.ws_port = port
-        url = self.server_info.url_ws(f"/{self.master_token}")
+        self.config.ip, self.config.ws_port = ip, port
+        url = self.config.ws(f"/{self.master_token}")
         asyncio.create_task(self._connect_async(url))
     
     def start_server(self):
-        self.connect_server(self.server_info.ip, self.server_info.ws_port)
+        self.connect_server(self.config.ip, self.config.ws_port)
     
     def stop_server(self):
         pass

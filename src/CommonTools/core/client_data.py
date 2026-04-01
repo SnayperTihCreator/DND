@@ -24,6 +24,12 @@ class ClientData:
             self.socket.send(msg)
     
     @property
+    def isAlive(self):
+        if self.socket:
+            return self.socket.is_alive()
+        return False
+    
+    @property
     def mime(self):
         return f"player:{self.name}:{self.cls}:{self.uid}"
     

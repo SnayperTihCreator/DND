@@ -26,9 +26,8 @@ class ClientResourceManager(BaseResourceManager):
         asyncio.create_task(self._download(filename))
     
     async def _download(self, filename: str):
-        if not self.socket.server_ip or self.socket.me.uid == "temp":
+        if not self.socket.server_info.is_valid or self.socket.me.uid == "temp":
             self.resolve_file(filename, success=False)
             return
-        
-        url = f"http://{self.socket.server_ip}:{self.socket.server_http_port}/static/{filename}"
+        url = self.socket.server_info.url_http(f"/static/{filename}")
         await self.socket.transfer.download_file(url, self.folder / filename, self.socket.me.uid)
