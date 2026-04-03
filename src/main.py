@@ -4,6 +4,11 @@ import sys
 import warnings
 import asyncio
 
+if getattr(sys, 'frozen', False):
+    os.environ['PATH'] = sys._MEIPASS + os.pathsep + os.environ['PATH']
+    if hasattr(os, 'add_dll_directory'):
+        os.add_dll_directory(sys._MEIPASS)
+
 import certifi
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QSurfaceFormat
