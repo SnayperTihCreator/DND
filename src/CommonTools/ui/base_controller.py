@@ -1,6 +1,5 @@
 from abc import ABCMeta, ABC, abstractmethod
 import logging
-from tkinter import FALSE
 
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout
