@@ -12,23 +12,26 @@ if TYPE_CHECKING:
 from PyInstaller.log import logger
 
 
-def get_ssl_binaries():
+def get_runtime_binaries():
     base_path = sys.base_prefix
-    bin_path = os.path.join(base_path, 'Library', 'bin')  # Путь для Windows/Conda/uv
-    if not os.path.exists(bin_path):
-        bin_path = base_path  # Если это обычный Python
+    # Пути, где обычно лежат жирные DLL в Windows-сборках Python
+    search_paths = [
+        base_path,
+        os.path.join(base_path, 'Library', 'bin'),
+        os.path.join(base_path, 'DLLs')
+    ]
     
-    ssl_binaries = []
-    # Ищем критичные файлы
-    for dll in ['libssl-3-x64.dll', 'libcrypto-3-x64.dll', 'libssl-1_1-x64.dll', 'libcrypto-1_1-x64.dll']:
-        full_path = os.path.join(bin_path, dll)
-        if os.path.exists(full_path):
-            # Добавляем в binaries (в корень или в _internal)
-            ssl_binaries.append((full_path, '.'))
-    return ssl_binaries
-
-
-extra_binaries = get_ssl_binaries()
+    found = []
+    # Нам нужны именно эти ребята
+    targets = ['libssl-3-x64.dll', 'libcrypto-3-x64.dll']
+    
+    for p in search_paths:
+        for dll in targets:
+            full_path = os.path.join(p, dll)
+            if os.path.exists(full_path):
+                # Кладем и в корень, и в _internal для надежности
+                found.append((full_path, '.'))
+    return found
 
 SPEC_DIR = SPECPATH
 PROJECT_ROOT = os.path.dirname(SPEC_DIR)
@@ -54,13 +57,16 @@ def buildZipFile(dist: pathlib.Path, dir_name: str):
 a = Analysis(
     [os.path.join(SRC_PATH, 'main.py')],
     pathex=[SRC_PATH, PROJECT_ROOT],
-    binaries=get_ssl_binaries(),
+    binaries=get_runtime_binaries(),
     datas=[],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=[
+        'api-ms-win-core-kernel32-legacy-l1-1-1.dll',  # Выкидываем серверный мусор
+        'ucrtbase.dll'
+    ],
     noarchive=False,
     optimize=1,
 )
@@ -88,13 +94,16 @@ exe = EXE(
 updater_a = Analysis(
     [os.path.join(SRC_PATH, 'updater.py')],
     pathex=[SRC_PATH, PROJECT_ROOT],
-    binaries=[],
+    binaries=get_runtime_binaries(),
     datas=[],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=[
+        'api-ms-win-core-kernel32-legacy-l1-1-1.dll',  # Выкидываем серверный мусор
+        'ucrtbase.dll'
+    ],
     noarchive=False,
     optimize=1,
 )

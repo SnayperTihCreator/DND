@@ -42,7 +42,9 @@ jobs:
 
       - name: Install OpenSSL
         if: runner.os == 'Windows'
-        run: choco install openssl -y
+        run: |
+          choco install openssl -y
+          echo "C:\Program Files\OpenSSL-Win64\bin" >> $GITHUB_PATH
 
       - name: Install dependencies
         run: uv sync --group dev
