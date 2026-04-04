@@ -1,6 +1,6 @@
 [project]
 name = "dnd"
-version = ["version"]
+dynamic = ["version"]
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
