@@ -1,7 +1,6 @@
 [project]
 name = "dnd"
-version = "1.1.0b1"
-description = ""
+version = ["version"]
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -27,6 +26,9 @@ dev = [
     "pyinstaller>=6.18.0",
     "taskipy>=1.14.1",
 ]
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.taskipy.tasks]
 build = "pyinstaller scripts/dnd-table.spec --noconfirm"
