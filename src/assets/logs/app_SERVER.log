@@ -16,3 +16,14 @@
 2026-04-08 19:50:57: [SERVER/ServerTools.core.server_socket/INFO] Add client dca0f958328a4fc4ad41ff094a1ab1df to table
 2026-04-08 19:56:50: [SERVER/__main__/INFO] 
 🛑 Сервер остановлен
+2026-04-08 19:56:54: [SERVER/root/INFO] Logging system initialized.
+2026-04-08 19:56:54: [SERVER/__main__/INFO] 🚀 Сервер запущен!
+2026-04-08 19:56:54: [SERVER/__main__/INFO] 🔑 Master Token: MASTER
+2026-04-08 19:56:54: [SERVER/__main__/INFO] 🌐 Ожидание подключений...
+2026-04-08 19:56:54: [SERVER/ServerTools.core.server_socket/INFO] Запуск AsyncServerBridge...
+2026-04-08 19:56:54: [SERVER/ServerTools.core.server_socket/INFO] Сервер работает: WS 8765, HTTP 8080
+2026-04-08 19:57:17: [SERVER/ServerTools.core.proxy/INFO] Master attached with UID: ff04127cbb114941b90dd19cbec6d017
+2026-04-08 19:57:19: [SERVER/CommonTools.core.network_discovery/INFO] Beacon successfully started on UDP port 55000
+2026-04-08 19:57:30: [SERVER/ServerTools.core.server_socket/INFO] Add client 55b2224096004a3da0b8a81403af686a to table
+2026-04-08 19:57:34: [SERVER/ServerTools.core.server/INFO] Proxy processing msg from 55b2224096004a3da0b8a81403af686a: name='OLEG' cls='Бард' iname=None
+2026-04-08 19:57:34: [SERVER/ServerTools.core.server/INFO] Proxy processing msg from 55b2224096004a3da0b8a81403af686a: 
