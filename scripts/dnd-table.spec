@@ -59,7 +59,7 @@ a = Analysis(
     pathex=[SRC_PATH, PROJECT_ROOT],
     binaries=get_runtime_binaries(),
     datas=[],
-    hiddenimports=[],
+    hiddenimports=["dnd"],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -82,7 +82,7 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=True,
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
@@ -96,7 +96,7 @@ updater_a = Analysis(
     pathex=[SRC_PATH, PROJECT_ROOT],
     binaries=get_runtime_binaries(),
     datas=[],
-    hiddenimports=[],
+    hiddenimports=["dnd"],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -133,6 +133,37 @@ updater_exe = EXE(
     **exe_options
 )
 
+# --- Сборка SERVER ---
+server_a = Analysis(
+    [os.path.join(SRC_PATH, 'main_server.py')],
+    pathex=[SRC_PATH, PROJECT_ROOT],
+    binaries=get_runtime_binaries(),
+    datas=[],
+    hiddenimports=["dnd"],
+    hookspath=[],
+    runtime_hooks=[],
+    excludes=['api-ms-win-core-kernel32-legacy-l1-1-1.dll', 'ucrtbase.dll'],
+    noarchive=False,
+    optimize=1,
+)
+server_pyz = PYZ(server_a.pure)
+
+server_exe = EXE(
+    server_pyz,
+    server_a.scripts,
+    [],
+    exclude_binaries=True,
+    name='DndServer',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    console=True,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    icon=[icon_path] if os.path.exists(icon_path) else None,
+)
+
 coll = COLLECT(
     exe,
     a.binaries,
@@ -141,6 +172,10 @@ coll = COLLECT(
     updater_exe,
     updater_a.binaries,
     updater_a.datas,
+    
+    server_exe,
+    server_a.binaries,
+    server_a.datas,
     
     strip=False,
     upx=True,

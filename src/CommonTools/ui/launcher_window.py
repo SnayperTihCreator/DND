@@ -10,6 +10,7 @@ from ServerTools.ui.master_window import MasterGameTable
 
 from CommonTools.core import ServerScanner
 from CommonTools.updater_manager import UpdateManager
+from CommonTools.version import __version__
 
 
 class LauncherWindow(QMainWindow):
@@ -54,6 +55,8 @@ class LauncherWindow(QMainWindow):
         # Запускаем сканирование при старте
         loop = asyncio.get_event_loop()
         loop.call_soon(self._start_scan)
+        
+        self.statusBar().addWidget(QLabel(f"Version: {__version__}"))
     
     def _setup_join_ui(self):
         layout = QVBoxLayout(self.join_tab)

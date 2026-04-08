@@ -45,9 +45,9 @@ class AsyncClientBridge(ResourceLoaderMixin):
     def _on_transfer_failed(self, filename: str, error: str):
         self.error_occurred.emit(f"Transfer error for {filename}: {error}")
     
-    def connect_server(self, ip, ws_port):
+    def connect_server(self, ip, ws_port, extra=""):
         self.config.ip, self.config.ws_port = ip, ws_port
-        uri = self.config.ws()
+        uri = self.config.ws(extra)
         asyncio.create_task(self._connect_async(uri))
     
     def disconnect_server(self):
@@ -63,6 +63,7 @@ class AsyncClientBridge(ResourceLoaderMixin):
                 logger.info("WebSocket connection established to %s", uri)
                 self.connected.emit()
                 await self._listen_for_messages()
+                
         except Exception as e:
             logger.error("Connection failed to %s: %s", uri, e)
             self.error_occurred.emit(f"Connection error: {e}")
@@ -76,6 +77,7 @@ class AsyncClientBridge(ResourceLoaderMixin):
             return
         logger.info("Listening for incoming messages...")
         async for message in self.socket:
+            logger.info("Received message: %s", message)
             await self._process_message(message)
     
     async def _process_message(self, message_str: str):

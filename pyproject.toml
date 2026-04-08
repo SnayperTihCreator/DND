@@ -1,6 +1,6 @@
 [project]
 name = "dnd"
-dynamic = ["version"]
+version = "1.1.0b3"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -23,12 +23,12 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "pyinstaller>=6.18.0",
+    "pyinstaller>=6.19.0",
     "taskipy>=1.14.1",
 ]
 
-[tool.hatch.version]
-source = "vcs"
 
 [tool.taskipy.tasks]
-build = "pyinstaller scripts/dnd-table.spec --noconfirm"
+build = "task pre-run && pyinstaller scripts/dnd-table.spec --noconfirm"
+push-tag = "python scripts/release_helper.py"
+pre-run = "uv pip install -e ."

@@ -32,5 +32,3 @@ class ServerWS:
             await self.server.handle_websocket(websocket)
         except Exception as e:
             pass
-
-        websocket.w

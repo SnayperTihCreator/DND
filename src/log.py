@@ -27,6 +27,10 @@ class LessThanFilter(logging.Filter):
     
     def filter(self, record: logging.LogRecord) -> bool:
         return record.levelno < self.max_level
+    
+    
+def log_signal_error(target, signal, exc, slot):
+    logging.error(f"Signal Error: {signal.name} -> {slot}. Error: {exc}", exc_info=True)
 
 
 def setup_logging(role="launcher"):
@@ -77,6 +81,7 @@ def setup_logging(role="launcher"):
     logging.basicConfig(handlers=[app_handler, error_handler, console_handler])
     
     qInstallMessageHandler(qt_message_handler)
+    
     sys.excepthook = exception_handler
     
     logging.info("Logging system initialized.")

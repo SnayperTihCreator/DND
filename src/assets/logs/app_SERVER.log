@@ -1,24 +1,18 @@
-2026-03-28 23:12:10: [SERVER/root/INFO] Logging system initialized.
-2026-03-28 23:12:29: [SERVER/root/INFO] Logging system initialized.
-2026-03-28 23:13:05: [SERVER/root/INFO] Logging system initialized.
-2026-03-28 23:13:05: [SERVER/__main__/INFO] 🚀 Сервер запущен!
-2026-03-28 23:13:05: [SERVER/__main__/INFO] 🔑 Master Token: MASTER
-2026-03-28 23:13:05: [SERVER/__main__/INFO] 🌐 Ожидание подключений...
-2026-03-28 23:13:05: [SERVER/ServerTools.core.server_socket/INFO] Запуск AsyncServerBridge...
-2026-03-28 23:13:05: [SERVER/CommonTools.core.network_discovery/INFO] Beacon started on UDP 55000
-2026-03-28 23:13:05: [SERVER/websockets.server/INFO] server listening on 0.0.0.0:8765
-2026-03-28 23:13:05: [SERVER/ServerTools.core.server_socket/INFO] Сервер работает: WS 8765, HTTP 8080
-2026-03-28 23:13:44: [SERVER/websockets.server/INFO] connection open
-2026-03-28 23:17:41: [SERVER/__main__/INFO] 
-🛑 Сервер остановлен
-2026-03-28 23:17:41: [SERVER/websockets.server/INFO] server closing
-2026-03-28 23:17:52: [SERVER/root/INFO] Logging system initialized.
-2026-03-28 23:17:52: [SERVER/__main__/INFO] 🚀 Сервер запущен!
-2026-03-28 23:17:52: [SERVER/__main__/INFO] 🔑 Master Token: MASTER
-2026-03-28 23:17:52: [SERVER/__main__/INFO] 🌐 Ожидание подключений...
-2026-03-28 23:17:52: [SERVER/ServerTools.core.server_socket/INFO] Запуск AsyncServerBridge...
-2026-03-28 23:17:52: [SERVER/CommonTools.core.network_discovery/INFO] Beacon started on UDP 55000
-2026-03-28 23:17:52: [SERVER/ServerTools.core.server_socket/INFO] Сервер работает: WS 8765, HTTP 8080
-2026-03-28 23:18:07: [SERVER/ServerTools.core.server/INFO] Не обработанное сообщение: client:start:player - name='oleg' cls='Бард' iname=None
-2026-03-28 23:18:19: [SERVER/__main__/INFO] 
+2026-04-08 19:36:29: [SERVER/root/INFO] Logging system initialized.
+2026-04-08 19:36:41: [SERVER/root/INFO] Logging system initialized.
+2026-04-08 19:36:41: [SERVER/__main__/INFO] 🚀 Сервер запущен!
+2026-04-08 19:36:41: [SERVER/__main__/INFO] 🔑 Master Token: MASTER
+2026-04-08 19:36:41: [SERVER/__main__/INFO] 🌐 Ожидание подключений...
+2026-04-08 19:36:41: [SERVER/ServerTools.core.server_socket/INFO] Запуск AsyncServerBridge...
+2026-04-08 19:36:41: [SERVER/ServerTools.core.server_socket/INFO] Сервер работает: WS 8765, HTTP 8080
+2026-04-08 19:37:06: [SERVER/ServerTools.core.proxy/INFO] Master attached with UID: c07e927a07514619b9f0d49b164e21c9
+2026-04-08 19:37:10: [SERVER/CommonTools.core.network_discovery/INFO] Beacon successfully started on UDP port 55000
+2026-04-08 19:37:30: [SERVER/ServerTools.core.server_socket/INFO] Add client 4e3be08bd72c428cbc94c34aca1cd829 to table
+2026-04-08 19:38:46: [SERVER/ServerTools.core.server_socket/INFO] Add client 26c08b214a074f0da2e2489bafcc2290 to table
+2026-04-08 19:39:05: [SERVER/ServerTools.core.server_socket/INFO] Add client 6bf99d2bbfde471baeb55b0241fac838 to table
+2026-04-08 19:41:50: [SERVER/ServerTools.core.server_socket/INFO] Add client 2c31fb859c9b4765adafe4755b58f0b0 to table
+2026-04-08 19:45:03: [SERVER/ServerTools.core.server_socket/INFO] Add client 793e3ef4bcf046b8a519ecf32774592e to table
+2026-04-08 19:49:12: [SERVER/CommonTools.core.network_discovery/INFO] Beacon successfully started on UDP port 55000
+2026-04-08 19:50:57: [SERVER/ServerTools.core.server_socket/INFO] Add client dca0f958328a4fc4ad41ff094a1ab1df to table
+2026-04-08 19:56:50: [SERVER/__main__/INFO] 
 🛑 Сервер остановлен

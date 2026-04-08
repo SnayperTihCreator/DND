@@ -4,7 +4,7 @@ import uuid
 from pathlib import Path
 
 from psygnal import Signal
-from websockets import ServerConnection
+from websockets import ServerConnection, ConnectionClosedError
 
 from CommonTools.core import ClientData, SocketAdapter, MasterBeacon, NetworkConfig, ResourceLoaderMixin
 from CommonTools.messages import *
@@ -43,9 +43,8 @@ class AsyncServerBridge(ResourceLoaderMixin):
         
         self.beacon = MasterBeacon()
     
-    @staticmethod
-    def get_me():
-        return ClientData("")
+    def get_me(self):
+        return self.proxy_handler.master
     
     def start_server(self):
         logger.info("Запуск AsyncServerBridge...")
@@ -87,22 +86,28 @@ class AsyncServerBridge(ResourceLoaderMixin):
         
         is_master = self.proxy_handler.attach(path, adapter, uid)
         
-        if not is_master and self.proxy_handler.is_token(path):
-            logger.warning(f"Rejecting client {uid}: Master is find")
-            await websocket.close(1008, "Master slot occupied or forbidden")
-            return
-        
-        if not self.beacon.is_public and not is_master:
-            logger.warning(f"Rejecting client {uid}: Table is not public yet!")
-            await websocket.close(1008, "Table closed")
-            return
+        if not is_master:
+            if self.proxy_handler.is_token(path):
+                logger.warning(f"Rejecting client {uid}: Master slot occupied")
+                await websocket.close(1008, "Master slot occupied")
+                return
+            
+            if not self.beacon.is_public:
+                logger.warning(f"Rejecting client {uid}: Table is not public yet!")
+                await websocket.close(1008, "Table closed")
+                return
         
         if not is_master:
+            logger.info(f"Add client {uid} to table")
             client_data = ClientData(uid=uid, socket=adapter)
             self.clients[uid] = client_data
             self.client_connected.emit(uid)
         
-        self.answer(uid, SystemServerInfo(http_port=self.serve_info.http_port, table_name="TestDND", uid=uid))
+        self.answer(uid, SystemServerInfo(
+            http_port=self.serve_info.http_port,
+            table_name="TestDND",
+            uid=uid
+        ))
         
         try:
             async for message in websocket:
@@ -112,7 +117,10 @@ class AsyncServerBridge(ResourceLoaderMixin):
                 else:
                     await self._process_message(uid, msg)
         except Exception:
-            logger.exception("Error", exc_info=True)
+            logger.exception("Error during WS session", exc_info=True)
+            
+        except ConnectionClosedError:
+            pass
         finally:
             if uid in self.clients:
                 del self.clients[uid]

@@ -1,0 +1,118 @@
+2026-04-06 22:52:37: [SERVER/root/INFO] Logging system initialized.
+2026-04-06 22:52:51: [SERVER/root/INFO] Logging system initialized.
+2026-04-06 22:52:51: [SERVER/__main__/INFO] 🚀 Сервер запущен!
+2026-04-06 22:52:51: [SERVER/__main__/INFO] 🔑 Master Token: MASTER
+2026-04-06 22:52:51: [SERVER/__main__/INFO] 🌐 Ожидание подключений...
+2026-04-06 22:52:51: [SERVER/ServerTools.core.server_socket/INFO] Запуск AsyncServerBridge...
+2026-04-06 22:52:51: [SERVER/ServerTools.core.server_socket/INFO] Сервер работает: WS 8765, HTTP 8080
+2026-04-06 22:54:25: [SERVER/ServerTools.core.server_socket/WARNING] Rejecting client 0cb9f6002a6847eba8880aa27996b096: Table is not public yet!
+2026-04-06 22:55:09: [SERVER/__main__/INFO] 
+🛑 Сервер остановлен
+2026-04-06 22:55:13: [SERVER/root/INFO] Logging system initialized.
+2026-04-06 22:55:13: [SERVER/__main__/INFO] 🚀 Сервер запущен!
+2026-04-06 22:55:13: [SERVER/__main__/INFO] 🔑 Master Token: MASTER
+2026-04-06 22:55:13: [SERVER/__main__/INFO] 🌐 Ожидание подключений...
+2026-04-06 22:55:13: [SERVER/ServerTools.core.server_socket/INFO] Запуск AsyncServerBridge...
+2026-04-06 22:55:13: [SERVER/ServerTools.core.server_socket/INFO] Сервер работает: WS 8765, HTTP 8080
+2026-04-06 22:55:30: [SERVER/ServerTools.core.server_socket/WARNING] Rejecting client 1292b828d71b409daab2fdf9bcf5dec2: Table is not public yet!
+2026-04-06 22:57:10: [SERVER/__main__/INFO] 
+🛑 Сервер остановлен
+2026-04-06 22:57:16: [SERVER/root/INFO] Logging system initialized.
+2026-04-06 22:57:16: [SERVER/__main__/INFO] 🚀 Сервер запущен!
+2026-04-06 22:57:16: [SERVER/__main__/INFO] 🔑 Master Token: MASTER
+2026-04-06 22:57:16: [SERVER/__main__/INFO] 🌐 Ожидание подключений...
+2026-04-06 22:57:16: [SERVER/ServerTools.core.server_socket/INFO] Запуск AsyncServerBridge...
+2026-04-06 22:57:16: [SERVER/ServerTools.core.server_socket/INFO] Сервер работает: WS 8765, HTTP 8080
+2026-04-06 22:57:33: [SERVER/ServerTools.core.server_socket/WARNING] Rejecting client 66baf32a633e4462b50b99ce75788f7c: Table is not public yet!
+2026-04-06 22:58:26: [SERVER/__main__/INFO] 
+🛑 Сервер остановлен
+2026-04-06 22:58:30: [SERVER/root/INFO] Logging system initialized.
+2026-04-06 22:58:30: [SERVER/__main__/INFO] 🚀 Сервер запущен!
+2026-04-06 22:58:30: [SERVER/__main__/INFO] 🔑 Master Token: MASTER
+2026-04-06 22:58:30: [SERVER/__main__/INFO] 🌐 Ожидание подключений...
+2026-04-06 22:58:30: [SERVER/ServerTools.core.server_socket/INFO] Запуск AsyncServerBridge...
+2026-04-06 22:58:30: [SERVER/ServerTools.core.server_socket/INFO] Сервер работает: WS 8765, HTTP 8080
+2026-04-06 22:59:06: [SERVER/ServerTools.core.server_socket/WARNING] Rejecting client d509b70670fb43de8018477d43164cc7: Table is not public yet!
+2026-04-06 22:59:50: [SERVER/__main__/INFO] 
+🛑 Сервер остановлен
+2026-04-06 22:59:56: [SERVER/root/INFO] Logging system initialized.
+2026-04-06 22:59:56: [SERVER/__main__/INFO] 🚀 Сервер запущен!
+2026-04-06 22:59:56: [SERVER/__main__/INFO] 🔑 Master Token: MASTER
+2026-04-06 22:59:56: [SERVER/__main__/INFO] 🌐 Ожидание подключений...
+2026-04-06 22:59:56: [SERVER/ServerTools.core.server_socket/INFO] Запуск AsyncServerBridge...
+2026-04-06 22:59:56: [SERVER/ServerTools.core.server_socket/INFO] Сервер работает: WS 8765, HTTP 8080
+2026-04-06 23:00:10: [SERVER/ServerTools.core.server_socket/WARNING] Rejecting client 2f4df8175a1e4f3a944bca9659bb07c8: Table is not public yet!
+2026-04-06 23:11:04: [SERVER/__main__/INFO] 
+🛑 Сервер остановлен
+2026-04-06 23:11:08: [SERVER/root/INFO] Logging system initialized.
+2026-04-06 23:11:08: [SERVER/__main__/INFO] 🚀 Сервер запущен!
+2026-04-06 23:11:08: [SERVER/__main__/INFO] 🔑 Master Token: MASTER
+2026-04-06 23:11:08: [SERVER/__main__/INFO] 🌐 Ожидание подключений...
+2026-04-06 23:11:08: [SERVER/ServerTools.core.server_socket/INFO] Запуск AsyncServerBridge...
+2026-04-06 23:11:08: [SERVER/ServerTools.core.server_socket/INFO] Сервер работает: WS 8765, HTTP 8080
+2026-04-06 23:11:25: [SERVER/ServerTools.core.server_socket/WARNING] Rejecting client b5b1a2ae4e5e480f9662575e3dac1401: Master is find
+2026-04-06 23:18:26: [SERVER/__main__/INFO] 
+🛑 Сервер остановлен
+2026-04-06 23:18:32: [SERVER/root/INFO] Logging system initialized.
+2026-04-06 23:18:32: [SERVER/__main__/INFO] 🚀 Сервер запущен!
+2026-04-06 23:18:32: [SERVER/__main__/INFO] 🔑 Master Token: MASTER
+2026-04-06 23:18:32: [SERVER/__main__/INFO] 🌐 Ожидание подключений...
+2026-04-06 23:18:32: [SERVER/ServerTools.core.server_socket/INFO] Запуск AsyncServerBridge...
+2026-04-06 23:18:32: [SERVER/ServerTools.core.server_socket/INFO] Сервер работает: WS 8765, HTTP 8080
+2026-04-06 23:18:52: [SERVER/ServerTools.core.server_socket/WARNING] Rejecting client d4d3587b02da4c7d9515bfe085476b9b: Master slot occupied
+2026-04-06 23:22:01: [SERVER/__main__/INFO] 
+🛑 Сервер остановлен
+2026-04-06 23:22:06: [SERVER/root/INFO] Logging system initialized.
+2026-04-06 23:22:06: [SERVER/__main__/INFO] 🚀 Сервер запущен!
+2026-04-06 23:22:06: [SERVER/__main__/INFO] 🔑 Master Token: MASTER
+2026-04-06 23:22:06: [SERVER/__main__/INFO] 🌐 Ожидание подключений...
+2026-04-06 23:22:06: [SERVER/ServerTools.core.server_socket/INFO] Запуск AsyncServerBridge...
+2026-04-06 23:22:06: [SERVER/ServerTools.core.server_socket/INFO] Сервер работает: WS 8765, HTTP 8080
+2026-04-06 23:22:22: [SERVER/ServerTools.core.server_socket/WARNING] Rejecting client 66dc99f1551f4ba784bf0f1a4c2342e4: Master slot occupied
+2026-04-06 23:22:46: [SERVER/__main__/INFO] 
+🛑 Сервер остановлен
+2026-04-06 23:22:52: [SERVER/root/INFO] Logging system initialized.
+2026-04-06 23:22:52: [SERVER/__main__/INFO] 🚀 Сервер запущен!
+2026-04-06 23:22:52: [SERVER/__main__/INFO] 🔑 Master Token: MASTER
+2026-04-06 23:22:52: [SERVER/__main__/INFO] 🌐 Ожидание подключений...
+2026-04-06 23:22:52: [SERVER/ServerTools.core.server_socket/INFO] Запуск AsyncServerBridge...
+2026-04-06 23:22:52: [SERVER/ServerTools.core.server_socket/INFO] Сервер работает: WS 8765, HTTP 8080
+2026-04-06 23:23:57: [SERVER/root/INFO] Logging system initialized.
+2026-04-06 23:23:57: [SERVER/__main__/INFO] 🚀 Сервер запущен!
+2026-04-06 23:23:57: [SERVER/__main__/INFO] 🔑 Master Token: MASTER
+2026-04-06 23:23:57: [SERVER/__main__/INFO] 🌐 Ожидание подключений...
+2026-04-06 23:23:57: [SERVER/ServerTools.core.server_socket/INFO] Запуск AsyncServerBridge...
+2026-04-06 23:23:57: [SERVER/ServerTools.core.server_socket/INFO] Сервер работает: WS 8765, HTTP 8080
+2026-04-06 23:24:11: [SERVER/ServerTools.core.proxy/INFO] Master attached with UID: 7ed0706781e84a43991eb15b5604340c
+2026-04-06 23:26:17: [SERVER/__main__/INFO] 
+🛑 Сервер остановлен
+2026-04-06 23:26:21: [SERVER/root/INFO] Logging system initialized.
+2026-04-06 23:26:21: [SERVER/__main__/INFO] 🚀 Сервер запущен!
+2026-04-06 23:26:21: [SERVER/__main__/INFO] 🔑 Master Token: MASTER
+2026-04-06 23:26:21: [SERVER/__main__/INFO] 🌐 Ожидание подключений...
+2026-04-06 23:26:21: [SERVER/ServerTools.core.server_socket/INFO] Запуск AsyncServerBridge...
+2026-04-06 23:26:21: [SERVER/ServerTools.core.server_socket/INFO] Сервер работает: WS 8765, HTTP 8080
+2026-04-06 23:26:34: [SERVER/ServerTools.core.proxy/INFO] Master attached with UID: e74b4245912e4a0b836652be8ea615d2
+2026-04-06 23:26:36: [SERVER/ServerTools.core.proxy/INFO] Не обработанное сообщение: proxy:table:switch - open=True
+2026-04-06 23:30:37: [SERVER/__main__/INFO] 
+🛑 Сервер остановлен
+2026-04-06 23:31:43: [SERVER/root/INFO] Logging system initialized.
+2026-04-06 23:31:43: [SERVER/__main__/INFO] 🚀 Сервер запущен!
+2026-04-06 23:31:43: [SERVER/__main__/INFO] 🔑 Master Token: MASTER
+2026-04-06 23:31:43: [SERVER/__main__/INFO] 🌐 Ожидание подключений...
+2026-04-06 23:31:43: [SERVER/ServerTools.core.server_socket/INFO] Запуск AsyncServerBridge...
+2026-04-06 23:31:43: [SERVER/ServerTools.core.server_socket/INFO] Сервер работает: WS 8765, HTTP 8080
+2026-04-06 23:32:00: [SERVER/ServerTools.core.proxy/INFO] Master attached with UID: 823b031a8c0945faa62a8944c9bb6106
+2026-04-06 23:33:18: [SERVER/__main__/INFO] 
+🛑 Сервер остановлен
+2026-04-06 23:33:22: [SERVER/root/INFO] Logging system initialized.
+2026-04-06 23:33:22: [SERVER/__main__/INFO] 🚀 Сервер запущен!
+2026-04-06 23:33:22: [SERVER/__main__/INFO] 🔑 Master Token: MASTER
+2026-04-06 23:33:22: [SERVER/__main__/INFO] 🌐 Ожидание подключений...
+2026-04-06 23:33:22: [SERVER/ServerTools.core.server_socket/INFO] Запуск AsyncServerBridge...
+2026-04-06 23:33:22: [SERVER/ServerTools.core.server_socket/INFO] Сервер работает: WS 8765, HTTP 8080
+2026-04-06 23:33:37: [SERVER/ServerTools.core.proxy/INFO] Master attached with UID: 5ea37605fe644975913a676bfd609cec
+2026-04-06 23:33:39: [SERVER/ServerTools.core.proxy/INFO] Не обработанное сообщение: proxy:table:switch - open=True
+2026-04-06 23:33:39: [SERVER/CommonTools.core.network_discovery/INFO] Beacon successfully started on UDP port 55000
+2026-04-06 23:54:59: [SERVER/__main__/INFO] 
+🛑 Сервер остановлен

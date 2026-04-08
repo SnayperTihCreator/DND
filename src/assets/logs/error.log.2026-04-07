@@ -1,0 +1,11 @@
+2026-04-07 00:15:17: [SERVER/ServerTools.core.server_socket/ERROR] Error during WS session
+Traceback (most recent call last):
+  File "C:\Users\MSI\Documents\Python\DND\src\ServerTools\core\server_socket.py", line 113, in _ws_handler
+    try:
+        
+  File "C:\Users\MSI\Documents\Python\DND\.venv\Lib\site-packages\websockets\asyncio\connection.py", line 244, in __aiter__
+    yield await self.recv()
+          ^^^^^^^^^^^^^^^^^
+  File "C:\Users\MSI\Documents\Python\DND\.venv\Lib\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: no close frame received or sent

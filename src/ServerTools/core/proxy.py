@@ -3,8 +3,9 @@ from typing import Protocol
 
 from attrs import define, field
 
+from CommonTools.components import RouterDescriptor
 from CommonTools.core import ClientData, SenderAdapterSocket
-from CommonTools.messages import BaseMessage, ProxyActionType
+from CommonTools.messages import BaseMessage, ProxyActionType, ProxyTunnel, ProxyOpenTable
 
 logger = logging.getLogger(__name__)
 
@@ -17,33 +18,44 @@ class ServerTableProtocol(Protocol):
     def set_access(self, allow: bool): ...
 
 
-@define
+@define(hash=True)
 class MasterProxyHandler:
-    server: ServerTableProtocol
+    router = RouterDescriptor()
+    
+    server: ServerTableProtocol = field(hash=False)
     token: str
-    no_master: bool = field(default=False)
-    _data: ClientData = field(default=None)
+    no_master: bool = field(default=False, hash=False)
+    _data: ClientData = field(default=None, hash=False)
+    
+    def __attrs_post_init__(self):
+        self.token = self.token.strip()
+        
+    @property
+    def master(self):
+        return self._data
     
     @property
     def isBusy(self) -> bool:
-        if self.no_master:
-            return True
         return self._data is not None and self._data.isAlive
     
     def is_token(self, token: str) -> bool:
-        if self.no_master or not self.token:
+        if not self.token or not token:
             return False
         return self.token == token
     
     def attach(self, token: str, adapter: SenderAdapterSocket, uid: str):
-        if self.no_master:
+        if not token or (self.token != token):
             return False
         
-        if token and (self.token == token) and not self.isBusy:
+        if not self.isBusy:
             self._data = ClientData(uid, "MASTER", "MASTER", adapter)
             self._data.is_playing = True
+            
+            self.no_master = False
+            
             logger.info(f"Master attached with UID: {uid}")
             return True
+        
         return False
     
     def detach(self, uid):
@@ -54,11 +66,22 @@ class MasterProxyHandler:
         return False
     
     async def process_message(self, uid: str, msg: BaseMessage):
-        if msg.type == ProxyActionType.TUNNEL_DATA:
-            await self.server.__prepare_message__(msg.uid, msg.msg)
-            self.server.answer(msg.uid, msg.msg)
+        
+        if await self.router(uid, msg):
+            return
         
         logger.info("Не обработанное сообщение: %s - %s", msg.type, msg)
+    
+    @router.handler(ProxyActionType.TUNNEL_DATA)
+    async def _handler_tunnel_data(self, uid: str, msg: ProxyTunnel):
+        await self.server.__prepare_message__(msg.uid, msg.msg)
+        self.server.answer(msg.uid, msg.msg)
+        return True
+        
+    @router.handler(ProxyActionType.TABLE_SWITCH)
+    async def _handler_table_switch(self, uid: str, msg: ProxyOpenTable):
+        self.server.set_access(msg.open)
+        return True
     
     @property
     def uid(self) -> str | None:

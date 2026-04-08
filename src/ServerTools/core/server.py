@@ -25,10 +25,10 @@ class Server:
         self.server.client_disconnected.connect(self._handle_disconnect)
         
     def _handle_connect(self, uid):
-        self.server.master_cd.send(ProxyClientConnect(uid=uid))
+        self.server.get_me().send(ProxyClientConnect(uid=uid))
         
     def _handle_disconnect(self, uid):
-        self.server.master_cd.send(ProxyClientDisconnect(uid=uid))
+        self.server.get_me().send(ProxyClientDisconnect(uid=uid))
     
     def start_services(self):
         asyncio.create_task(self._start())
@@ -45,4 +45,4 @@ class Server:
     
     async def _handle_message(self, uid: str, msg: BaseMessage):
         logger.info("Proxy processing msg from %s: %s", uid, msg)
-        self.server.master_cd.send(ProxyTunnel(uid=uid, msg=msg))
+        self.server.get_me().send(ProxyTunnel(uid=uid, msg=msg))
