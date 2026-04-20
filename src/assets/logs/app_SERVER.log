@@ -27,3 +27,5 @@
 2026-04-08 19:57:30: [SERVER/ServerTools.core.server_socket/INFO] Add client 55b2224096004a3da0b8a81403af686a to table
 2026-04-08 19:57:34: [SERVER/ServerTools.core.server/INFO] Proxy processing msg from 55b2224096004a3da0b8a81403af686a: name='OLEG' cls='Бард' iname=None
 2026-04-08 19:57:34: [SERVER/ServerTools.core.server/INFO] Proxy processing msg from 55b2224096004a3da0b8a81403af686a: 
+2026-04-08 22:08:32: [SERVER/__main__/INFO] 
+🛑 Сервер остановлен

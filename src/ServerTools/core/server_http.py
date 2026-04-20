@@ -1,27 +1,16 @@
 from pathlib import Path
-from typing import Protocol, Optional
+from typing import Optional
 
 import aiofiles
-from attrs import field, define
 from aiohttp import web
-from psygnal import Signal
+from attrs import field, define
 
-from CommonTools.core import ClientData, NetworkConfig
-from .proxy import MasterProxyHandler
-
-
-class ServerTableProtocol(Protocol):
-    clients: dict[str, ClientData]
-    proxy_handler: MasterProxyHandler
-    assets: Path
-    config: NetworkConfig
-    
-    file_loaded: Signal
+from Protocols.network import ServerProxyProtocol
 
 
 @define
 class ServerHttp:
-    server: ServerTableProtocol
+    server: ServerProxyProtocol
     runner: Optional[web.AppRunner] = field(default=None, init=False)
     port: int = field(default=8080)
     

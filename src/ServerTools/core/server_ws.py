@@ -1,16 +1,14 @@
-from typing import Protocol, Optional
+from typing import Optional
 
 from attrs import define, field
 from websockets import Server, serve, ServerConnection
 
-
-class ServerTableProtocol(Protocol):
-    async def handle_websocket(self, websocket): ...
+from Protocols.network import ServerSocketProtocol
 
 
 @define
 class ServerWS:
-    server: ServerTableProtocol
+    server: ServerSocketProtocol
     runner: Optional[Server] = field(init=False, default=None)
     port: int = field(default=8765)
     

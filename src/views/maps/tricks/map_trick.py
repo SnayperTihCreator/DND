@@ -6,7 +6,7 @@ from PySide6.QtGui import QPixmap, QMovie, QColor, QPen
 from PySide6.QtWidgets import QGraphicsPixmapItem
 
 if TYPE_CHECKING:
-    from CommonTools.maps.core.scene import Scene
+    from views.maps.core.scene import Scene
 
 
 class MapFon1(QGraphicsPixmapItem):

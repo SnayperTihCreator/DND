@@ -1,38 +1,30 @@
 import logging
-from typing import Protocol
 
 from attrs import define, field
 
 from CommonTools.components import RouterDescriptor
 from CommonTools.core import ClientData, SenderAdapterSocket
 from CommonTools.messages import BaseMessage, ProxyActionType, ProxyTunnel, ProxyOpenTable
+from Protocols.network import ServerProxyProtocol
 
 logger = logging.getLogger(__name__)
-
-
-class ServerTableProtocol(Protocol):
-    async def __prepare_message__(self, uid: str, msg: BaseMessage): ...
-    
-    def answer(self, uid: str, msg: BaseMessage): ...
-    
-    def set_access(self, allow: bool): ...
 
 
 @define(hash=True)
 class MasterProxyHandler:
     router = RouterDescriptor()
     
-    server: ServerTableProtocol = field(hash=False)
+    server: ServerProxyProtocol = field(hash=False)
     token: str
     no_master: bool = field(default=False, hash=False)
     _data: ClientData = field(default=None, hash=False)
     
     def __attrs_post_init__(self):
         self.token = self.token.strip()
-        
+    
     @property
     def master(self):
-        return self._data
+        return self._data or ClientData("MASTER")
     
     @property
     def isBusy(self) -> bool:
@@ -77,7 +69,7 @@ class MasterProxyHandler:
         await self.server.__prepare_message__(msg.uid, msg.msg)
         self.server.answer(msg.uid, msg.msg)
         return True
-        
+    
     @router.handler(ProxyActionType.TABLE_SWITCH)
     async def _handler_table_switch(self, uid: str, msg: ProxyOpenTable):
         self.server.set_access(msg.open)

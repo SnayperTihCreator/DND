@@ -1,3 +1,4 @@
+from abc import ABCMeta, ABC, abstractmethod
 from typing import ClassVar, Optional, TYPE_CHECKING
 
 from PySide6.QtCore import QVariantAnimation, QRect, Qt, QPointF, QEasingCurve, QLineF, QRectF
@@ -5,12 +6,16 @@ from PySide6.QtGui import QPixmap, QPen, QColor, QPainter, QPainterPath
 from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsItem, QMenu, QInputDialog
 
 from .configs import BaseConfigTrick
+from CommonTools.messages import TokenData
 
 if TYPE_CHECKING:
     from ..core.scene import Scene
 
 
-class BaseTrick(QGraphicsEllipseItem):
+class QMetaAbc(ABCMeta, type(QGraphicsEllipseItem)): ...
+
+
+class BaseTrick(ABC, QGraphicsEllipseItem, metaclass=QMetaAbc):
     TEXTURE_SIZE: ClassVar[int] = 512
     ttype: ClassVar[str]
     _default_border_ = None
@@ -46,7 +51,7 @@ class BaseTrick(QGraphicsEllipseItem):
         self.setFlag(QGraphicsEllipseItem.GraphicsItemFlag.ItemSendsScenePositionChanges)
         self.setAcceptHoverEvents(True)
         self.update_from_grid()
-        
+    
     def __init_subclass__(cls, **kwargs):
         cls.ttype = kwargs.get("type", "service")
     
@@ -163,7 +168,7 @@ class BaseTrick(QGraphicsEllipseItem):
                 self._animation.stop()
                 self._old_pos = self.pos()
         super().mousePressEvent(event)
-        
+    
     def mouseMoveEvent(self, event):
         super().mouseMoveEvent(event)
         if self.scene():
@@ -222,7 +227,7 @@ class BaseTrick(QGraphicsEllipseItem):
         painter.setRenderHint(QPainter.RenderHint.TextAntialiasing)
         rect = self.rect()
         painter.drawText(rect, Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap, text)
-        
+    
     def _get_text(self):
         return text if len(text := self.config.title) <= 15 else text[:15]
     
@@ -239,15 +244,20 @@ class BaseTrick(QGraphicsEllipseItem):
         moveMap.triggered.connect(self._handle_move_map)
         
         menu.exec(event.screenPos())
-        
+    
+    @classmethod
+    @abstractmethod
+    def create(cls, data: TokenData, *args, **kwargs):
+        ...
+    
     def _handle_delete_action(self):
         self.scene().removeItem(self)
-        
+    
     def _handle_move_map(self):
         text, ok = QInputDialog.getText(self.scene().views()[0], "Переместить", "UID карты")
         if ok and self.scene():
             self.scene().item_moved_map.emit(self, text)
-            
+    
     @property
     def mime(self):
         return self.config.mime

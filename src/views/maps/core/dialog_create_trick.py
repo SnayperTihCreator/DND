@@ -140,7 +140,7 @@ class DialogCreateTrick(BaseDialog):
         self._path: Optional[Path] = None
     
     def _handle_select_avatar(self):
-        path, _ = QFileDialog.getOpenFileName(self, "Аватарка токена", ".", "Images (*.png *.jpg *.jpeg)")
+        path, _ = QFileDialog.getOpenFileName(self, "Аватарка токена", "", "Images (*.png *.jpg *.jpeg)")
         if not path: return
         
         img = QImage(path)

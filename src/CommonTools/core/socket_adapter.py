@@ -1,28 +1,12 @@
 import asyncio
-from typing import Any, Protocol, Optional
 from abc import ABC, abstractmethod
-
-from websockets import ServerConnection, State
+from typing import Any
 
 from attrs import define, field
+from websockets import ServerConnection, State
 
 from CommonTools.messages import BaseMessage
-
-
-class SocketProtocol(Protocol):
-    def send(self, msg: BaseMessage): ...
-    
-    def answer(self, uid: str, msg: BaseMessage): ...
-    
-    def broadcast(self, msg: BaseMessage): ...
-    
-    def get_me(self): ...
-
-
-class ProxyServer(Protocol):
-    async def proxy_send(self, msg: BaseMessage, uid: str): ...
-    
-    
+from Protocols.network import ServerProxyProtocol
 
 
 @define
@@ -45,7 +29,7 @@ class SenderAdapterSocket(AbstractAdapterSocket):
 @define
 class ProxyAdapterSocket(SenderAdapterSocket):
     uid: str
-    bridge: ProxyServer
+    bridge: ServerProxyProtocol
     
     def send(self, msg: BaseMessage):
         try:
@@ -53,7 +37,7 @@ class ProxyAdapterSocket(SenderAdapterSocket):
             loop.create_task(self.bridge.proxy_send(msg, self.uid))
         except RuntimeError:
             pass
-        
+    
     def is_alive(self):
         return bool(self.bridge)
     
@@ -71,7 +55,7 @@ class SocketAdapter(SenderAdapterSocket):
             loop.create_task(self._ws.send(msg.to_str()))
         except RuntimeError:
             pass
-        
+    
     def is_alive(self):
         return self._ws and self._ws.state == State.OPEN
     

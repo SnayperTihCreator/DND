@@ -39,3 +39,34 @@ Traceback (most recent call last):
   File "C:\Users\MSI\Documents\Python\DND\.venv\Lib\site-packages\websockets\asyncio\connection.py", line 324, in recv
     raise self.protocol.close_exc from self.recv_exc
 websockets.exceptions.ConnectionClosedError: no close frame received or sent
+2026-04-08 21:35:56: [SERVER/ServerTools.core.server_socket/ERROR] Error during WS session
+Traceback (most recent call last):
+  File "C:\Users\MSI\AppData\Roaming\uv\python\cpython-3.11.14-windows-x86_64-none\Lib\asyncio\windows_events.py", line 494, in finish_recv
+    return ov.getresult()
+           ^^^^^^^^^^^^^^
+OSError: [WinError 64] Указанное сетевое имя более недоступно
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\MSI\AppData\Roaming\uv\python\cpython-3.11.14-windows-x86_64-none\Lib\asyncio\proactor_events.py", line 286, in _loop_reading
+    length = fut.result()
+             ^^^^^^^^^^^^
+  File "C:\Users\MSI\AppData\Roaming\uv\python\cpython-3.11.14-windows-x86_64-none\Lib\asyncio\windows_events.py", line 854, in _poll
+    value = callback(transferred, key, ov)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MSI\AppData\Roaming\uv\python\cpython-3.11.14-windows-x86_64-none\Lib\asyncio\windows_events.py", line 498, in finish_recv
+    raise ConnectionResetError(*exc.args)
+ConnectionResetError: [WinError 64] Указанное сетевое имя более недоступно
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\MSI\Documents\Python\DND\src\ServerTools\core\server_socket.py", line 113, in _ws_handler
+    async for message in websocket:
+  File "C:\Users\MSI\Documents\Python\DND\.venv\Lib\site-packages\websockets\asyncio\connection.py", line 244, in __aiter__
+    yield await self.recv()
+          ^^^^^^^^^^^^^^^^^
+  File "C:\Users\MSI\Documents\Python\DND\.venv\Lib\site-packages\websockets\asyncio\connection.py", line 324, in recv
+    raise self.protocol.close_exc from self.recv_exc
+websockets.exceptions.ConnectionClosedError: no close frame received or sent

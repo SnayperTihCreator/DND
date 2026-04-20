@@ -140,7 +140,7 @@ class LauncherWindow(QMainWindow):
         self.btn_refresh.setDisabled(False)
     
     def _add_server_to_list(self, info: dict):
-        text = f"{info['name']}  |  {info['ip']}:{info['ws_port']}"
+        text = f"{info['name']}  |  {info['best_ip']}:{info['ws_port']}"
         item = QListWidgetItem(text)
         item.setData(Qt.ItemDataRole.UserRole, info)  # Сохраняем данные для подключения
         self.server_list.addItem(item)
@@ -167,7 +167,7 @@ class LauncherWindow(QMainWindow):
     
     def _join_from_list(self, item: QListWidgetItem):
         info = item.data(Qt.ItemDataRole.UserRole)
-        self._launch_player(info['ip'], info['ws_port'])
+        self._launch_player(info['best_ip'], info['ws_port'])
     
     def _join_manual(self):
         ip = self.ip_input.text().strip()

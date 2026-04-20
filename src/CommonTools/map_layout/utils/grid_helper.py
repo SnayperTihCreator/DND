@@ -9,7 +9,7 @@ class GridHelper:
         """Возвращает размер сетки карты"""
         for item in self.scene.items():
             if hasattr(item, 'grid_size'):
-                return item.grid_size
+                return item.size
         return 50  # значение по умолчанию
     
     def align_to_grid(self, position: QPointF, grid_size=None):

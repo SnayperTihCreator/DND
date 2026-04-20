@@ -2,63 +2,14 @@ from pathlib import Path
 from typing import Optional
 
 from PySide6.QtCore import QPointF
-from PySide6.QtGui import QColor
 
-from CommonTools.mime import BaseMime, NPCMime, MobMime, PlayerMime, SpawnMime, TokenMime, InputMime, CacheMobMime, \
-    CacheNPCMime
+from CommonTools.mime import *
 from CommonTools.messages import TokenData
 
 from .dialog_create_trick import DialogCreateTrick, ResultDialog
 from .scene import Scene
 from ..tricks.base import BaseTrick
 from ..tricks.tricks import NPCTrick, MobTrick, PlayerTrick, SpawnPlayerTrick
-from ..tricks.configs import NPCConfigTrick, MobConfigTrick, PlayerConfigTrick, SpawnConfigTrick
-
-
-class TrickFactory:
-    @staticmethod
-    def create_npc_trick(data: TokenData):
-        config = NPCConfigTrick(
-            data.pos,
-            QColor("#113f2e"),
-            data.scale,
-            35,
-            data.kd
-        )
-        return NPCTrick(config)
-    
-    @staticmethod
-    def create_mob_trick(data: TokenData):
-        config = MobConfigTrick(
-            data.pos,
-            QColor("#8833f1"),
-            data.scale,
-            35,
-            data.kd
-        )
-        return MobTrick(config)
-    
-    @staticmethod
-    def create_player_trick(data: TokenData, name, cls, uid):
-        config = PlayerConfigTrick(
-            data.pos,
-            QColor("#0883f1"),
-            data.scale,
-            40,
-            100,
-            name, cls, uid
-        )
-        return PlayerTrick(config)
-    
-    @staticmethod
-    def create_spawn_player_trick(data: TokenData):
-        config = SpawnConfigTrick(
-            data.pos,
-            QColor("#450549"),
-            data.scale,
-            40
-        )
-        return SpawnPlayerTrick(config)
 
 
 class TricksManager:
@@ -73,11 +24,11 @@ class TricksManager:
         data.align(self.align_to_grid)
         match data.mime:
             case NPCMime():
-                token = TrickFactory.create_npc_trick(data)
+                token = NPCTrick.create(data)
             case MobMime():
-                token = TrickFactory.create_mob_trick(data)
+                token = MobTrick.create(data)
             case PlayerMime(name=name, cls=cls, uid=uid):
-                token = TrickFactory.create_player_trick(data, name, cls, uid)
+                token = PlayerTrick.create(data, name, cls, uid)
             case SpawnMime():
                 token = self._create_spawn(data)
         
@@ -91,7 +42,7 @@ class TricksManager:
         data = TokenData(mime=mime, kd=result.kd, scale=result.scale, pos=pos, image=result.path)
         return self.create_trick(data), data.image
     
-    def _dialog_create_trick(self, imime: InputMime) -> tuple[TokenMime, ResultDialog]:
+    def _dialog_create_trick(self, imime: InputMime) -> tuple[Optional[TokenMime], Optional[ResultDialog]]:
         match imime:
             case InputMime(name="mob"):
                 result = DialogCreateTrick.request("Моба")
@@ -110,9 +61,9 @@ class TricksManager:
             case InputMime(name="spawn-player"):
                 return SpawnMime(), None
             case _:
-                return imime, None
+                return None, None
     
-    def _get_next_number(self, mime: TokenMime, unique: bool = False):
+    def _get_next_number(self, mime: CacheMime, unique: bool = False):
         if unique:
             return "0"
         
@@ -142,4 +93,4 @@ class TricksManager:
         trick = self._tricks.pop(data.mime, None)
         if trick is not None:
             self.scene.removeItem(trick)
-        return TrickFactory.create_spawn_player_trick(data)
+        return SpawnPlayerTrick.create(data)

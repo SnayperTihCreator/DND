@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QGraphicsScene
 from PySide6.QtCore import Signal, QPointF
 
 # from .tooltip_token import ToolTipToken
-from CommonTools.maps.tricks.base import BaseTrick
+from views.maps.tricks.base import BaseTrick
 
 
 class Scene(QGraphicsScene):
