@@ -22,6 +22,7 @@ MAGIC_REQUEST = "WHO_IS_THE_MASTER?"
 PROTOCOL_SIG = f"DDTABLE:{__version__}"
 MAX_PACKET_SIZE = 1400
 
+
 @define(hash=True, eq=True)
 class ServerEntry:
     uid: str
@@ -44,14 +45,13 @@ class ServerEntry:
     
     @staticmethod
     def _priority_address(ip: str):
-        # 1. Localhost - самый низкий приоритет
-        if ip.startswith("127.") or ip == "::1": return 0
-        # 2. Приватные локальные сети (LAN)
-        if ip.startswith(("192.168.", "10.", "172.16.")): return 1
-        # 3. Виртуальные сети (RadminVPN 26.x.x.x, Hamachi 25.x.x.x)
-        if ip.startswith(("26.", "25.")): return 2
-        # 4. Внешние IP (все остальное)
-        return 3
+        if ip.startswith("127.") or ip == "::1":
+            return 4
+        if ip.startswith(("192.168.", "10.", "172.16.")):
+            return 3
+        if ip.startswith(("100.", "26.", "25.")):
+            return 2
+        return 1
     
     def get_best_address(self) -> str:
         """Выбирает приоритетный IP для подключения."""
@@ -59,14 +59,12 @@ class ServerEntry:
     
     def pack(self):
         return dict(
-            uid = self.uid,
-            name = self.name,
-            best_ip = self.get_best_address(),
-            ws_port = self.port,
-            all_addresses = list(self.addresses)
+            uid=self.uid,
+            name=self.name,
+            best_ip=self.get_best_address(),
+            ws_port=self.port,
+            all_addresses=list(self.addresses)
         )
-        
-    
 
 
 class MasterBeacon:

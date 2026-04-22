@@ -5,10 +5,10 @@ from PySide6.QtCore import QPoint, Signal, QPointF
 
 from CommonTools.core import ClientData
 from CommonTools.map_layout import BaseToken
-from CommonTools.messages import *
-from CommonTools.mime import TokenMime
 from CommonTools.ui.base_controller import BaseController
 from ServerTools.core import AsyncServerBridge
+from network.messages import *
+from network.mime import TokenMime
 
 logger = logging.getLogger(__name__)
 

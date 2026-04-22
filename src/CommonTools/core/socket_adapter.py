@@ -5,7 +5,7 @@ from typing import Any
 from attrs import define, field
 from websockets import ServerConnection, State
 
-from CommonTools.messages import BaseMessage
+from network.messages import BaseMessage
 from Protocols.network import ServerProxyProtocol
 
 

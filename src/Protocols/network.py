@@ -4,9 +4,11 @@ from typing import runtime_checkable, Protocol, TYPE_CHECKING
 
 from psygnal import Signal
 
+
+
 if TYPE_CHECKING:
     from CommonTools.core import ClientData, NetworkConfig
-    from CommonTools.messages import BaseMessage
+    from network.messages import *
     from ServerTools.core.proxy import MasterProxyHandler
 
 

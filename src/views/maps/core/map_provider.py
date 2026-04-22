@@ -1,22 +1,39 @@
+from enum import auto, Enum
 from pathlib import Path
 from typing import Optional, TYPE_CHECKING
 
-from PySide6.QtCore import QRectF
 from PySide6.QtGui import QPainter, QPen
 from PySide6.QtWidgets import QGraphicsItem
+from views.maps.core.fog_view import FogView
 
 from .map_view import *
+from .root_token import RootToken
 
 if TYPE_CHECKING:
     from .map import Map
+
+
+class ModeMap(Enum):
+    MOVE_TOKEN = auto()
+    PAINTER_MAP = auto()
+    FOG_MAP = auto()
 
 
 class MapProvider(QGraphicsItem):
     def __init__(self):
         super().__init__()
         self._view: Optional[BaseMapView] = None
+        self._root = RootToken(self)
+        self._fog = FogView(self)
         
-    def scene(self, /) -> "Map": return super().scene()
+        self._mode = ModeMap.MOVE_TOKEN
+    
+    def scene(self, /) -> "Map":
+        return super().scene()
+    
+    @property
+    def fog(self) -> FogView:
+        return self._fog
     
     def _draw_vertical_lines(self, painter, rect):
         if not (scene := self.scene()): return
@@ -56,7 +73,8 @@ class MapProvider(QGraphicsItem):
         if self._view is None:
             self._view = MapImageView(self)
         self._view.load(path)
-        
+        self.fog.init(self._view.boundingRect().toRect().size())
+    
     def loadAnimation(self, path: Path | str):
         if not isinstance(self._view, MapGifView) and self._view:
             self.removeItem(self._view)
@@ -64,20 +82,60 @@ class MapProvider(QGraphicsItem):
         if self._view is None:
             self._view = MapGifView(self)
         self._view.load(path)
-        
+        self.fog.init(self._view.boundingRect().toRect().size())
+    
     def loadPainter(self, path: str):
         if not isinstance(self._view, MapPainterView) and self._view:
             self.removeItem(self._view)
             self._view = None
         if self._view is None:
-            self._view = MapGifView(self)
+            self._view = MapPainterView(self)
         self._view.load(path)
-        
+        self.fog.init(self._view.boundingRect().toRect().size())
+    
     @property
     def view_painter(self) -> Optional[MapPainterView]:
         if isinstance(self._view, MapPainterView):
             return self._view
         return None
+    
+    def mousePressEvent(self, event, /):
+        if (self._mode == ModeMap.PAINTER_MAP) and (painter := self.view_painter):
+            painter.start_stroke(event.scenePos())
+            event.accept()
+            return
+        if self._mode == ModeMap.FOG_MAP:
+            self._fog.start_stroke(event.scenePos())
+            event.accept()
+            return
+        super().mousePressEvent(event)
+    
+    def mouseMoveEvent(self, event, /):
+        if (painter := self.view_painter) and painter.isDrawing:
+            painter.continue_stroke(event.scenePos())
+            event.accept()
+            return
+        if self.fog.isDrawing:
+            rect, data = self._fog.continue_stroke(event.scenePos())
+            if not rect.isEmpty():
+                self.scene().fogChanged.emit(rect, data)
+            event.accept()
+            return
+        super().mouseMoveEvent(event)
+    
+    def mouseReleaseEvent(self, event, /):
+        if (painter := self.view_painter) and painter.isDrawing:
+            painter.stop_stroke()
+            event.accept()
+            return
+        if self.fog.isDrawing:
+            self.fog.stop_stroke()
+            event.accept()
+            return
+        super().mouseReleaseEvent(event)
+    
+    def setMode(self, mode: ModeMap):
+        self._mode = mode
     
     def boundingRect(self):
         return self.childrenBoundingRect()

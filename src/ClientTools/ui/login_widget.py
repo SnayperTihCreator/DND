@@ -11,7 +11,7 @@ from qasync import asyncSlot
 from CommonTools.core import ClientData, classes
 from ClientTools.core.client_socket import AsyncClientBridge
 from CommonTools.utils import FORBIDDEN_CHARS
-from CommonTools.messages import ClientStartPlayer
+from network.messages import ClientStartPlayer
 
 logger = logging.getLogger(__name__)
 

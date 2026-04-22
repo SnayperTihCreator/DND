@@ -1,4 +1,4 @@
-from CommonTools.messages import *
+from network.messages import *
 
 msg = ClientStartPlayer(name="oleg", cls="oleg")
 

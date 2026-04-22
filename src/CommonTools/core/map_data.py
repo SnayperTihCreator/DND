@@ -1,7 +1,7 @@
 from attrs import define
 
 from CommonTools.map_layout import MapWidget
-from CommonTools.mime import AssetsMime
+from network.mime import AssetsMime
 
 
 @define

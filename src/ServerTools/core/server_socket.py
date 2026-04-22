@@ -7,7 +7,7 @@ from psygnal import Signal
 from websockets import ServerConnection, ConnectionClosedError
 
 from CommonTools.core import ClientData, SocketAdapter, MasterBeacon, NetworkConfig, ResourceLoaderMixin
-from CommonTools.messages import *
+from network.messages import *
 from .proxy import MasterProxyHandler
 from .resource_manager import ServerResourceManager
 from .server_http import ServerHttp

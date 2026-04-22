@@ -9,7 +9,7 @@ from websockets import ClientConnection
 
 from CommonTools.components import RouterDescriptor
 from CommonTools.core import ClientData, ResourceLoaderMixin, NetworkConfig
-from CommonTools.messages import *
+from network.messages import *
 from .resource_manager import ClientResourceManager
 from .transfer_manager import FileTransferManager
 

@@ -1,6 +1,6 @@
 [project]
 name = "dnd"
-version = "1.1.0b3"
+version = "1.1.0b4.dev1"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -10,6 +10,7 @@ dependencies = [
     "bidict>=0.23.1",
     "certifi>=2026.1.4",
     "d20>=1.1.2",
+    "icecream>=2.2.0",
     "json5>=0.12.1",
     "packaging>=26.0",
     "pillow>=12.0.0",
@@ -33,3 +34,4 @@ dev = [
 build = "task pre-run && pyinstaller scripts/dnd-table.spec --noconfirm"
 push-tag = "python scripts/release_helper.py"
 pre-run = "uv pip install -e ."
+run-test = "cd run-test && uv run python ../src/main.py"

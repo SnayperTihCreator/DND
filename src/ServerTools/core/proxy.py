@@ -4,7 +4,7 @@ from attrs import define, field
 
 from CommonTools.components import RouterDescriptor
 from CommonTools.core import ClientData, SenderAdapterSocket
-from CommonTools.messages import BaseMessage, ProxyActionType, ProxyTunnel, ProxyOpenTable
+from network.messages import *
 from Protocols.network import ServerProxyProtocol
 
 logger = logging.getLogger(__name__)

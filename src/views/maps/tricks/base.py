@@ -6,6 +6,7 @@ from PySide6.QtGui import QPixmap, QPen, QColor, QPainter, QPainterPath
 from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsItem, QMenu, QInputDialog
 
 from .configs import BaseConfigTrick
+
 from CommonTools.messages import TokenData
 
 if TYPE_CHECKING:

@@ -2,10 +2,10 @@ from typing import Optional
 
 from attrs import define, field
 
-from CommonTools.messages import BaseMessage
+from network.messages import BaseMessage
+from network.mime import PlayerMime
 
 from .socket_adapter import SenderAdapterSocket
-from ..mime import PlayerMime
 
 
 @define

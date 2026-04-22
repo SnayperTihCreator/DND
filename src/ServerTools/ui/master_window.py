@@ -3,14 +3,14 @@ import logging
 from pathlib import Path
 from typing import Optional
 
+from CommonTools.map_layout import MapWidget
+from CommonTools.notes import Note
 from PySide6.QtCore import Qt, QPoint, QPointF, QTimer
 from PySide6.QtGui import QIcon, QColor
 from PySide6.QtWidgets import QMainWindow, QToolBar, QSpinBox, QLabel, QCheckBox, QFileDialog, \
-    QGraphicsColorizeEffect, QComboBox
+    QGraphicsColorizeEffect
 from psygnal import set_async_backend
 
-from CommonTools.map_layout import MapWidget
-from CommonTools.notes import Note
 from ..core.server_remote import AsyncServerRemote
 
 logger = logging.getLogger(__name__)
@@ -19,11 +19,11 @@ logging.getLogger("Qt.js").setLevel(logging.ERROR)
 from CommonTools.components import ColorButton, GuidePanel, RouterDescriptor
 from CommonTools.updater_manager import UpdateManager
 from ServerTools.core.server_socket import AsyncServerBridge
-from CommonTools.messages import *
 from CommonTools.core import ClientData
-from CommonTools.mime import AssetsMime
 from ServerTools.components import *
 from CommonTools.utils import getImageMIME
+from network.messages import *
+from network.mime import AssetsMime
 
 from .master_controller import MasterController
 from .note_book import NoteBookDock

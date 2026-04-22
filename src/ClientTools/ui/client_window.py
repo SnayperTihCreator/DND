@@ -2,27 +2,25 @@ import asyncio
 import logging
 from pathlib import Path
 
+from ClientTools.core import AsyncClientBridge
+from CommonTools.components import RouterDescriptor, GuidePanel, ColorButton
+from CommonTools.core import classes
+from CommonTools.map_layout import MovedEvent
+from CommonTools.notes import Note
+from CommonTools.updater_manager import UpdateManager
+from CommonTools.utils import restart_app
+from network.messages import *
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QColor, QIcon
 from PySide6.QtWidgets import (
     QMainWindow, QStackedWidget, QToolBar, QCheckBox,
-    QGraphicsColorizeEffect, QMessageBox, QGraphicsEffect
+    QGraphicsColorizeEffect, QMessageBox
 )
 from psygnal import set_async_backend
 
-from ClientTools.core import AsyncClientBridge
-
-from CommonTools.notes import Note
-from CommonTools.updater_manager import UpdateManager
-from CommonTools.core import classes
-from CommonTools.components import RouterDescriptor, GuidePanel, ColorButton
-from CommonTools.map_layout import MovedEvent
-from CommonTools.messages import *
-from CommonTools.utils import restart_app
-
 from .login_widget import Loging
-from .player_controller import PlayerController
 from .note_book import NoteBookDock
+from .player_controller import PlayerController
 
 logger = logging.getLogger(__name__)
 

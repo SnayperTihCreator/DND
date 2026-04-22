@@ -5,7 +5,7 @@ from pathlib import Path
 from attrs import define, field
 from psygnal import set_async_backend
 
-from CommonTools.messages import BaseMessage, ProxyClientConnect, ProxyClientDisconnect, ProxyTunnel
+from network.messages import *
 from CommonTools.components import RouterDescriptor
 from .server_socket import AsyncServerBridge
 

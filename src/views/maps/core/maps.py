@@ -30,6 +30,9 @@ class Maps(QGraphicsView):
         
         self._is_panning = False
         self._last_mouse_pos: QPoint = None
+        
+    def scene(self, /) -> Map:
+        return super().scene()
     
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -80,8 +83,8 @@ class Maps(QGraphicsView):
             self._last_mouse_pos = event.pos()
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
             event.accept()
-        else:
-            super().mousePressEvent(event)
+            return
+        super().mousePressEvent(event)
     
     def mouseMoveEvent(self, event):
         if self._is_panning:
@@ -91,16 +94,14 @@ class Maps(QGraphicsView):
             self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - delta.x())
             self.verticalScrollBar().setValue(self.verticalScrollBar().value() - delta.y())
             event.accept()
-        else:
-            super().mouseMoveEvent(event)
+            return
+        super().mouseMoveEvent(event)
     
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.MouseButton.RightButton:
             self._is_panning = False
             self.setCursor(Qt.CursorShape.ArrowCursor)
             event.accept()
-        else:
-            super().mouseReleaseEvent(event)
+            return
+        super().mouseReleaseEvent(event)
             
-    def scene(self, /) -> Map:
-        return super().scene()

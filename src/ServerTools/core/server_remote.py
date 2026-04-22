@@ -1,17 +1,13 @@
 import asyncio
 import logging
 from pathlib import Path
-from typing import Optional
-
-import websockets
-from psygnal import Signal
-from websockets import ClientConnection
 
 from ClientTools.core import AsyncClientBridge
 from CommonTools.components import RouterDescriptor
-from CommonTools.core import ClientData, ProxyAdapterSocket, ResourceLoaderMixin, NetworkConfig
-from CommonTools.messages import *
+from CommonTools.core import ClientData, ProxyAdapterSocket, ResourceLoaderMixin
+from network.messages import *
 from ServerTools.core.resource_manager import ServerResourceManager
+from psygnal import Signal
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

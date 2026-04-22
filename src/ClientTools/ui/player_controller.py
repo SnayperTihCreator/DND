@@ -3,8 +3,8 @@ from pathlib import Path
 
 from PySide6.QtCore import QPoint
 
-from CommonTools.messages import *
-from CommonTools.mime import AssetsMime
+from network.messages import *
+from network.mime import AssetsMime
 from CommonTools.ui.base_controller import BaseController
 from ClientTools.core import AsyncClientBridge
 

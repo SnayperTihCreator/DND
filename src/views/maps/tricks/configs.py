@@ -4,7 +4,7 @@ from PySide6.QtCore import QPointF
 from PySide6.QtGui import QColor
 from attrs import define, field, validators
 
-from CommonTools.mime import TokenMime, MobMime, NPCMime, SpawnMime, PlayerMime
+from network.mime import TokenMime, NPCMime, MobMime, PlayerMime
 
 
 def _tuple2qpoint(value):

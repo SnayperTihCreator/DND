@@ -1,13 +1,13 @@
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
-from PySide6.QtCore import Signal, QPointF, QPoint
-from PySide6.QtGui import QColor, QTransform
+from PySide6.QtCore import Signal, QPointF, QPoint, Qt
+from PySide6.QtGui import QColor, QTransform, QMouseEvent
 from PySide6.QtWidgets import QGraphicsScene
 from attrs import define, field
 
 from .manager import Manager
-from .map_provider import MapProvider
+from .map_provider import MapProvider, ModeMap
 from ..tokens import BaseToken
 from ..utils.automatic import properties
 
@@ -50,6 +50,8 @@ class Map(QGraphicsScene):
     token_added = Signal(object)
     token_removed = Signal(object)
     token_moved_map = Signal(object, str)
+    fogChanged = Signal(object, bytes)
+    mapFonChanged = Signal(str)
     
     contextMenuRequested = Signal(QPointF)
     
@@ -62,6 +64,7 @@ class Map(QGraphicsScene):
         
         self.margin = 250
         
+        self._is_drawing = False
         self.view_data = View()
         self.manager = Manager(self)
         self.provider = MapProvider()
@@ -91,7 +94,11 @@ class Map(QGraphicsScene):
             return self.views()[0]
         except IndexError:
             return None
-        
+    
+    def setMode(self, mode: ModeMap):
+        self.provider.setMode(mode)
+    
+    @property
     def painter(self):
         return self.provider.view_painter
     
@@ -122,5 +129,6 @@ class Map(QGraphicsScene):
                 self.provider.loadAnimation(path)
             case ".paint":
                 self.provider.loadPainter(path)
+            case ".map":
+                pass
         self.__prepare_rect__(True)
-        

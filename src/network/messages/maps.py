@@ -6,7 +6,7 @@ from .core import BaseMessage, BaseActionType
 
 from pydantic import Field, BaseModel
 
-from CommonTools.mime import AssetsMime, TokenMime
+from network.mime import AssetsMime, TokenMime
 from CommonTools.qt_pydantic import QtPointF, QtPath
 
 

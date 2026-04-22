@@ -7,11 +7,11 @@ from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout
 logger = logging.getLogger(__name__)
 
 from CommonTools.map_layout.tokens_dnd import BaseToken
-from CommonTools.messages import *
 from CommonTools.core import ClientData, BufferManager, ViewFog
 from CommonTools.utils import getImageMIME
 from CommonTools.union import AsyncBridge
 from CommonTools.components import RouterDescriptor
+from network.messages import *
 
 from .tabs_map_controller import TabMapsWidget
 
