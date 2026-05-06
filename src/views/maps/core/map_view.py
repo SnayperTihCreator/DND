@@ -144,6 +144,7 @@ class MapPainterView(BaseMapView):
         
         self._last_point = current_point
         self._update()
+        return True
     
     def stop_stroke(self):
         self._last_point = None

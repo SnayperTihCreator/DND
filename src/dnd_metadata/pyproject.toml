@@ -1,0 +1,13 @@
+[project]
+name = "dnd-metadata"
+version = "1.1.0b4.dev1"
+description = "Add your description here"
+authors = [
+    { name = "SnayperTihCreator", email = "snajpertih@gmail.com" }
+]
+requires-python = ">=3.11"
+dependencies = []
+
+[build-system]
+requires = ["uv_build>=0.9.24,<0.10.0"]
+build-backend = "uv_build"

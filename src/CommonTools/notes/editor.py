@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QSpinBox, QLineEdit
 
 from .base import Note
-from CommonTools.components import AdvancedTextEdit
+from views.awidgets import AdvancedTextEdit
 
 
 class NoteEditor(QWidget):

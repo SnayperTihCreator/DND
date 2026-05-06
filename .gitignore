@@ -14,3 +14,4 @@ wheels/
 /.cache/
 /run-test/
 /assets/
+*.sha256

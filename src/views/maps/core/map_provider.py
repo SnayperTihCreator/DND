@@ -8,6 +8,7 @@ from views.maps.core.fog_view import FogView
 
 from .map_view import *
 from .root_token import RootToken
+from .view_box import ViewBox
 
 if TYPE_CHECKING:
     from .map import Map
@@ -25,6 +26,7 @@ class MapProvider(QGraphicsItem):
         self._view: Optional[BaseMapView] = None
         self._root = RootToken(self)
         self._fog = FogView(self)
+        self._view_box = ViewBox(self)
         
         self._mode = ModeMap.MOVE_TOKEN
     
@@ -34,6 +36,14 @@ class MapProvider(QGraphicsItem):
     @property
     def fog(self) -> FogView:
         return self._fog
+    
+    @property
+    def rtoken(self):
+        return self._root
+    
+    @property
+    def mode(self) -> ModeMap:
+        return self._mode
     
     def _draw_vertical_lines(self, painter, rect):
         if not (scene := self.scene()): return
@@ -94,13 +104,13 @@ class MapProvider(QGraphicsItem):
         self.fog.init(self._view.boundingRect().toRect().size())
     
     @property
-    def view_painter(self) -> Optional[MapPainterView]:
+    def painter(self) -> Optional[MapPainterView]:
         if isinstance(self._view, MapPainterView):
             return self._view
         return None
     
     def mousePressEvent(self, event, /):
-        if (self._mode == ModeMap.PAINTER_MAP) and (painter := self.view_painter):
+        if (self._mode == ModeMap.PAINTER_MAP) and (painter := self.painter):
             painter.start_stroke(event.scenePos())
             event.accept()
             return
@@ -111,8 +121,9 @@ class MapProvider(QGraphicsItem):
         super().mousePressEvent(event)
     
     def mouseMoveEvent(self, event, /):
-        if (painter := self.view_painter) and painter.isDrawing:
-            painter.continue_stroke(event.scenePos())
+        if (painter := self.painter) and painter.isDrawing:
+            if painter.continue_stroke(event.scenePos()):
+                self.scene().mapFonChanged.emit(painter.path.as_posix())
             event.accept()
             return
         if self.fog.isDrawing:
@@ -124,7 +135,7 @@ class MapProvider(QGraphicsItem):
         super().mouseMoveEvent(event)
     
     def mouseReleaseEvent(self, event, /):
-        if (painter := self.view_painter) and painter.isDrawing:
+        if (painter := self.painter) and painter.isDrawing:
             painter.stop_stroke()
             event.accept()
             return

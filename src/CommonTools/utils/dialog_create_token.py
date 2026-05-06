@@ -6,10 +6,10 @@ from PySide6.QtCore import Qt, QSize, QPoint
 from PySide6.QtGui import QImage
 from PySide6.QtWidgets import (QDialog, QFormLayout, QDialogButtonBox, QTextBrowser, QLineEdit,
                                QComboBox, QMessageBox, QCheckBox, QWidget, QSpinBox,
-                               QPushButton, QWhatsThis, QHBoxLayout, QLabel, QFileDialog)
+                               QPushButton, QWhatsThis, QHBoxLayout, QFileDialog)
 from attrs import define, field, validators
 
-from CommonTools.components import AdvancedTextEdit
+from views.awidgets import AdvancedTextEdit
 from .name_utils import FORBIDDEN_CHARS
 
 

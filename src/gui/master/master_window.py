@@ -11,12 +11,13 @@ from PySide6.QtWidgets import QMainWindow, QToolBar, QSpinBox, QLabel, QCheckBox
     QGraphicsColorizeEffect
 from psygnal import set_async_backend
 
-from ..core.server_remote import AsyncServerRemote
+from ServerTools.core.server_remote import AsyncServerRemote
 
 logger = logging.getLogger(__name__)
 logging.getLogger("Qt.js").setLevel(logging.ERROR)
 
-from CommonTools.components import ColorButton, GuidePanel, RouterDescriptor
+from CommonTools.components import RouterDescriptor
+from views.awidgets import ColorButton, GuidePanel
 from CommonTools.updater_manager import UpdateManager
 from ServerTools.core.server_socket import AsyncServerBridge
 from CommonTools.core import ClientData
@@ -225,7 +226,7 @@ class MasterGameTable(QMainWindow):
     def _on_action_load_bg(self):
         if not (name := self.controller.tabMaps.getActiveNameMap()):
             return
-        path, _ = QFileDialog.getOpenFileName(self, "Выберете фон", ".", "Image(*.png *.jpg *.gif)")
+        path, _ = QFileDialog.getOpenFileName(self, "Выберете фон", "../../ServerTools/ui", "Image(*.png *.jpg *.gif)")
         if not path: return
         
         # TODO Добавить норм фильтр

@@ -16,7 +16,7 @@ from qasync import QEventLoop
 
 warnings.filterwarnings("ignore", category=UserWarning, module='pkg_resources')
 
-from CommonTools.ui import LauncherWindow
+from gui.launcher.window import LauncherWindow
 from PrintManager import PrintManager
 
 os.environ['REQUESTS_CA_BUNDLE'] = certifi.where()

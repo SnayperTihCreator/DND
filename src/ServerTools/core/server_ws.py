@@ -3,7 +3,7 @@ from typing import Optional
 from attrs import define, field
 from websockets import Server, serve, ServerConnection
 
-from Protocols.network import ServerSocketProtocol
+from protocols.network import ServerSocketProtocol
 
 
 @define

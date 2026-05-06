@@ -1,8 +1,10 @@
 [project]
 name = "dnd"
-version = "1.1.0b4.dev1"
-readme = "README.md"
+version = "1.0.0"
 requires-python = ">=3.11"
+authors = [
+    { name = "SnayperTihCreator", email = "snajpertih@gmail.com" }
+]
 dependencies = [
     "aiofiles>=25.1.0",
     "aiohttp>=3.13.3",
@@ -10,12 +12,16 @@ dependencies = [
     "bidict>=0.23.1",
     "certifi>=2026.1.4",
     "d20>=1.1.2",
+    "dnd-metadata",
     "icecream>=2.2.0",
+    "ipykernel>=7.2.0",
     "json5>=0.12.1",
     "packaging>=26.0",
     "pillow>=12.0.0",
+    "platformdirs>=4.9.6",
     "psygnal>=0.15.1",
     "pydantic>=2.12.4",
+    "pymunk>=7.2.0",
     "pyside6==6.10.1",
     "qasync>=0.28.0",
     "requests>=2.32.5",
@@ -31,7 +37,14 @@ dev = [
 
 
 [tool.taskipy.tasks]
-build = "task pre-run && pyinstaller scripts/dnd-table.spec --noconfirm"
+build = "pyinstaller scripts/dnd-table.spec --noconfirm"
 push-tag = "python scripts/release_helper.py"
-pre-run = "uv pip install -e ."
 run-test = "cd run-test && uv run python ../src/main.py"
+
+[tool.uv.workspace]
+members = [
+    "src/dnd_metadata",
+]
+
+[tool.uv.sources]
+dnd-metadata = { workspace = true }

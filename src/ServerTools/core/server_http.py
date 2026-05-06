@@ -5,7 +5,7 @@ import aiofiles
 from aiohttp import web
 from attrs import field, define
 
-from Protocols.network import ServerProxyProtocol
+from protocols.network import ServerProxyProtocol
 
 
 @define

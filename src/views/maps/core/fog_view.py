@@ -13,7 +13,7 @@ class FogView(QGraphicsItem):
         super().__init__(parent)
         self.setZValue(1000)
         self._mask = QImage()
-        self._texture = QPixmap(":/textures/fog_tile.png")
+        self._texture = QPixmap(":/textures/fog.png")
         
         self._pen = QPen(Qt.GlobalColor.white, 20, Qt.PenStyle.SolidLine)
         self._pen.setCapStyle(Qt.PenCapStyle.RoundCap)

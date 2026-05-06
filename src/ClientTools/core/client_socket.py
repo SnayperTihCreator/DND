@@ -98,7 +98,7 @@ class AsyncClientBridge(ResourceLoaderMixin):
     @router_system.handler(SystemActionType.INFO)
     async def _on_handle_info_server(self, _, msg: SystemServerInfo):
         self.me.uid, self.config.http_port = msg.uid, msg.http_port
-        logger.info("Received server configuration: HTTP port %s", self.config.http_port)
+        logger.info("Received server configuration: HTTP ws_port %s", self.config.http_port)
         logger.info("Connected. My UID is: %s", self.me.uid)
     
     @router_system.handler(SystemActionType.RESOURCE_AVAILABLE)

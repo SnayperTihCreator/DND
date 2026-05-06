@@ -40,11 +40,20 @@ class View:
         return self._loaded
 
 
+@define
+class MoveSetting:
+    player: bool = field(default=True)
+    mob: bool = field(default=True)
+    npc: bool = field(default=True)
+    spawnplayer: bool = field(default=True)
+
+
 class Map(QGraphicsScene):
     name: str = properties("name")
     speed_trick: int = properties("speed")
     grid_factor: float = properties("grid_factor")
     isSideClient: bool = properties("isClient")
+    active: bool = properties("isActive")
     
     token_moved = Signal(object)
     token_added = Signal(object)
@@ -55,22 +64,40 @@ class Map(QGraphicsScene):
     
     contextMenuRequested = Signal(QPointF)
     
-    def __init__(self, name: str, parent=None):
+    def __init__(self, name: str, active: bool = True, parent=None):
         super().__init__(parent)
         self.setProperty("name", name)
         self.setProperty("speed", 250)
         self.setProperty("grid_factor", 1.0)
         self.setProperty("isClient", False)
+        self.setProperty("isActive", active)
         
         self.margin = 250
         
         self._is_drawing = False
         self.view_data = View()
-        self.manager = Manager(self)
+        self.movement = MoveSetting()
         self.provider = MapProvider()
+        self.manager = Manager(self, self.provider)
         self.grid = GridData(self)
         
         self.addItem(self.provider)
+        
+    def clear(self):
+        self.manager.clear()
+        
+    def setMasterView(self, enable: bool = True):
+        self.isSideClient = not enable
+        self.provider.fog.setOpacity(0.1 if enable else 0)
+        self.update()
+    
+    def set_tokens_moved(self, ttypes: list[str], enabled: bool):
+        for ttype in ttypes:
+            setattr(self.movement, ttype, enabled)
+        self._update_moved()
+        
+    def _update_moved(self):
+        self.manager.update_moved(self.movement)
     
     def update_grid(self, size: int):
         self.setProperty("grid_factor", size / 50)
@@ -100,7 +127,7 @@ class Map(QGraphicsScene):
     
     @property
     def painter(self):
-        return self.provider.view_painter
+        return self.provider.painter
     
     def __prepare_view__(self, view: "Maps"):
         if not view: return

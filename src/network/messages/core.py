@@ -2,7 +2,7 @@ from typing import ClassVar, Type, Any, Self, Optional
 from enum import Enum
 
 import json5
-from pydantic import BaseModel, model_serializer, model_validator
+from pydantic import BaseModel, model_serializer, model_validator, SecretStr
 from pydantic_core.core_schema import SerializerFunctionWrapHandler
 
 
@@ -16,6 +16,9 @@ class BaseActionType(Enum):
     
     def __str__(self) -> str:
         return f"{self.group}:{self.action}:{self.type}"
+    
+    def __repr__(self):
+        return f"<{self.__class__.__name__}({self!s})>"
     
     @classmethod
     def get_by_group(cls, group: str) -> list:
@@ -83,11 +86,20 @@ class BaseMessage(BaseModel):
         
         return handler(data)
     
-    def to_dict(self) -> dict[str, Any]:
-        return self.model_dump(mode="json")
+    def to_dict(self, secure: bool = False) -> dict[str, Any]:
+        data = self.model_dump(mode="json")
+        if not secure:
+            for field_name, field_info in self.model_fields.items():
+                extra = field_info.json_schema_extra
+                if extra and extra.get("is_socket"):
+                    value = getattr(self, field_name)
+                    if isinstance(value, SecretStr):
+                        data[field_name] = value.get_secret_value()
+        data["_type"] = self.__class__.__qualname__
+        return data
     
     def to_str(self) -> str:
-        return json5.dumps(self.model_dump(mode="json"), ensure_ascii=False)
+        return json5.dumps(self.to_dict(), ensure_ascii=False)
     
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:

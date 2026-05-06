@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from abc import ABCMeta, ABC
-from typing import TYPE_CHECKING, Optional, ClassVar
+from abc import ABCMeta, ABC, abstractmethod
+from typing import TYPE_CHECKING, Optional, ClassVar, Self
 
 from PySide6.QtCore import Qt, QRect
 from PySide6.QtGui import QPixmap, QPen, QColor, QBrush, QTransform
@@ -11,12 +11,10 @@ if TYPE_CHECKING:
     from ..core.map import Map
 
 from .configs import BaseConfig
+from ..utils.data import CreateData
 
 
-class QMetaAbc(ABCMeta, type(QGraphicsItem)): ...
-
-
-class BaseToken(ABC, QGraphicsEllipseItem, metaclass=QMetaAbc):
+class BaseToken(QGraphicsEllipseItem):
     TEXTURE_SIZE: ClassVar[int] = 512
     BORDER_SCALE: ClassVar[float] = 1.5
     __default_border__: ClassVar[Optional[QPixmap]] = None
@@ -67,11 +65,12 @@ class BaseToken(ABC, QGraphicsEllipseItem, metaclass=QMetaAbc):
         rect = self.label.boundingRect()
         self.label.setPos(-rect.width() / 2, -rect.height() / 2)
     
+    def setPos(self, pos, /):
+        self.config.pos = pos
+        return super().setPos(pos)
+    
     def scene(self) -> Map:
         return super().scene()
-    
-    def __init_subclass__(cls, **kwargs):
-        cls.ttype = kwargs.get("type", "service")
     
     def update_grid(self):
         if not (scene := self.scene()): return
@@ -131,6 +130,10 @@ class BaseToken(ABC, QGraphicsEllipseItem, metaclass=QMetaAbc):
         else:
             brightness = self.brush().color().lightness()
         return QColor(Qt.GlobalColor.black if brightness > 128 else Qt.GlobalColor.white)
+    
+    @classmethod
+    def create(cls, data: CreateData, *args, **kwargs) -> Self:
+        ...
     
     @property
     def isSideClient(self):

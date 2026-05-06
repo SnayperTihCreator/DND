@@ -1,17 +1,17 @@
 import asyncio
 import json
-import socket
 import logging
-import time
+import socket
 import struct
+import time
 import uuid
 from asyncio import DatagramTransport
-from typing import Optional, Dict, Set, Self
+from typing import Optional, Dict, Self
 
 from attrs import define, field
 from psygnal import Signal
-
-from CommonTools.version import __version__
+from pydantic import BaseModel, Field
+from dnd_metadata import version
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +19,15 @@ logger = logging.getLogger(__name__)
 DISCOVERY_PORT = 55000
 MULTICAST_GROUP = "224.0.2.60"
 MAGIC_REQUEST = "WHO_IS_THE_MASTER?"
-PROTOCOL_SIG = f"DDTABLE:{__version__}"
+PROTOCOL_SIG = f"DDTABLE:{version}"
 MAX_PACKET_SIZE = 1400
+
+
+class InfoServer(BaseModel):
+    uid: str
+    name: str
+    ws_port: int
+    sig: str = Field(default=PROTOCOL_SIG)
 
 
 @define(hash=True, eq=True)
@@ -69,10 +76,9 @@ class ServerEntry:
 
 class MasterBeacon:
     class BeaconProtocol(asyncio.DatagramProtocol):
-        def __init__(self, info: dict):
+        def __init__(self, info: InfoServer):
             self.info = info
-            self.info["_sig"] = PROTOCOL_SIG
-            self.response = json.dumps(self.info).encode('utf-8')
+            self.response = json.dumps(info.model_dump(mode="json")).encode("utf-8")
             self.transport: Optional[DatagramTransport] = None
             
             if len(self.response) > MAX_PACKET_SIZE:
@@ -97,9 +103,7 @@ class MasterBeacon:
                 message = data.decode('utf-8').strip()
                 if message == MAGIC_REQUEST:
                     if len(self.response) <= MAX_PACKET_SIZE:
-                        # Отвечаем напрямую отправителю (Unicast)
                         self.transport.sendto(self.response, addr)
-                        # Дублируем в Multicast группу для надежности в VLAN
                         self.transport.sendto(self.response, (MULTICAST_GROUP, DISCOVERY_PORT))
             except (UnicodeDecodeError, Exception) as e:
                 logger.debug(f"Beacon receive error: {e}")
@@ -112,7 +116,7 @@ class MasterBeacon:
     
     async def start(self, ws_port: int, server_name: str = "D&D Table"):
         loop = asyncio.get_running_loop()
-        info = {"name": server_name, "ws_port": ws_port, "uid": self._uid}
+        info = InfoServer(name=server_name, ws_port=ws_port, uid=self._uid)
         
         for port in range(DISCOVERY_PORT, DISCOVERY_PORT + 10):
             try:
@@ -128,7 +132,7 @@ class MasterBeacon:
             except OSError:
                 continue
         
-        raise RuntimeError("Could not bind Beacon to any port in range")
+        raise RuntimeError("Could not bind Beacon to any ws_port in range")
     
     def stop(self):
         if self.transport:
@@ -179,12 +183,12 @@ class ServerScanner:
                 if len(data) > MAX_PACKET_SIZE:
                     return
                 
-                info = json.loads(data.decode('utf-8'))
+                info = InfoServer.model_validate(json.loads(data.decode('utf-8')))
                 
-                if info.get("_sig") != PROTOCOL_SIG:
+                if info.sig != PROTOCOL_SIG:
                     return
                 
-                self.scanner.add_server(info.get("uid"), addr[0], info)
+                self.scanner.add_server(info.uid, addr[0], info.model_dump())
             
             except (json.JSONDecodeError, UnicodeDecodeError, KeyError):
                 pass

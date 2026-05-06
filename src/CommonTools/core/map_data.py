@@ -1,14 +1,18 @@
+from typing import TYPE_CHECKING
+
 from attrs import define
 
-from CommonTools.map_layout import MapWidget
+
 from network.mime import AssetsMime
+if TYPE_CHECKING:
+    from CommonTools.map_layout import MapWidget
 
 
 @define
 class MapData:
     name: str
     visible: bool
-    mWidget: MapWidget
+    mWidget: "MapWidget"
     
     @property
     def mime_s(self):

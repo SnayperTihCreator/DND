@@ -8,10 +8,7 @@ import subprocess
 from packaging import version
 from PySide6.QtCore import QObject, QThread, Signal, Qt, QTimer
 from PySide6.QtWidgets import QMessageBox, QProgressDialog
-
-from .version import __version__
-
-REPO = "SnayperTihCreator/DND"
+from dnd_metadata import version as app_version, REPO
 
 
 class DownloadThread(QThread):
@@ -79,7 +76,7 @@ class UpdateManager(QObject):
             data = response.json()
             latest_version = data["tag_name"]
             
-            if version.parse(latest_version) > version.parse(__version__):
+            if version.parse(latest_version) > version.parse(app_version):
                 download_url = self.find_correct_asset(data.get("assets", []))
                 
                 if download_url:

@@ -93,7 +93,7 @@ class NoteBookDock(QDockWidget):
             json5.dump(asdict(self.notes[idx]), file, ensure_ascii=False, indent=4)
     
     def _import_note(self):
-        path, _ = QFileDialog.getOpenFileName(self, "Импорт", "../components", "JSON(*.json, *.json5)")
+        path, _ = QFileDialog.getOpenFileName(self, "Импорт", "../../ServerTools/components", "JSON(*.json, *.json5)")
         if not path: return
         
         with open(path, "r", encoding="utf-8") as file:
@@ -107,7 +107,7 @@ class NoteBookDock(QDockWidget):
         self.save_to_path(path)
     
     def _load_book(self):
-        path, _ = QFileDialog.getOpenFileName(self, "Открыть книгу", "../components", "JSON (*.json)")
+        path, _ = QFileDialog.getOpenFileName(self, "Открыть книгу", "../../ServerTools/components", "JSON (*.json)")
         if not path: return
         self.load_from_path(path)
     

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>D&amp;D Launcher</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QTabWidget" name="tabs">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="ScannerPage" name="scannerPage">
+       <attribute name="title">
+        <string>Найти игру</string>
+       </attribute>
+      </widget>
+      <widget class="DmPage" name="dmPage">
+       <attribute name="title">
+        <string>Создать стол</string>
+       </attribute>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>33</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>Приложение</string>
+    </property>
+    <addaction name="action_update"/>
+    <addaction name="action_about"/>
+    <addaction name="action_qt"/>
+   </widget>
+   <addaction name="menu"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="action_update">
+   <property name="text">
+    <string>Проверить обновления</string>
+   </property>
+  </action>
+  <action name="action_about">
+   <property name="text">
+    <string>О программе</string>
+   </property>
+  </action>
+  <action name="action_qt">
+   <property name="text">
+    <string>О PySide6</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ScannerPage</class>
+   <extends>QWidget</extends>
+   <header location="global">gui.launcher.scanner</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>DmPage</class>
+   <extends>QWidget</extends>
+   <header location="global">gui.launcher.dm</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

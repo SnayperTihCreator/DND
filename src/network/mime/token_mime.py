@@ -8,6 +8,11 @@ class CacheMobMime(BaseMime, prefix="cache:mob"):
 
 class CacheNPCMime(BaseMime, prefix="cache:npc"):
     name: str
+    
+
+class CacheTokenMime(BaseMime, prefix="cache:token"):
+    name: str
+    unique: bool
 
 
 class MobMime(BaseMime, prefix="token:mob"):
@@ -31,11 +36,12 @@ class SpawnMime(BaseMime, prefix="token:spawn"):
 
 
 TokenMime: TypeAlias = MobMime | NPCMime | PlayerMime | SpawnMime
-CacheMime: TypeAlias = CacheMobMime | CacheNPCMime
+CacheMime: TypeAlias = CacheMobMime | CacheNPCMime | CacheTokenMime
+TokensMime: TypeAlias = TokenMime | CacheMime
 
 __all__ = [
-    "TokenMime", "CacheMime",
+    "TokenMime", "CacheMime", "TokensMime",
     "SpawnMime",
     "PlayerMime", "MobMime", "NPCMime",
-    "CacheMobMime", "CacheNPCMime",
+    "CacheMobMime", "CacheNPCMime", "CacheTokenMime"
 ]

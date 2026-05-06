@@ -118,4 +118,4 @@ class AsyncServerRemote(ResourceLoaderMixin):
     
     def loadTo(self, path: str | Path) -> str:
         super().loadTo(path)
-        self.bridge.upload_file(path)
+        asyncio.create_task(self.bridge.upload_file(path))
